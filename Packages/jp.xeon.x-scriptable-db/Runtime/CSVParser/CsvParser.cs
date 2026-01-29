@@ -37,7 +37,7 @@ namespace Xeon.XScriptableDB.IO
             this.csv = csv;
         }
 
-        public void SetDefaultSeparator(string separator)
+        public static void SetDefaultSeparator(string separator)
             => defaultSeparator = separator;
 
         public static List<T> Parse<T>(string csv) where T : CsvData, new()
@@ -51,7 +51,7 @@ namespace Xeon.XScriptableDB.IO
         }
         public static List<T> ParseFile<T>(string path, string separator) where T : CsvData, new()
         {
-            var encoding = EncodeHelper.GetJpEncoding(path);
+            var encoding = EncodeHelper.GetJpEncoding(path) ?? Encoding.UTF8;
             using (var reader = new StreamReader(path, encoding))
             {
                 var parser = new CsvParser(reader.ReadToEnd(), separator);
@@ -79,11 +79,6 @@ namespace Xeon.XScriptableDB.IO
                 var parsed = new Dictionary<string, string>();
                 foreach (var (key, index) in headers.Select((key, index) => (key, index)))
                 {
-                    if (index >= headers.Count)
-                    {
-                        Debug.LogError(index);
-                        continue;
-                    }
                     try
                     {
                         parsed[key] = index >= columns.Length ? string.Empty : Restore(columns[index], "string");
@@ -129,10 +124,7 @@ namespace Xeon.XScriptableDB.IO
                 try
                 {
                     if (member.MemberType == MemberTypes.Property)
-                    {
-                        text = RestoreEscape(text);
-                        type.GetProperty(member.Name).SetValue(instance, text);
-                    }
+                        SetPropertyValue(type, member.Name, instance, text);
                     else if (member.MemberType == MemberTypes.Field)
                         SetValue(type, member.Name, instance, text);
                     else
@@ -191,50 +183,98 @@ namespace Xeon.XScriptableDB.IO
             }
         }
 
+        private void SetPropertyValue<T>(Type type, string memberName, T instance, string value)
+        {
+            var propertyInfo = type.GetProperty(memberName, ProperyFlags);
+            if (propertyInfo == null)
+            {
+                Debug.LogWarning($"Property '{memberName}' not found on type '{type.Name}'");
+                return;
+            }
+            var convertedValue = ConvertValue(propertyInfo.PropertyType, value, memberName);
+            if (convertedValue != null)
+                propertyInfo.SetValue(instance, convertedValue);
+        }
+
         private void SetValue<T>(Type type, string memberName, T instance, string value)
         {
             var fieldInfo = type.GetField(memberName, ProperyFlags);
-            if (VectorTypes.Contains(fieldInfo.FieldType))
-                value = Restore(value, "vector");
-            if (fieldInfo.FieldType.GetInterface(nameof(ICsvSupport)) != null)
+            if (fieldInfo == null)
             {
-                var data = (ICsvSupport)Activator.CreateInstance(fieldInfo.FieldType);
-                value = Restore(value, "list", "object", "vector", "string");
-                data.FromCsv(value);
-                fieldInfo.SetValue(instance, data);
+                Debug.LogWarning($"Field '{memberName}' not found on type '{type.Name}'");
+                return;
             }
-            else if (fieldInfo.FieldType == typeof(int) && int.TryParse(value, out var intValue))
-                fieldInfo.SetValue(instance, intValue);
-            else if (fieldInfo.FieldType == typeof(float) && float.TryParse(value, out var floatValue))
-                fieldInfo.SetValue(instance, floatValue);
-            else if (fieldInfo.FieldType == typeof(bool) && bool.TryParse(value, out var boolValue))
-                fieldInfo.SetValue(instance, boolValue);
-            else if (fieldInfo.FieldType == typeof(string))
-            {
-                value = Restore(value, "string");
-                fieldInfo.SetValue(instance, value.FromCsv());
-            }
-            else if (fieldInfo.FieldType.IsGenericType && fieldInfo.FieldType.GetGenericTypeDefinition() == typeof(List<>))
+            if (fieldInfo.FieldType.IsGenericType && fieldInfo.FieldType.GetGenericTypeDefinition() == typeof(List<>))
             {
                 value = Restore(value, "list");
                 SetArrayValue(fieldInfo, instance, value);
+                return;
             }
-            else if (fieldInfo.FieldType.IsEnum)
-                fieldInfo.SetValue(instance, Enum.Parse(fieldInfo.FieldType, value));
-            else if (fieldInfo.FieldType == typeof(Vector2))
-                fieldInfo.SetValue(instance, value.ToVector2());
-            else if (fieldInfo.FieldType == typeof(Vector2Int))
-                fieldInfo.SetValue(instance, value.ToVector2Int());
-            else if (fieldInfo.FieldType == typeof(Vector3))
-                fieldInfo.SetValue(instance, value.ToVector3());
-            else if (fieldInfo.FieldType == typeof(Vector3Int))
-                fieldInfo.SetValue(instance, value.ToVector3Int());
-            else if (fieldInfo.FieldType == typeof(Vector4))
-                fieldInfo.SetValue(instance, value.ToVector4());
-            else if (fieldInfo.FieldType == typeof(Quaternion))
-                fieldInfo.SetValue(instance, value.ToQuaternion());
-            else
-                throw new Exception($"{fieldInfo.FieldType} is not supported");
+            var convertedValue = ConvertValue(fieldInfo.FieldType, value, memberName);
+            if (convertedValue != null)
+                fieldInfo.SetValue(instance, convertedValue);
+        }
+
+        private object ConvertValue(Type targetType, string value, string memberName)
+        {
+            if (VectorTypes.Contains(targetType))
+                value = Restore(value, "vector");
+
+            if (targetType.GetInterface(nameof(ICsvSupport)) != null)
+            {
+                var data = (ICsvSupport)Activator.CreateInstance(targetType);
+                value = Restore(value, "list", "object", "vector", "string");
+                data.FromCsv(value);
+                return data;
+            }
+            if (targetType == typeof(int))
+            {
+                if (int.TryParse(value, out var intValue))
+                    return intValue;
+                Debug.LogWarning($"Failed to parse '{value}' as int for member '{memberName}'");
+                return 0;
+            }
+            if (targetType == typeof(float))
+            {
+                if (float.TryParse(value, out var floatValue))
+                    return floatValue;
+                Debug.LogWarning($"Failed to parse '{value}' as float for member '{memberName}'");
+                return 0f;
+            }
+            if (targetType == typeof(bool))
+            {
+                if (bool.TryParse(value, out var boolValue))
+                    return boolValue;
+                Debug.LogWarning($"Failed to parse '{value}' as bool for member '{memberName}'");
+                return false;
+            }
+            if (targetType == typeof(string))
+            {
+                value = Restore(value, "string");
+                return value.FromCsv();
+            }
+            if (targetType.IsEnum)
+            {
+                if (Enum.TryParse(targetType, value, out var enumValue))
+                    return enumValue;
+                Debug.LogWarning($"Failed to parse '{value}' as {targetType.Name} for member '{memberName}'");
+                return Activator.CreateInstance(targetType);
+            }
+            if (targetType == typeof(Vector2))
+                return value.ToVector2();
+            if (targetType == typeof(Vector2Int))
+                return value.ToVector2Int();
+            if (targetType == typeof(Vector3))
+                return value.ToVector3();
+            if (targetType == typeof(Vector3Int))
+                return value.ToVector3Int();
+            if (targetType == typeof(Vector4))
+                return value.ToVector4();
+            if (targetType == typeof(Quaternion))
+                return value.ToQuaternion();
+
+            Debug.LogWarning($"Type '{targetType}' is not supported for member '{memberName}'");
+            return null;
         }
 
         private void SetArrayValue<T>(FieldInfo fieldInfo, T instance, string value)

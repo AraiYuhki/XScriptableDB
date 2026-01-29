@@ -96,18 +96,48 @@ namespace Xeon.XScriptableDB.IO
         private static string EscapeBrackets(string csv, string name, char start, char end, Dictionary<string, string> escapedData)
         {
             var result = csv;
-
             var replaceTexts = new List<string>();
             var startIndex = -1;
+            var depth = 0;
+            var isQuoteMode = start == '"' && end == '"';
+
             for (var index = 0; index < csv.Length; index++)
             {
+                var current = csv[index];
+
                 if (startIndex < 0)
                 {
-                    if (csv[index] != start) continue;
+                    if (current != start)
+                        continue;
                     startIndex = index;
+                    depth = 1;
                     continue;
                 }
-                if (csv[index] != end) continue;
+
+                if (isQuoteMode)
+                {
+                    if (current != '"')
+                        continue;
+                    if (index + 1 < csv.Length && csv[index + 1] == '"')
+                    {
+                        index++;
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (current == start)
+                    {
+                        depth++;
+                        continue;
+                    }
+                    if (current != end)
+                        continue;
+                    depth--;
+                    if (depth > 0)
+                        continue;
+                }
+
                 var endIndex = index + 1;
                 var target = csv[startIndex..endIndex];
                 var escapeIndex = replaceTexts.IndexOf(target);
@@ -121,6 +151,7 @@ namespace Xeon.XScriptableDB.IO
                 if (!escapedData.ContainsKey(replaceText))
                     escapedData.Add(replaceText, target);
                 startIndex = -1;
+                depth = 0;
             }
             return result;
         }

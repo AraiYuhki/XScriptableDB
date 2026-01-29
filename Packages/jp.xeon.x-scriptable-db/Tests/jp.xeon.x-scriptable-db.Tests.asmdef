@@ -1,11 +1,11 @@
 {
-    "name": "Tests",
-    "rootNamespace": "",
+    "name": "jp.xeon.x-scriptable-db.Tests",
+    "rootNamespace": "Xeon.XScriptableDB.Tests",
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "jp.xeon.x-scriptable-db.Runtime",
-        "jp.xeon.x-scritable-db.Editor"
+        "jp.xeon.x-scriptable-db.Editor"
     ],
     "includePlatforms": [
         "Editor"

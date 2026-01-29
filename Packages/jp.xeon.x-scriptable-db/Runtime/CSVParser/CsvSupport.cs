@@ -14,6 +14,8 @@ namespace Xeon.XScriptableDB.IO
     {
         public static string ToString(object value, string separator = ",")
         {
+            if (value == null)
+                return "\"\"";
             if (value is string text)
                 return text.ToCsv();
             if (value is Vector2 vector2)
@@ -40,7 +42,8 @@ namespace Xeon.XScriptableDB.IO
             return value.ToString();
         }
 
-        public static string ToCsv(this string value) => $"\"{value}\"";
+        public static string ToCsv(this string value) => $"\"{value?.Replace("\"", "\"\"")}\"";
+
         public static string ToCsv(this Vector2 value, string separator = ",")
             => Format(new object[] { value.x, value.y }, separator);
         public static string ToCsv(this Vector2Int value, string separator = ",")
@@ -57,7 +60,7 @@ namespace Xeon.XScriptableDB.IO
             => $"[{string.Join(separator, value.Select(v => ToString(v)))}]";
 
         public static string FromCsv(this string self)
-            => self.Trim('"');
+            => self.Trim('"').Replace("\"\"", "\"");
 
         public static Vector2 ToVector2(this string self, string separator = ",")
         {
@@ -95,9 +98,9 @@ namespace Xeon.XScriptableDB.IO
             throw new InvalidFormatException();
         }
 
-        public static Vector4 ToVector4(this string self, string seprator = ",")
+        public static Vector4 ToVector4(this string self, string separator = ",")
         {
-            var splited = Split(self, seprator);
+            var splited = Split(self, separator);
             if (splited.Length <= 3) throw new InvalidFormatException();
             if (   float.TryParse(splited[0], out var x)
                 && float.TryParse(splited[1], out var y)
@@ -121,11 +124,17 @@ namespace Xeon.XScriptableDB.IO
 
         public static List<T> ToList<T>(this string self, string separator = ",")
         {
-            var splited = self.Trim('[', ']').Split(separator);
+            var trimmed = self.Trim('[', ']');
+            if (string.IsNullOrEmpty(trimmed))
+                return new List<T>();
+
+            var splited = trimmed.Split(separator);
             var type = typeof(T);
             var result = new List<T>();
             foreach (var row in splited)
             {
+                if (string.IsNullOrEmpty(row))
+                    continue;
                 if (!ParseFuncDict.TryGetValue(type, out var function))
                 {
                     Debug.LogError($"{row} is invalid format at {type}");
