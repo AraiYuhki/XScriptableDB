@@ -60,7 +60,16 @@ namespace Xeon.XScriptableDB.IO
             => $"[{string.Join(separator, value.Select(v => ToString(v)))}]";
 
         public static string FromCsv(this string self)
-            => self.Trim('"').Replace("\"\"", "\"");
+        {
+            if (string.IsNullOrEmpty(self))
+                return self;
+            var result = self;
+            if (result.StartsWith("\""))
+                result = result.Substring(1);
+            if (result.EndsWith("\""))
+                result = result.Substring(0, result.Length - 1);
+            return result.Replace("\"\"", "\"");
+        }
 
         public static Vector2 ToVector2(this string self, string separator = ",")
         {

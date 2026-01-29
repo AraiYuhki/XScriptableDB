@@ -186,7 +186,7 @@ namespace Xeon.XScriptableDB.Tests
     public void ParseFileTest()
     {
         var path = Application.dataPath.Replace("Assets", "");
-        path = Path.Combine(path, "Packages/SimpleCSVParser/Test/TestData/Test.csv");
+        path = Path.Combine(path, "Packages/jp.xeon.x-scriptable-db/Tests/TestData/Test.csv");
         var obj = CsvParser.ParseFile<TestData>(path);
         Debug.Log(obj.Count);
     }

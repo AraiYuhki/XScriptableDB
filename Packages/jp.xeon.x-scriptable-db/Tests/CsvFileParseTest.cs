@@ -9,7 +9,7 @@ namespace Xeon.XScriptableDB.Tests
 {
     public class CsvFileParseTest
 {
-    private const string TestDataFile = "Packages/SimpleCSVParser/Test/TestData/TestData.csv";
+    private const string TestDataFile = "Packages/jp.xeon.x-scriptable-db/Tests/TestData/TestData.csv";
 
     private enum CharacterType
     {
