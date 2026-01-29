@@ -1,0 +1,32 @@
+{
+  "name": "jp.xeon.x-scriptable-db",
+  "version": "0.1.0",
+  "displayName": "XScriptableDB",
+  "description": "A scriptable object-based database for Unity.",
+  "license": "MIT OR Apache-2.0",
+  "unity": "6000.0",
+  "documentationUrl": "https://github.com/AraiYuhki/XScriptableDB#readme",
+  "changelogUrl": "https://github.com/AraiYuhki/XScriptableDB/blob/main/Packages/jp.xeon.x-scriptable-db/CHANGELOG.md",
+  "licensesUrl": "https://github.com/AraiYuhki/XScriptableDB/blob/main/Packages/jp.xeon.x-scriptable-db/LICENSE.md",
+  "keywords": [
+    "database",
+    "DB",
+    "scriptable object",
+    "csv",
+    "tsv",
+    "SQL",
+    "sql"
+  ],
+  "author": {
+    "name": "Xeon",
+    "email": "xeon.lagunas@gmail.com",
+    "url": "https://github.com/AraiYuhki"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AraiYuhki/XScriptableDB.git"
+  },
+  "dependencies": {
+    "com.unity.addressables": "2.3.7"
+  }
+}
