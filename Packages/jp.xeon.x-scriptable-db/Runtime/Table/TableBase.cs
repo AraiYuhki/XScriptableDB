@@ -8,11 +8,7 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB
 {
     public abstract class TableBase<T> : ScriptableObject, ITable<T>, IImportable, IExportable
-        where T :
-#if SIMPLE_CSV_SUPPORT
-        CsvData,
-#endif
-        new()
+        where T : CsvData, new()
     {
         [SerializeField]
         protected List<T> data = new List<T>();
@@ -27,7 +23,6 @@ namespace Xeon.XScriptableDB
 
         protected abstract void Initialize();
 
-#if SIMPLE_CSV_SUPPORT
         public void Export(string filePath, Encoding encoding = null)
         {
             if (string.IsNullOrEmpty(filePath))
@@ -51,18 +46,10 @@ namespace Xeon.XScriptableDB
             data = CsvParser.ParseFile<T>(filePath);
             Initialize();
         }
-#else
-        public virtual void Import(string filePath) { }
-        public virtual void Export(string filePath, Encoding encoding = null) { }
-#endif
     }
 
     public abstract class LookupTableBase<T, TKey> : TableBase<T>, ILookupTable<T, TKey>
-        where T :
-#if SIMPLE_CSV_SUPPORT
-        CsvData,
-#endif
-        IPrimaryKey<TKey>, new()
+        where T : CsvData, IPrimaryKey<TKey>, new()
     {
         private Dictionary<TKey, T> index;
 
