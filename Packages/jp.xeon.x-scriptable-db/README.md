@@ -11,6 +11,8 @@ Unity用のScriptableObjectベースのデータベースパッケージです�
 - **Diff Viewer**: インポート前の変更プレビュー、選択的な適用
 - **SQL Editor**: SQLライクなクエリでデータ検索・更新
 - **Database Browser**: テーブル一覧とスキーマ確認
+- **データ検証**: 属性ベースのバリデーション（Required, Range, ForeignKey等）
+- **パフォーマンス最適化**: LRUキャッシュ、遅延ロード、プロファイリング
 
 ## 動作環境
 
@@ -104,6 +106,18 @@ foreach (ref readonly var item in result)
 | `[SecondaryKey]` | 副キーを指定。ハッシュインデックスで高速検索 |
 | `[CsvColumn("名前")]` | CSV/TSVでのカラム名を指定 |
 
+### バリデーション属性
+
+| 属性 | 説明 |
+|------|------|
+| `[Required]` | 必須フィールド（null/空を禁止） |
+| `[Range(min, max)]` | 数値の範囲制限 |
+| `[StringLength(max)]` | 文字列の長さ制限 |
+| `[RegularExpression(pattern)]` | 正規表現による検証 |
+| `[Unique]` | テーブル内での一意性を保証 |
+| `[ForeignKey(typeof(Table))]` | 外部キー参照の検証 |
+| `[Compare(field, operator)]` | 他フィールドとの比較検証 |
+
 ### TableAsset<TKey, TRecord>
 
 ScriptableObjectベースのテーブルクラスです。
@@ -184,6 +198,22 @@ DELETE FROM ItemTable WHERE Price = 0
 - スキーマ情報（カラム、キー）
 - データプレビュー
 
+### Validation Window
+
+`Window > XScriptableDB > Validation`
+
+- テーブルデータの検証
+- エラー・警告の一覧表示
+- 外部キー整合性チェック
+
+### Performance Window
+
+`Window > XScriptableDB > Performance`
+
+- キャッシュ統計表示
+- メモリ使用量の可視化
+- クエリプロファイリング
+
 ### Diff Viewer
 
 CSVインポート時に変更内容をプレビューし、選択的に適用できます。
@@ -222,6 +252,54 @@ Id,Category,Name,Price,Attack,Defense
 1001,Weapon,鉄の剣,100,10,0
 1002,Weapon,鋼の剣,500,25,0
 1003,Armor,皮の鎧,80,0,5
+```
+
+## パフォーマンス機能
+
+### LRUキャッシュ
+
+```csharp
+using Xeon.XScriptableDB.Cache;
+
+// キャッシュ付きクエリ
+var cache = CacheManager.QueryCache;
+var result = cache.GetOrAdd<Item>(
+    typeof(ItemTable), "FindById", 1,
+    () => itemTable.FindById(1)
+);
+
+// テーブル更新時にキャッシュを無効化
+CacheManager.InvalidateTable<ItemTable>();
+```
+
+### 遅延ロード
+
+```csharp
+using Xeon.XScriptableDB.LazyLoad;
+
+// Addressablesベースの遅延ロード
+var loader = new TableLoader();
+loader.Register<ItemTable>("Tables/ItemTable");
+
+// 非同期ロード
+var table = await loader.GetAsync<ItemTable>();
+
+// 使用後の解放
+loader.Release<ItemTable>();
+```
+
+### プロファイリング
+
+```csharp
+using Xeon.XScriptableDB.Performance;
+
+var profiler = new QueryProfiler();
+var items = profiler.Profile("SearchItems", typeof(ItemTable),
+    () => itemTable.All.ToList());
+
+// 統計の取得
+var stats = profiler.GetStatistics();
+Debug.Log($"Total queries: {stats.QueryCount}, Avg: {stats.AverageMilliseconds}ms");
 ```
 
 ## ベストプラクティス
@@ -266,10 +344,15 @@ Package Managerからインポートできます:
 
 今後の開発予定については [ROADMAP.md](ROADMAP.md) を参照してください。
 
+**完了済み:**
+- v0.1.0: CSV/TSVインポート・エクスポート、Diff Viewer
+- v0.2.0: SQL Editor、Database Browser、データ検証
+- v0.3.0: キャッシュシステム、遅延ロード、パフォーマンス計測
+
 **計画中の機能:**
-- v0.3.0: パフォーマンス最適化（キャッシュ、遅延ロード）
-- v0.4.0: 高度なSQL機能（JOIN, 集計関数, GROUP BY）
-- v0.5.0: 追加ツール（マイグレーション, CLI, バックアップ）
+- v0.4.0: 大量データ対応（仮想スクロール、ストリーミング）
+- v0.5.0: 高度なSQL機能（JOIN, 集計関数, GROUP BY）
+- v0.6.0: 追加ツール（マイグレーション, CLI, バックアップ）
 
 ## ライセンス
 
