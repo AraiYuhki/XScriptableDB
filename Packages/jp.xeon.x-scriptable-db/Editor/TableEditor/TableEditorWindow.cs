@@ -343,7 +343,8 @@ namespace Xeon.XScriptableDB.Editor
 
         private void ImportFromFile()
         {
-            if (selectedTable is not IImportable importer)
+            var tableAsset = selectedTable as ITableAsset;
+            if (tableAsset == null && selectedTable is not IImportable)
                 return;
 
             var extension = exportFormat == FileFormat.CSV ? "csv" : "tsv";
@@ -359,11 +360,31 @@ namespace Xeon.XScriptableDB.Editor
 
             try
             {
-                importer.Import(filePath);
-                serializedTable.Update();
-                EditorUtility.SetDirty(selectedTable);
-                EditorUtility.DisplayDialog("インポート完了", $"{selectedTable.name}をインポートしました", "OK");
-                Repaint();
+                // ITableAssetの場合はプレビュー付きインポート
+                if (tableAsset != null)
+                {
+                    var encoding = useExcelEncoding ? Encoding.GetEncoding(932) : Encoding.UTF8;
+                    var importedRecords = TableImporter.ParseFile(filePath, tableAsset.RecordType, encoding);
+
+                    if (importedRecords.Length == 0)
+                    {
+                        EditorUtility.DisplayDialog("警告", "インポートするレコードがありません", "OK");
+                        return;
+                    }
+
+                    // 差分を計算してDiffViewerを開く
+                    var diffResult = DiffCalculator.Calculate(tableAsset, importedRecords);
+                    DiffViewerWindow.Open(diffResult, selectedTable, importedRecords);
+                }
+                else if (selectedTable is IImportable importer)
+                {
+                    // 従来の直接インポート
+                    importer.Import(filePath);
+                    serializedTable.Update();
+                    EditorUtility.SetDirty(selectedTable);
+                    EditorUtility.DisplayDialog("インポート完了", $"{selectedTable.name}をインポートしました", "OK");
+                    Repaint();
+                }
             }
             catch (Exception e)
             {
