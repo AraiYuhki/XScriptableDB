@@ -303,14 +303,12 @@ public GameObject prefab;
 
 | Type | Example CSV Value |
 |------|-------------------|
-| `int`, `float`, `bool` | `123`, `1.5`, `True` |
+| `int` | `123` |
+| `float` | `1.5` |
+| `double` | `1.5` |
+| `bool` | `True`, `False` |
 | `string` | `"text with spaces"` |
-| `Vector2`, `Vector3`, `Vector4` | `(1.0,2.0,3.0)` |
-| `Vector2Int`, `Vector3Int` | `(1,2,3)` |
-| `Quaternion` | `(0,0,0,1)` |
-| `List<T>` | `[1,2,3]` or `["a","b","c"]` |
 | `enum` | `EnumValue` |
-| Custom `ICsvSupport` | `{custom,format}` |
 
 ---
 
@@ -318,6 +316,11 @@ public GameObject prefab;
 
 See `docs/roadmap.md` for detailed implementation phases:
 
+0. **Phase 0 (Current Priority)**: Existing code improvements
+   - CSV Parser bug fixes and test coverage
+   - TableBase<T> generalization and redesign
+   - DB class generalization and redesign
+   - Assembly Definition setup
 1. **Phase 1 (MVP)**: XTableAsset, PrimaryKey management, basic Editor
 2. **Phase 2**: SecondaryKey indexes, high-speed search API
 3. **Phase 3**: CSV import/export improvements, Diff Viewer

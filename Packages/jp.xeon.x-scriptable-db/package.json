@@ -1,6 +1,6 @@
 {
   "name": "jp.xeon.x-scriptable-db",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "XScriptableDB",
   "description": "A scriptable object-based database for Unity.",
   "license": "MIT OR Apache-2.0",
@@ -28,5 +28,12 @@
   },
   "dependencies": {
     "com.unity.addressables": "2.3.7"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Basic Usage",
+      "description": "基本的な使い方のサンプル。レコード定義、テーブル作成、検索方法の例を含みます。",
+      "path": "Samples~/BasicUsage"
+    }
+  ]
 }
