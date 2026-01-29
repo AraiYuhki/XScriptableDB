@@ -53,42 +53,57 @@
 
 ---
 
-### v0.3.0 - パフォーマンス最適化
+### v0.3.0 (2026-01-29)
 
-大規模データセットでのパフォーマンス向上。
-
-#### 機能
-- [ ] クエリ結果キャッシュ
-  - LRUキャッシュによる頻繁なクエリの高速化
-  - キャッシュ無効化の自動検出
-- [ ] 遅延ロード
-  - Addressablesとの連携強化
-  - オンデマンドでのテーブル読み込み
+#### Phase 7: パフォーマンス最適化
+- [x] クエリ結果キャッシュ
+  - `LruCache<TKey, TValue>` - LRUキャッシュ（容量制限、自動エビクション）
+  - `QueryCache` - クエリ結果専用キャッシュ（バージョンベース無効化）
+  - `CacheManager` - グローバルキャッシュ管理
+- [x] 遅延ロード
+  - `LazyTableReference<T>` - Addressablesベースの遅延ロード
+  - `TableLoader` - 複数テーブルの一括管理
   - 参照カウントによる自動アンロード
-- [ ] 大量データ対応
-  - 仮想スクロール（Table Editor）
-  - ストリーミングインポート
-  - バッチ処理API
-- [ ] パフォーマンス計測
-  - ベンチマークテストスイート
-  - プロファイリングツール
-  - メモリ使用量の可視化
+- [x] パフォーマンス計測
+  - `QueryProfiler` - クエリ実行時間の計測
+  - `MemoryProfiler` - メモリ使用量の推定
+  - Performance Window - エディタでの可視化
 
 #### 使用例
 ```csharp
-// 遅延ロード
-var table = await Database.LoadAsync<ItemTable>();
-
 // キャッシュ付きクエリ
-var weapons = table.QueryCached("Category", "Weapon");
+var cache = CacheManager.QueryCache;
+var result = cache.GetOrAdd<Item>(
+    typeof(ItemTable), "FindById", 1,
+    () => itemTable.FindById(1)
+);
 
-// バッチ処理
-table.BatchUpdate(items, batchSize: 100);
+// 遅延ロード
+var loader = new TableLoader();
+loader.Register<ItemTable>("Tables/ItemTable");
+var table = await loader.GetAsync<ItemTable>();
+
+// プロファイリング
+var profiler = new QueryProfiler();
+var items = profiler.Profile("SearchItems", typeof(ItemTable),
+    () => itemTable.All.ToList());
 ```
 
 ---
 
-### v0.4.0 - 高度なSQL機能
+### v0.4.0 - 大量データ対応（予定）
+
+大規模データセットでの追加最適化。
+
+#### 機能
+- [ ] 仮想スクロール（Table Editor）
+- [ ] ストリーミングインポート
+- [ ] バッチ処理API
+- [ ] ベンチマークテストスイート
+
+---
+
+### v0.5.0 - 高度なSQL機能（予定）
 
 より表現力豊かなクエリのためのSQL機能拡張。
 
@@ -130,7 +145,7 @@ WHERE Price > (SELECT AVG(Price) FROM ItemTable)
 
 ---
 
-### v0.5.0 - 追加ツール
+### v0.6.0 - 追加ツール（予定）
 
 開発効率を向上させる追加ツール。
 

@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-29
+
+### Added
+
+#### Cache System
+- `LruCache<TKey, TValue>` - LRU（Least Recently Used）キャッシュ
+  - 容量制限、自動エビクション
+  - ヒット率・統計情報の追跡
+- `QueryCache` - クエリ結果専用キャッシュ
+  - テーブル型・クエリ種別・キー値によるキャッシング
+  - バージョンベースの自動無効化
+- `CacheManager` - グローバルキャッシュ管理
+  - キャッシュの有効/無効切り替え
+  - テーブル単位の無効化
+
+#### Lazy Loading
+- `LazyTableReference<T>` - Addressablesベースの遅延ロード参照
+  - 同期・非同期ロード
+  - 参照カウントによる自動解放
+- `TableLoader` - 複数テーブルの一括管理
+  - 登録ベースのロード
+  - 並列非同期ロード
+  - 参照カウントによるライフサイクル管理
+
+#### Performance Profiling
+- `QueryProfiler` - クエリ実行時間の計測
+  - 実行時間、結果数、タイムスタンプの記録
+  - 遅いクエリの検出
+  - キャッシュヒットの追跡
+- `MemoryProfiler` - メモリ使用量の推定
+  - 型サイズの推定
+  - テーブル単位のメモリ情報
+  - GCスナップショット
+
+#### Editor Tools
+- **Performance Window** (`Window > XScriptableDB > Performance`)
+  - キャッシュ統計表示
+  - メモリ使用量の可視化
+  - クエリ履歴表示
+  - 手動GC実行
+
+---
+
 ## [0.2.0] - 2026-01-29
 
 ### Added
