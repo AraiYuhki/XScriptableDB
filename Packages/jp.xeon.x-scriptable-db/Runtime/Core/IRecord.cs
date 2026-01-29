@@ -3,10 +3,10 @@ using System;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// XTableAssetで管理されるレコードの基本インターフェース。
+    /// TableAssetで管理されるレコードの基本インターフェース。
     /// [PrimaryKey]属性と組み合わせて使用することで、自動的なキー管理が可能になる。
     /// </summary>
-    public interface IXRecord
+    public interface IRecord
     {
         /// <summary>
         /// レコードのPrimaryKey値をobjectとして取得する。
@@ -18,16 +18,16 @@ namespace Xeon.XScriptableDB
 
     /// <summary>
     /// 型安全なPrimaryKeyアクセスを提供するレコードインターフェース。
-    /// IPrimaryKey&lt;TKey&gt;と同等だが、IXRecordを継承している。
+    /// IPrimaryKey&lt;TKey&gt;と同等だが、IRecordを継承している。
     /// </summary>
     /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
-    public interface IXRecord<TKey> : IXRecord
+    public interface IRecord<TKey> : IRecord
     {
         /// <summary>
         /// レコードのPrimaryKey値。
         /// </summary>
         TKey PrimaryKey { get; }
 
-        object IXRecord.GetPrimaryKeyValue() => PrimaryKey;
+        object IRecord.GetPrimaryKeyValue() => PrimaryKey;
     }
 }

@@ -8,15 +8,15 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// XTableAssetを編集するためのEditorWindow。
+    /// TableAssetを編集するためのEditorWindow。
     /// </summary>
-    public class XTableEditorWindow : EditorWindow
+    public class TableEditorWindow : EditorWindow
     {
         [MenuItem("Tools/XScriptableDB/テーブルエディタ")]
         public static void Open()
         {
-            var window = GetWindow<XTableEditorWindow>();
-            window.titleContent = new GUIContent("XTable Editor");
+            var window = GetWindow<TableEditorWindow>();
+            window.titleContent = new GUIContent("Table Editor");
             window.Show();
         }
 
@@ -136,22 +136,22 @@ namespace Xeon.XScriptableDB.Editor
             {
                 EditorGUILayout.LabelField($"{selectedTable.name}", headerStyle);
 
-                var xTable = selectedTable as IXTableAsset;
-                if (xTable != null)
+                var tableAsset = selectedTable as ITableAsset;
+                if (tableAsset != null)
                 {
-                    EditorGUILayout.LabelField($"レコード数: {xTable.Count}", GUILayout.Width(100));
-                    EditorGUILayout.LabelField($"Key: {xTable.KeyType.Name}", GUILayout.Width(100));
+                    EditorGUILayout.LabelField($"レコード数: {tableAsset.Count}", GUILayout.Width(100));
+                    EditorGUILayout.LabelField($"Key: {tableAsset.KeyType.Name}", GUILayout.Width(100));
                 }
             }
         }
 
         private void DrawDuplicateKeyWarning()
         {
-            var xTable = selectedTable as IXTableAsset;
-            if (xTable == null)
+            var tableAsset = selectedTable as ITableAsset;
+            if (tableAsset == null)
                 return;
 
-            var duplicates = xTable.FindDuplicateKeysAsObjects();
+            var duplicates = tableAsset.FindDuplicateKeysAsObjects();
             if (duplicates == null || duplicates.Count == 0)
                 return;
 
@@ -279,7 +279,7 @@ namespace Xeon.XScriptableDB.Editor
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-                if (asset is IXTableAsset)
+                if (asset is ITableAsset)
                     allTables.Add(asset);
             }
 
@@ -288,15 +288,15 @@ namespace Xeon.XScriptableDB.Editor
 
         private void AddNewRecord()
         {
-            var xTable = selectedTable as IXTableAsset;
-            if (xTable == null)
+            var tableAsset = selectedTable as ITableAsset;
+            if (tableAsset == null)
                 return;
 
-            var newRecord = xTable.CreateNewRecord();
-            xTable.AddRecordObject(newRecord);
+            var newRecord = tableAsset.CreateNewRecord();
+            tableAsset.AddRecordObject(newRecord);
 
             serializedTable.Update();
-            selectedRecordIndex = xTable.Count - 1;
+            selectedRecordIndex = tableAsset.Count - 1;
             Repaint();
         }
 
@@ -305,18 +305,18 @@ namespace Xeon.XScriptableDB.Editor
             if (selectedRecordIndex < 0)
                 return;
 
-            var xTable = selectedTable as IXTableAsset;
-            if (xTable == null)
+            var tableAsset = selectedTable as ITableAsset;
+            if (tableAsset == null)
                 return;
 
             if (!EditorUtility.DisplayDialog("確認", "選択したレコードを削除しますか？", "削除", "キャンセル"))
                 return;
 
-            xTable.RemoveRecordAt(selectedRecordIndex);
+            tableAsset.RemoveRecordAt(selectedRecordIndex);
             serializedTable.Update();
 
-            if (selectedRecordIndex >= xTable.Count)
-                selectedRecordIndex = xTable.Count - 1;
+            if (selectedRecordIndex >= tableAsset.Count)
+                selectedRecordIndex = tableAsset.Count - 1;
 
             Repaint();
         }
@@ -341,10 +341,10 @@ namespace Xeon.XScriptableDB.Editor
             if (selectedTable == null)
                 return;
 
-            var xTable = selectedTable as IXTableAsset;
-            if (xTable != null)
+            var tableAsset = selectedTable as ITableAsset;
+            if (tableAsset != null)
             {
-                var duplicates = xTable.FindDuplicateKeysAsObjects();
+                var duplicates = tableAsset.FindDuplicateKeysAsObjects();
                 if (duplicates != null && duplicates.Count > 0)
                 {
                     var keysString = string.Join(", ", duplicates.Cast<object>().Take(5));

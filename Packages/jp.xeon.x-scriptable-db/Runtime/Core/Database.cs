@@ -1,23 +1,26 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// XScriptableDBのデータベースマネージャー。
-    /// XTableAssetの自動登録と型安全なアクセスを提供する。
+    /// データベースマネージャー。
+    /// テーブルの登録と型安全なアクセスを提供する。
     /// </summary>
-    public class XDatabase
+    public class Database
     {
-        private static XDatabase instance;
+        private static Database instance;
         private static readonly object lockObject = new();
 
         /// <summary>
         /// シングルトンインスタンス。
         /// </summary>
-        public static XDatabase Instance
+        public static Database Instance
         {
             get
             {
@@ -25,17 +28,18 @@ namespace Xeon.XScriptableDB
                     return instance;
                 lock (lockObject)
                 {
-                    instance ??= new XDatabase();
+                    instance ??= new Database();
                 }
                 return instance;
             }
         }
 
         private readonly Dictionary<Type, ScriptableObject> tables = new();
+        private readonly Dictionary<string, string> addressableKeys = new();
 
-        private XDatabase() { }
+        private Database() { }
 
-        ~XDatabase()
+        ~Database()
         {
             tables.Clear();
         }
@@ -86,12 +90,44 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
+        /// Addressableキーを登録する。
+        /// </summary>
+        /// <typeparam name="TTable">テーブルの型</typeparam>
+        /// <param name="addressableKey">Addressableキー</param>
+        public static void RegisterAddressable<TTable>(string addressableKey) where TTable : ScriptableObject
+        {
+            Instance.addressableKeys[typeof(TTable).FullName] = addressableKey;
+        }
+
+        /// <summary>
+        /// Addressableからテーブルをロードして登録する。
+        /// </summary>
+        /// <typeparam name="TTable">テーブルの型</typeparam>
+        /// <param name="addressableKey">Addressableキー</param>
+        /// <returns>ロードしたテーブル</returns>
+        public static TTable LoadAndRegister<TTable>(string addressableKey) where TTable : ScriptableObject
+        {
+            var table = Addressables.LoadAssetAsync<TTable>(addressableKey).WaitForCompletion();
+            if (table == null)
+            {
+                Debug.LogError($"Failed to load table from Addressable key: {addressableKey}");
+                return null;
+            }
+            Register(table);
+            return table;
+        }
+
+        /// <summary>
         /// テーブルの登録を解除する。
         /// </summary>
         /// <typeparam name="TTable">テーブルの型</typeparam>
         public static void Unregister<TTable>() where TTable : ScriptableObject
         {
-            Instance.tables.Remove(typeof(TTable));
+            var type = typeof(TTable);
+            if (!Instance.tables.TryGetValue(type, out var table))
+                return;
+            SafeRelease(table);
+            Instance.tables.Remove(type);
         }
 
         /// <summary>
@@ -99,6 +135,8 @@ namespace Xeon.XScriptableDB
         /// </summary>
         public static void Clear()
         {
+            foreach (var table in Instance.tables.Values)
+                SafeRelease(table);
             Instance.tables.Clear();
         }
 
@@ -109,8 +147,44 @@ namespace Xeon.XScriptableDB
         {
             lock (lockObject)
             {
-                instance?.tables.Clear();
+                if (instance != null)
+                {
+                    foreach (var table in instance.tables.Values)
+                        SafeRelease(table);
+                    instance.tables.Clear();
+                }
                 instance = null;
+            }
+        }
+
+        /// <summary>
+        /// Addressableキーを使用して全テーブルを再ロードする。
+        /// </summary>
+        public static void Reload()
+        {
+            var keys = Instance.addressableKeys.ToList();
+            Clear();
+            foreach (var (typeName, addressableKey) in keys)
+            {
+                var table = Addressables.LoadAssetAsync<ScriptableObject>(addressableKey).WaitForCompletion();
+                if (table == null)
+                    continue;
+                var type = table.GetType();
+                Instance.tables[type] = table;
+            }
+        }
+
+        private static void SafeRelease(object target)
+        {
+            if (target == null)
+                return;
+            try
+            {
+                Addressables.Release(target);
+            }
+            catch
+            {
+                // Ignore release errors for non-Addressable objects
             }
         }
 
@@ -148,7 +222,7 @@ namespace Xeon.XScriptableDB
         /// <param name="key">検索するPrimaryKey</param>
         /// <returns>見つかったレコード、見つからない場合はdefault</returns>
         public static TRecord Find<TTable, TRecord, TKey>(TKey key)
-            where TTable : XTableAsset<TRecord, TKey>
+            where TTable : TableAsset<TRecord, TKey>
             where TRecord : class, new()
             where TKey : IComparable<TKey>
         {
@@ -186,22 +260,70 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// IXTableAssetとして全テーブルを取得する（Editor専用）。
+        /// ITableAssetとして全テーブルを取得する（Editor専用）。
         /// </summary>
-        public static IEnumerable<IXTableAsset> GetAllXTableAssets()
+        public static IEnumerable<ITableAsset> GetAllTableAssets()
         {
             foreach (var table in Instance.tables.Values)
             {
-                if (table is IXTableAsset xTable)
-                    yield return xTable;
+                if (table is ITableAsset tableAsset)
+                    yield return tableAsset;
             }
         }
 
-        [UnityEditor.MenuItem("Tools/XScriptableDB/Clear XDatabase")]
-        private static void ClearXDatabase()
+        [UnityEditor.MenuItem("Tools/XScriptableDB/Clear Database")]
+        private static void ClearDatabase()
         {
             Clear();
-            Debug.Log("XDatabase cleared");
+            Debug.Log("Database cleared");
+        }
+
+        [UnityEditor.MenuItem("Tools/XScriptableDB/Reload Database")]
+        private static void ReloadDatabase() => Reload();
+
+        [UnityEditor.MenuItem("Tools/XScriptableDB/Export to TSV")]
+        public static void ExportToTsv()
+        {
+            var folderPath = UnityEditor.EditorUtility.SaveFolderPanel(
+                "Select Export Folder",
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+                "Masters");
+            if (string.IsNullOrEmpty(folderPath))
+                return;
+            foreach (var table in Instance.tables.Values)
+            {
+                if (table is not IExportable exporter)
+                    continue;
+                var filePath = Path.Combine(folderPath, table.name + ".tsv");
+                exporter.Export(filePath, Encoding.UTF8);
+                Debug.Log($"Exported: {filePath}");
+            }
+        }
+
+        [UnityEditor.MenuItem("Tools/XScriptableDB/Import from TSV")]
+        public static void ImportFromTsv()
+        {
+            var folderPath = UnityEditor.EditorUtility.OpenFolderPanel(
+                "Select Import Folder",
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+                "Masters");
+            if (string.IsNullOrEmpty(folderPath))
+                return;
+            var directoryInfo = new DirectoryInfo(folderPath);
+            var files = directoryInfo.GetFiles("*.tsv", SearchOption.TopDirectoryOnly);
+            foreach (var file in files)
+            {
+                var tableName = Path.GetFileNameWithoutExtension(file.Name);
+                var targetTable = Instance.tables.Values.FirstOrDefault(
+                    table => tableName == table.GetType().Name || tableName == table.name);
+                if (targetTable is not IImportable importable)
+                    continue;
+                Debug.Log($"Importing: {file.Name} -> {targetTable.name}");
+                importable.Import(file.FullName);
+                UnityEditor.EditorUtility.SetDirty(targetTable);
+            }
+            UnityEditor.AssetDatabase.SaveAssets();
+            UnityEditor.AssetDatabase.Refresh();
         }
 #endif
     }

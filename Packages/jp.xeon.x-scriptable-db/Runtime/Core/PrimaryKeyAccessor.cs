@@ -58,7 +58,7 @@ namespace Xeon.XScriptableDB
             if (record == null)
                 return null;
 
-            if (record is IXRecord xRecord)
+            if (record is IRecord xRecord)
             {
                 var value = xRecord.GetPrimaryKeyValue();
                 if (value != null)

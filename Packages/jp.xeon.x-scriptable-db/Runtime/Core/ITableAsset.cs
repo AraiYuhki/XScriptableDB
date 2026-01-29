@@ -4,10 +4,10 @@ using System.Collections;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// XTableAssetの非ジェネリックインターフェース。
+    /// TableAssetの非ジェネリックインターフェース。
     /// Editor等で型を知らずにテーブルを操作する場合に使用する。
     /// </summary>
-    public interface IXTableAsset
+    public interface ITableAsset
     {
         /// <summary>
         /// 全レコードを取得する。

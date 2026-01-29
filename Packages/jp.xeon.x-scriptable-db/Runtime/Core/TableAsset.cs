@@ -6,12 +6,12 @@ using UnityEngine;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// XScriptableDBのテーブルアセット基底クラス。
+    /// テーブルアセット基底クラス。
     /// PrimaryKeyでソートされたレコード配列を管理し、二分探索による高速検索を提供する。
     /// </summary>
     /// <typeparam name="T">レコードの型</typeparam>
     /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
-    public abstract class XTableAsset<T, TKey> : ScriptableObject, ITable<T>, IXTableAsset
+    public abstract class TableAsset<T, TKey> : ScriptableObject, ITable<T>, ITableAsset
         where T : class, new()
         where TKey : IComparable<TKey>
     {
@@ -32,19 +32,19 @@ namespace Xeon.XScriptableDB
         public int Count => records.Length;
 
         /// <summary>
-        /// IXTableAsset用：全レコードを取得する。
+        /// ITableAsset用：全レコードを取得する。
         /// </summary>
-        IEnumerable IXTableAsset.Records => records;
+        IEnumerable ITableAsset.Records => records;
 
         /// <summary>
-        /// IXTableAsset用：レコードの型。
+        /// ITableAsset用：レコードの型。
         /// </summary>
-        Type IXTableAsset.RecordType => typeof(T);
+        Type ITableAsset.RecordType => typeof(T);
 
         /// <summary>
-        /// IXTableAsset用：PrimaryKeyの型。
+        /// ITableAsset用：PrimaryKeyの型。
         /// </summary>
-        Type IXTableAsset.KeyType => typeof(TKey);
+        Type ITableAsset.KeyType => typeof(TKey);
 
         /// <summary>
         /// PrimaryKeyアクセサ。
@@ -278,23 +278,23 @@ namespace Xeon.XScriptableDB
         public T[] GetRecordsForEditor() => records;
 
         /// <summary>
-        /// IXTableAsset用：新しい空のレコードを作成する。
+        /// ITableAsset用：新しい空のレコードを作成する。
         /// </summary>
-        object IXTableAsset.CreateNewRecord() => new T();
+        object ITableAsset.CreateNewRecord() => new T();
 
         /// <summary>
-        /// IXTableAsset用：レコードを追加する。
+        /// ITableAsset用：レコードを追加する。
         /// </summary>
-        void IXTableAsset.AddRecordObject(object record)
+        void ITableAsset.AddRecordObject(object record)
         {
             if (record is T typedRecord)
                 AddRecord(typedRecord);
         }
 
         /// <summary>
-        /// IXTableAsset用：PrimaryKeyの重複をチェックする。
+        /// ITableAsset用：PrimaryKeyの重複をチェックする。
         /// </summary>
-        IList IXTableAsset.FindDuplicateKeysAsObjects()
+        IList ITableAsset.FindDuplicateKeysAsObjects()
         {
             var duplicates = FindDuplicateKeys();
             var result = new ArrayList(duplicates.Count);
