@@ -1,0 +1,2 @@
+# XScriptableDB
+MasterMemoryの思想を継承し、非エンジニアでもUnity上で作業しやすくすることを目的としたDBツール
