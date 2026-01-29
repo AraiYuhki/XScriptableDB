@@ -18,6 +18,9 @@ namespace Xeon.XScriptableDB
         [SerializeField]
         protected T[] records = Array.Empty<T>();
 
+        [SerializeField]
+        protected IndexContainer secondaryIndices = new();
+
         private PrimaryKeyAccessor<T> keyAccessor;
         private bool isSorted;
 
@@ -25,6 +28,11 @@ namespace Xeon.XScriptableDB
         /// 全レコードへの読み取り専用アクセス。
         /// </summary>
         public IReadOnlyList<T> All => records;
+
+        /// <summary>
+        /// 内部レコード配列への直接アクセス（クエリ用）。
+        /// </summary>
+        internal T[] RecordsInternal => records;
 
         /// <summary>
         /// レコード数。
@@ -57,6 +65,11 @@ namespace Xeon.XScriptableDB
                 return keyAccessor;
             }
         }
+
+        /// <summary>
+        /// SecondaryKeyインデックスコンテナ。
+        /// </summary>
+        public IndexContainer SecondaryIndices => secondaryIndices;
 
         protected virtual void OnEnable()
         {
@@ -204,6 +217,97 @@ namespace Xeon.XScriptableDB
             return left < records.Length ? left : -1;
         }
 
+        /// <summary>
+        /// SecondaryKeyでレコードを検索する（O(1)）。
+        /// </summary>
+        /// <typeparam name="TSecondaryKey">SecondaryKeyの型</typeparam>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="key">検索するキー</param>
+        /// <returns>見つかったレコード、見つからない場合はnull</returns>
+        public T FindBySecondaryKey<TSecondaryKey>(string indexName, TSecondaryKey key)
+        {
+            var index = secondaryIndices.GetIndex(indexName);
+            if (index == null)
+            {
+                Debug.LogWarning($"Index '{indexName}' not found");
+                return null;
+            }
+
+            var recordIndices = index.FindByKey(key);
+            if (recordIndices.Length == 0)
+                return null;
+
+            return records[recordIndices[0]];
+        }
+
+        /// <summary>
+        /// SecondaryKeyでレコードを検索する（O(1)）。
+        /// </summary>
+        /// <typeparam name="TSecondaryKey">SecondaryKeyの型</typeparam>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="key">検索するキー</param>
+        /// <param name="record">見つかったレコード</param>
+        /// <returns>見つかった場合はtrue</returns>
+        public bool TryFindBySecondaryKey<TSecondaryKey>(string indexName, TSecondaryKey key, out T record)
+        {
+            record = FindBySecondaryKey(indexName, key);
+            return record != null;
+        }
+
+        /// <summary>
+        /// SecondaryKeyで複数のレコードを検索する（O(1)）。
+        /// </summary>
+        /// <typeparam name="TSecondaryKey">SecondaryKeyの型</typeparam>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="key">検索するキー</param>
+        /// <returns>見つかったレコードの列挙</returns>
+        public IEnumerable<T> FindAllBySecondaryKey<TSecondaryKey>(string indexName, TSecondaryKey key)
+        {
+            var index = secondaryIndices.GetIndex(indexName);
+            if (index == null)
+            {
+                Debug.LogWarning($"Index '{indexName}' not found");
+                yield break;
+            }
+
+            var recordIndices = index.FindByKey(key);
+            foreach (var i in recordIndices)
+            {
+                if (i >= 0 && i < records.Length)
+                    yield return records[i];
+            }
+        }
+
+        /// <summary>
+        /// SecondaryKeyで複数のレコードを検索し、配列として返す（O(1)）。
+        /// </summary>
+        /// <typeparam name="TSecondaryKey">SecondaryKeyの型</typeparam>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="key">検索するキー</param>
+        /// <returns>見つかったレコードの配列</returns>
+        public T[] FindAllBySecondaryKeyAsArray<TSecondaryKey>(string indexName, TSecondaryKey key)
+        {
+            var index = secondaryIndices.GetIndex(indexName);
+            if (index == null)
+            {
+                Debug.LogWarning($"Index '{indexName}' not found");
+                return Array.Empty<T>();
+            }
+
+            var recordIndices = index.FindByKey(key);
+            if (recordIndices.Length == 0)
+                return Array.Empty<T>();
+
+            var result = new T[recordIndices.Length];
+            for (var i = 0; i < recordIndices.Length; i++)
+            {
+                var recordIndex = recordIndices[i];
+                if (recordIndex >= 0 && recordIndex < records.Length)
+                    result[i] = records[recordIndex];
+            }
+            return result;
+        }
+
 #if UNITY_EDITOR
         /// <summary>
         /// Editorでレコードを設定する。
@@ -276,6 +380,15 @@ namespace Xeon.XScriptableDB
         /// 内部のレコード配列を取得する（Editor専用）。
         /// </summary>
         public T[] GetRecordsForEditor() => records;
+
+        /// <summary>
+        /// SecondaryKeyインデックスを再構築する（Editor専用）。
+        /// </summary>
+        public void RebuildSecondaryIndices()
+        {
+            secondaryIndices = IndexBuilder.BuildIndices(records);
+            UnityEditor.EditorUtility.SetDirty(this);
+        }
 
         /// <summary>
         /// ITableAsset用：新しい空のレコードを作成する。

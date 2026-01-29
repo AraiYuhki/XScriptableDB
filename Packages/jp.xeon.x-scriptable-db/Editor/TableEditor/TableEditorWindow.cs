@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -12,6 +14,12 @@ namespace Xeon.XScriptableDB.Editor
     /// </summary>
     public class TableEditorWindow : EditorWindow
     {
+        private enum FileFormat
+        {
+            CSV,
+            TSV
+        }
+
         [MenuItem("Tools/XScriptableDB/テーブルエディタ")]
         public static void Open()
         {
@@ -33,6 +41,10 @@ namespace Xeon.XScriptableDB.Editor
 
         private GUIStyle headerStyle;
         private GUIStyle warningStyle;
+
+        // インポート/エクスポート設定
+        private FileFormat exportFormat = FileFormat.CSV;
+        private bool useExcelEncoding = false;
 
         private void OnEnable()
         {
@@ -82,7 +94,122 @@ namespace Xeon.XScriptableDB.Editor
                     tableListScrollPosition = scroll.scrollPosition;
                     DrawTableList();
                 }
+
+                DrawBulkOperations();
             }
+        }
+
+        private void DrawBulkOperations()
+        {
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("一括操作", EditorStyles.boldLabel);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                exportFormat = (FileFormat)EditorGUILayout.EnumPopup(exportFormat, GUILayout.Width(60));
+                useExcelEncoding = GUILayout.Toggle(useExcelEncoding, "Excel", GUILayout.Width(50));
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("全てエクスポート"))
+                    ExportAllTables();
+                if (GUILayout.Button("一括インポート"))
+                    ImportAllTables();
+            }
+        }
+
+        private void ExportAllTables()
+        {
+            var folderPath = EditorUtility.SaveFolderPanel(
+                "エクスポート先フォルダを選択",
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+                "Masters");
+
+            if (string.IsNullOrEmpty(folderPath))
+                return;
+
+            var encoding = useExcelEncoding ? Encoding.GetEncoding(932) : Encoding.UTF8;
+            var extension = exportFormat == FileFormat.CSV ? "csv" : "tsv";
+            var exportedCount = 0;
+
+            foreach (var table in allTables)
+            {
+                if (table is not IExportable exporter)
+                    continue;
+
+                var filePath = Path.Combine(folderPath, $"{table.name}.{extension}");
+                try
+                {
+                    exporter.Export(filePath, encoding);
+                    exportedCount++;
+                    Debug.Log($"Exported: {filePath}");
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to export {table.name}: {e.Message}");
+                }
+            }
+
+            EditorUtility.DisplayDialog("エクスポート完了", $"{exportedCount}件のテーブルをエクスポートしました\n{folderPath}", "OK");
+        }
+
+        private void ImportAllTables()
+        {
+            var folderPath = EditorUtility.OpenFolderPanel(
+                "インポート元フォルダを選択",
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+                "Masters");
+
+            if (string.IsNullOrEmpty(folderPath))
+                return;
+
+            var directoryInfo = new DirectoryInfo(folderPath);
+            var csvFiles = directoryInfo.GetFiles("*.csv", SearchOption.TopDirectoryOnly);
+            var tsvFiles = directoryInfo.GetFiles("*.tsv", SearchOption.TopDirectoryOnly);
+            var allFiles = csvFiles.Concat(tsvFiles).ToArray();
+
+            if (allFiles.Length == 0)
+            {
+                EditorUtility.DisplayDialog("ファイルが見つかりません", "CSV/TSVファイルが見つかりませんでした", "OK");
+                return;
+            }
+
+            var importedCount = 0;
+            foreach (var file in allFiles)
+            {
+                var tableName = Path.GetFileNameWithoutExtension(file.Name);
+                var targetTable = allTables.FirstOrDefault(t =>
+                    string.Equals(t.name, tableName, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(t.GetType().Name, tableName, StringComparison.OrdinalIgnoreCase));
+
+                if (targetTable is not IImportable importer)
+                    continue;
+
+                try
+                {
+                    Debug.Log($"Importing: {file.Name} -> {targetTable.name}");
+                    importer.Import(file.FullName);
+                    EditorUtility.SetDirty(targetTable);
+                    importedCount++;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to import {file.Name}: {e.Message}");
+                }
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            // 選択中のテーブルを更新
+            if (selectedTable != null)
+            {
+                serializedTable?.Update();
+                Repaint();
+            }
+
+            EditorUtility.DisplayDialog("インポート完了", $"{importedCount}件のテーブルをインポートしました", "OK");
         }
 
         private void DrawTableList()
@@ -176,11 +303,101 @@ namespace Xeon.XScriptableDB.Editor
 
                 GUILayout.FlexibleSpace();
 
+                // インポート/エクスポート
+                DrawImportExportButtons();
+
+                GUILayout.Space(10);
+
                 if (GUILayout.Button("ソート", EditorStyles.toolbarButton, GUILayout.Width(60)))
                     SortRecords();
 
                 if (GUILayout.Button("保存", EditorStyles.toolbarButton, GUILayout.Width(60)))
                     SaveTable();
+            }
+        }
+
+        private void DrawImportExportButtons()
+        {
+            var isExportable = selectedTable is IExportable;
+            var isImportable = selectedTable is IImportable;
+
+            if (!isExportable && !isImportable)
+                return;
+
+            // フォーマット選択
+            exportFormat = (FileFormat)EditorGUILayout.EnumPopup(exportFormat, EditorStyles.toolbarPopup, GUILayout.Width(50));
+
+            EditorGUI.BeginDisabledGroup(!isImportable);
+            if (GUILayout.Button("インポート", EditorStyles.toolbarButton, GUILayout.Width(80)))
+                ImportFromFile();
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUI.BeginDisabledGroup(!isExportable);
+            if (GUILayout.Button("エクスポート", EditorStyles.toolbarButton, GUILayout.Width(80)))
+                ExportToFile();
+
+            // Excel対応エンコーディングオプション
+            useExcelEncoding = GUILayout.Toggle(useExcelEncoding, "Excel", EditorStyles.toolbarButton, GUILayout.Width(50));
+            EditorGUI.EndDisabledGroup();
+        }
+
+        private void ImportFromFile()
+        {
+            if (selectedTable is not IImportable importer)
+                return;
+
+            var extension = exportFormat == FileFormat.CSV ? "csv" : "tsv";
+            var filterName = exportFormat == FileFormat.CSV ? "CSV files" : "TSV files";
+
+            var filePath = EditorUtility.OpenFilePanelWithFilters(
+                $"インポートするファイルを選択 ({selectedTable.name})",
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+                new[] { filterName, extension, "All files", "*" });
+
+            if (string.IsNullOrEmpty(filePath))
+                return;
+
+            try
+            {
+                importer.Import(filePath);
+                serializedTable.Update();
+                EditorUtility.SetDirty(selectedTable);
+                EditorUtility.DisplayDialog("インポート完了", $"{selectedTable.name}をインポートしました", "OK");
+                Repaint();
+            }
+            catch (Exception e)
+            {
+                EditorUtility.DisplayDialog("インポートエラー", $"インポート中にエラーが発生しました:\n{e.Message}", "OK");
+                Debug.LogException(e);
+            }
+        }
+
+        private void ExportToFile()
+        {
+            if (selectedTable is not IExportable exporter)
+                return;
+
+            var extension = exportFormat == FileFormat.CSV ? "csv" : "tsv";
+            var filePath = EditorUtility.SaveFilePanel(
+                "エクスポート先を選択",
+                Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+                $"{selectedTable.name}.{extension}",
+                extension);
+
+            if (string.IsNullOrEmpty(filePath))
+                return;
+
+            try
+            {
+                // Excel対応の場合はShift-JIS (CP932)を使用
+                var encoding = useExcelEncoding ? Encoding.GetEncoding(932) : Encoding.UTF8;
+                exporter.Export(filePath, encoding);
+                EditorUtility.DisplayDialog("エクスポート完了", $"{selectedTable.name}をエクスポートしました\n{filePath}", "OK");
+            }
+            catch (Exception e)
+            {
+                EditorUtility.DisplayDialog("エクスポートエラー", $"エクスポート中にエラーが発生しました:\n{e.Message}", "OK");
+                Debug.LogException(e);
             }
         }
 

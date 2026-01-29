@@ -1,0 +1,44 @@
+using System;
+
+namespace Xeon.XScriptableDB
+{
+    /// <summary>
+    /// フィールドまたはプロパティをSecondaryKeyとしてマークする属性。
+    /// SecondaryKeyはO(1)検索用のハッシュインデックスを構築するために使用される。
+    /// </summary>
+    /// <remarks>
+    /// 1つのレコードクラスに複数のSecondaryKeyを指定可能。
+    /// 各SecondaryKeyには一意の名前を付ける必要がある。
+    /// </remarks>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+    public class SecondaryKeyAttribute : Attribute
+    {
+        /// <summary>
+        /// インデックスの名前。指定しない場合はメンバー名が使用される。
+        /// </summary>
+        public string Name { get; }
+
+        /// <summary>
+        /// 同じキー値を持つ複数のレコードを許可するかどうか。
+        /// trueの場合、1つのキーに対して複数のレコードがマッピングされる。
+        /// </summary>
+        public bool AllowDuplicates { get; set; } = true;
+
+        /// <summary>
+        /// SecondaryKeyAttribute を作成する。
+        /// </summary>
+        public SecondaryKeyAttribute()
+        {
+            Name = null;
+        }
+
+        /// <summary>
+        /// 名前を指定して SecondaryKeyAttribute を作成する。
+        /// </summary>
+        /// <param name="name">インデックスの名前</param>
+        public SecondaryKeyAttribute(string name)
+        {
+            Name = name;
+        }
+    }
+}
