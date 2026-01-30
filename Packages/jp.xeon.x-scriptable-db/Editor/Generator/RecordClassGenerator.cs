@@ -1,0 +1,189 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using UnityEngine;
+
+namespace Xeon.XScriptableDB.Editor
+{
+    public static class RecordClassGenerator
+    {
+        private static readonly HashSet<string> PrimitiveTypeList = new() {
+            "byte", "sbyte", "short", "ushort",
+            "int", "uint", "long", "ulong",
+            "float", "double", "decimal",
+            "bool", "char", "DateTime"
+        };
+
+        public static string GenerateRecordClass(TableDefinition definition)
+        {
+            var namespaceName = "Xeon.XScriptableDB.Generated";
+            var className = ToCamelCase(definition.TableName);
+            var fields = GenerateFields(definition.Columns);
+            var properties = GenerateProperties(definition.Columns);
+            return $@"using System;
+using Xeon.XScriptableDB;
+
+namespace {namespaceName}
+{{
+    [Serializable]
+    public partial class {className}Record
+    {{
+{fields}
+
+{properties}
+    }}
+}}";
+        }
+
+
+        private static string GenerateFields(List<ColumnDefinition> columns)
+        {
+            var fieldList = new List<string>(columns.Count);
+
+            foreach (var column in columns)
+            {
+                fieldList.Add(GenerateField(column));
+            }
+
+            return string.Join("\n\n", fieldList);
+        }
+
+        private static string GenerateField(ColumnDefinition column)
+        {
+            var type = ConvertType(column.Type, column.IsNullable);
+            var fieldName = ToPascalCase(column.Name);
+            var sb = new StringBuilder();
+
+            if (column.IsPrimaryKey)
+                sb.Append("        [PrimaryKey]\n");
+
+            sb.Append("        [SerializeField]\n");
+            sb.Append($"        private {type} {fieldName};");
+
+            return sb.ToString();
+        }
+
+        private static string GenerateProperties(List<ColumnDefinition> columns)
+        {
+            var propertyList = new List<string>(columns.Count);
+
+            foreach (var column in columns)
+            {
+                propertyList.Add(GenerateProperty(column));
+            }
+
+            return string.Join("\n\n", propertyList);
+        }
+
+        private static string GenerateProperty(ColumnDefinition column)
+        {
+            var type = ConvertType(column.Type, column.IsNullable);
+            var fieldName = ToPascalCase(column.Name);
+            var propertyName = ToCamelCase(column.Name);
+
+            return $@"        public {type} {propertyName}
+        {{
+            get => {fieldName};
+            set => {fieldName} = value;
+        }}";
+        }
+
+        public static string ConvertType(string typeName, bool isNullable)
+        {
+            var result = typeName.ToLower();
+
+            switch (result)
+            {
+                case "tinyint":
+                    result = "byte";
+                    break;
+                case "smallint":
+                    result = "short";
+                    break;
+                case "int":
+                case "integer":
+                case "mediumint":
+                    result = "int";
+                    break;
+                case "bigint":
+                    result = "long";
+                    break;
+                case "float":
+                case "real":
+                    result = "float";
+                    break;
+                case "double":
+                    result = "double";
+                    break;
+                case "decimal":
+                case "numeric":
+                    result = "decimal";
+                    break;
+                case "bool":
+                case "boolean":
+                    result = "bool";
+                    break;
+                case "char":
+                    result = "char";
+                    break;
+                case "varchar":
+                case "text":
+                case "longtext":
+                case "mediumtext":
+                case "tinytext":
+                    result = "string";
+                    break;
+                case "datetime":
+                case "timestamp":
+                case "date":
+                    result = "DateTime";
+                    break;
+                default:
+                    result = typeName;
+                    break;
+            }
+
+            if (IsPrimitiveOrValueType(result) && isNullable)
+                result += "?";
+
+            return result;
+        }
+
+        private static bool IsPrimitiveOrValueType(string typeName) => PrimitiveTypeList.Contains(typeName);
+
+        public static string ToCamelCase(string origin)
+        {
+            if (string.IsNullOrEmpty(origin))
+                return origin;
+
+            if (origin.Length == 1)
+                return origin.ToLower();
+
+            return char.ToUpper(origin[0]) + origin.Substring(1);
+        }
+
+        public static string ToPascalCase(string origin)
+        {
+            if (string.IsNullOrEmpty(origin))
+                return origin;
+
+            if (origin.Length == 1)
+                return origin.ToLower();
+
+            return char.ToLower(origin[0]) + origin.Substring(1);
+        }
+    }
+
+    [Serializable]
+    public class UserRecord
+    {
+        [PrimaryKey]
+        private int id;
+
+        [SerializeField]
+        private string name;
+
+        [SerializeField]
+        private DateTime createdAt;
+    }
+}
