@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-01-30
+
+### Added
+
+#### Virtual Scroll (Table Editor)
+- `VirtualizedListView<T>` - 仮想スクロール対応のリストビュー
+  - 表示領域のアイテムのみをレンダリング
+  - 大量レコード（数万件）でもスムーズなスクロール
+  - 展開/折りたたみ機能
+- `VirtualizedPropertyListView` - SerializedProperty対応の仮想スクロールリスト
+  - TableEditorWindowに統合
+  - 100件以上のレコードで自動的に仮想スクロールを使用
+  - 切り替えオプション付き
+
+#### Streaming Import
+- `StreamingImporter` - 大量データのストリーミングインポート
+  - チャンク単位での処理によるメモリ効率化
+  - 進捗表示とキャンセル機能
+  - エラー時の継続処理オプション
+- `StreamingImportWindow` - ストリーミングインポート用のEditorウィンドウ
+  - チャンクサイズ、エンコーディング、区切り文字の設定
+  - リアルタイム進捗表示
+  - エラー一覧表示
+
+#### Batch Processing API (Editor専用)
+- `BatchProcessor<TRecord, TKey>` - バッチ操作のプロセッサ
+  - `AddRange()` - 複数レコードの一括追加
+  - `UpdateRange()` - 複数レコードの一括更新
+  - `DeleteRange()` - 複数レコードの一括削除
+  - `DeleteByKeys()` - キー指定での一括削除
+  - `DeleteWhere()` - 条件指定での一括削除
+  - `UpdateWhere()` - 条件指定での一括更新
+  - `UpsertRange()` - 複数レコードのアップサート
+  - `ReplaceAll()` - 全レコードの置換
+- `BatchOperationEntry<TRecord>` - バッチ操作のエントリ
+  - Add, Update, Delete, Upsert操作をサポート
+- `BatchProcessResult` - バッチ処理結果
+  - 追加/更新/削除/スキップ/失敗件数
+  - 処理時間
+  - エラーリスト
+- 拡張メソッド `CreateBatchProcessor()` でTableAssetから簡単に作成可能
+
+#### Benchmark Suite
+- `BenchmarkTests` - パフォーマンスベンチマークテスト
+  - 検索パフォーマンス（線形、バイナリ、ハッシュ）
+  - ソート・フィルタリングパフォーマンス
+  - CSV解析・出力パフォーマンス
+  - メモリ割り当て計測
+- `BenchmarkWindow` - ベンチマーク実行用Editorウィンドウ
+  - インタラクティブなベンチマーク実行
+  - 結果のグラフ表示
+  - Markdownレポート出力
+
+---
+
 ## [0.3.0] - 2026-01-29
 
 ### Added

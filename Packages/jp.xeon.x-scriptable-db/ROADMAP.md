@@ -91,15 +91,42 @@ var items = profiler.Profile("SearchItems", typeof(ItemTable),
 
 ---
 
-### v0.4.0 - 大量データ対応（予定）
+### v0.4.0 (2026-01-30)
 
-大規模データセットでの追加最適化。
+#### Phase 8: 大量データ対応
+- [x] 仮想スクロール（Table Editor）
+  - `VirtualizedListView<T>` - 汎用仮想スクロールコンポーネント
+  - `VirtualizedPropertyListView` - SerializedProperty対応版
+  - TableEditorWindowへの統合（100件以上で自動有効化）
+- [x] ストリーミングインポート
+  - `StreamingImporter` - チャンク単位での大量データインポート
+  - 進捗表示、キャンセル機能、エラー処理
+  - `StreamingImportWindow` - 専用Editorウィンドウ
+- [x] バッチ処理API（Editor専用）
+  - `BatchProcessor<TRecord, TKey>` - バッチ操作のメインクラス
+  - `AddRange()`, `UpdateRange()`, `DeleteRange()`, `UpsertRange()`
+  - `DeleteWhere()`, `UpdateWhere()`, `ReplaceAll()`
+  - 拡張メソッド `CreateBatchProcessor()` で簡単に作成
+- [x] ベンチマークテストスイート
+  - `BenchmarkTests` - 検索・ソート・CSV・メモリのベンチマーク
+  - `BenchmarkWindow` - インタラクティブなベンチマーク実行
 
-#### 機能
-- [ ] 仮想スクロール（Table Editor）
-- [ ] ストリーミングインポート
-- [ ] バッチ処理API
-- [ ] ベンチマークテストスイート
+#### 使用例
+```csharp
+// バッチ処理
+var processor = itemTable.CreateBatchProcessor(r => r.id);
+var result = processor.UpsertRange(newRecords);
+Debug.Log($"Added: {result.AddedCount}, Updated: {result.UpdatedCount}");
+
+// 条件付き一括削除
+processor.DeleteWhere(r => r.price < 100);
+
+// 条件付き一括更新
+processor.UpdateWhere(
+    r => r.category == "Sale",
+    r => r.price = (int)(r.price * 0.9f)
+);
+```
 
 ---
 

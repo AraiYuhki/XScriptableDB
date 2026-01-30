@@ -46,8 +46,10 @@ namespace Xeon.XScriptableDB.Tests
                 enumValue = TestEnum.Two
             };
             var csv = CsvParser.ToCSV(new List<TestData> { testData });
+            // 改行コードを正規化して比較（プラットフォーム非依存）
+            var normalizedCsv = csv.Replace("\r\n", "\n");
             var expect = "int_value,float_value,string_value,bool_value,enum_value\n10,123.45,\"abcdefg\",False,Two\n";
-            Assert.That(csv, Is.EqualTo(expect));
+            Assert.That(normalizedCsv, Is.EqualTo(expect));
         }
 
         [Test]

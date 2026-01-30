@@ -11,6 +11,7 @@ namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
     /// TableAssetを編集するためのEditorWindow。
+    /// 仮想スクロールにより大量レコードの表示に対応。
     /// </summary>
     public class TableEditorWindow : EditorWindow
     {
@@ -33,7 +34,6 @@ namespace Xeon.XScriptableDB.Editor
         private SerializedProperty recordsProperty;
 
         private Vector2 tableListScrollPosition;
-        private Vector2 recordListScrollPosition;
         private int selectedRecordIndex = -1;
 
         private List<ScriptableObject> allTables = new();
@@ -42,6 +42,11 @@ namespace Xeon.XScriptableDB.Editor
         private GUIStyle headerStyle;
         private GUIStyle warningStyle;
 
+        // 仮想スクロール
+        private VirtualizedPropertyListView virtualizedList;
+        private bool useVirtualScroll = true;
+        private const int VirtualScrollThreshold = 100;
+
         // インポート/エクスポート設定
         private FileFormat exportFormat = FileFormat.CSV;
         private bool useExcelEncoding = false;
@@ -49,6 +54,30 @@ namespace Xeon.XScriptableDB.Editor
         private void OnEnable()
         {
             RefreshTableList();
+            InitializeVirtualizedList();
+        }
+
+        private void InitializeVirtualizedList()
+        {
+            virtualizedList = new VirtualizedPropertyListView
+            {
+                ItemHeight = 26f,
+                BufferCount = 5,
+                CalculateExpandedHeight = CalculatePropertyHeight,
+                OnDrawSummary = DrawRecordSummaryVirtualized,
+                OnSelectionChanged = OnRecordSelectionChanged
+            };
+        }
+
+        private float CalculatePropertyHeight(SerializedProperty property)
+        {
+            return EditorGUI.GetPropertyHeight(property, true) + 8f;
+        }
+
+        private void OnRecordSelectionChanged(int index)
+        {
+            selectedRecordIndex = index;
+            Repaint();
         }
 
         private void OnGUI()
@@ -206,6 +235,7 @@ namespace Xeon.XScriptableDB.Editor
             if (selectedTable != null)
             {
                 serializedTable?.Update();
+                virtualizedList?.ClearCache();
                 Repaint();
             }
 
@@ -253,7 +283,16 @@ namespace Xeon.XScriptableDB.Editor
                 DrawRecordHeader();
                 DrawDuplicateKeyWarning();
                 DrawRecordToolbar();
-                DrawRecordList();
+
+                // 仮想スクロール使用判定
+                var tableAsset = selectedTable as ITableAsset;
+                var recordCount = tableAsset?.Count ?? recordsProperty?.arraySize ?? 0;
+                var shouldUseVirtualScroll = useVirtualScroll && recordCount >= VirtualScrollThreshold;
+
+                if (shouldUseVirtualScroll)
+                    DrawRecordListVirtualized();
+                else
+                    DrawRecordListStandard();
             }
         }
 
@@ -268,6 +307,17 @@ namespace Xeon.XScriptableDB.Editor
                 {
                     EditorGUILayout.LabelField($"レコード数: {tableAsset.Count}", GUILayout.Width(100));
                     EditorGUILayout.LabelField($"Key: {tableAsset.KeyType.Name}", GUILayout.Width(100));
+
+                    // 仮想スクロール切り替え
+                    if (tableAsset.Count >= VirtualScrollThreshold)
+                    {
+                        var newUseVirtualScroll = GUILayout.Toggle(useVirtualScroll, "仮想スクロール", GUILayout.Width(100));
+                        if (newUseVirtualScroll != useVirtualScroll)
+                        {
+                            useVirtualScroll = newUseVirtualScroll;
+                            virtualizedList?.ClearCache();
+                        }
+                    }
                 }
             }
         }
@@ -381,6 +431,7 @@ namespace Xeon.XScriptableDB.Editor
                     // 従来の直接インポート
                     importer.Import(filePath);
                     serializedTable.Update();
+                    virtualizedList?.ClearCache();
                     EditorUtility.SetDirty(selectedTable);
                     EditorUtility.DisplayDialog("インポート完了", $"{selectedTable.name}をインポートしました", "OK");
                     Repaint();
@@ -422,16 +473,45 @@ namespace Xeon.XScriptableDB.Editor
             }
         }
 
-        private void DrawRecordList()
+        /// <summary>
+        /// 仮想スクロールを使用したレコードリスト描画。
+        /// </summary>
+        private void DrawRecordListVirtualized()
         {
             if (serializedTable == null || recordsProperty == null)
                 return;
 
             serializedTable.Update();
 
-            using (var scroll = new EditorGUILayout.ScrollViewScope(recordListScrollPosition))
+            // 仮想スクロールリストの設定
+            virtualizedList.SetProperty(recordsProperty);
+            virtualizedList.SelectedIndex = selectedRecordIndex;
+
+            // 描画領域を確保
+            var rect = GUILayoutUtility.GetRect(0, 0, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+            if (rect.height > 0)
             {
-                recordListScrollPosition = scroll.scrollPosition;
+                virtualizedList.Draw(rect);
+                selectedRecordIndex = virtualizedList.SelectedIndex;
+            }
+
+            if (serializedTable.ApplyModifiedProperties())
+                virtualizedList.ClearCache();
+        }
+
+        /// <summary>
+        /// 標準のレコードリスト描画。
+        /// </summary>
+        private void DrawRecordListStandard()
+        {
+            if (serializedTable == null || recordsProperty == null)
+                return;
+
+            serializedTable.Update();
+
+            using (var scroll = new EditorGUILayout.ScrollViewScope(virtualizedList?.GetScrollPosition() ?? Vector2.zero))
+            {
+                virtualizedList?.SetScrollPosition(scroll.scrollPosition);
 
                 for (var i = 0; i < recordsProperty.arraySize; i++)
                 {
@@ -443,7 +523,7 @@ namespace Xeon.XScriptableDB.Editor
                         using (new EditorGUILayout.HorizontalScope())
                         {
                             EditorGUILayout.LabelField($"[{i}]", GUILayout.Width(40));
-                            if (GUILayout.Button(isSelected ? "▼" : "▶", GUILayout.Width(25)))
+                            if (GUILayout.Button(isSelected ? "v" : ">", GUILayout.Width(25)))
                                 selectedRecordIndex = isSelected ? -1 : i;
 
                             DrawRecordSummary(element);
@@ -456,6 +536,27 @@ namespace Xeon.XScriptableDB.Editor
             }
 
             serializedTable.ApplyModifiedProperties();
+        }
+
+        private void DrawRecordSummaryVirtualized(int index, SerializedProperty element, Rect rect)
+        {
+            var iterator = element.Copy();
+            var enterChildren = true;
+            var depth = iterator.depth;
+            var count = 0;
+            const int maxFields = 4;
+            var x = rect.x;
+
+            while (iterator.NextVisible(enterChildren) && iterator.depth > depth && count < maxFields)
+            {
+                enterChildren = false;
+                var value = GetPropertyValueString(iterator);
+                var content = new GUIContent($"{iterator.name}: {value}");
+                var width = Mathf.Min(150, rect.width / maxFields);
+                EditorGUI.LabelField(new Rect(x, rect.y + 4, width, rect.height - 8), content);
+                x += width + 4;
+                count++;
+            }
         }
 
         private void DrawRecordSummary(SerializedProperty element)
@@ -485,7 +586,9 @@ namespace Xeon.XScriptableDB.Editor
                     ? property.stringValue.Substring(0, 15) + "..."
                     : property.stringValue,
                 SerializedPropertyType.Boolean => property.boolValue.ToString(),
-                SerializedPropertyType.Enum => property.enumDisplayNames[property.enumValueIndex],
+                SerializedPropertyType.Enum => property.enumDisplayNames.Length > property.enumValueIndex && property.enumValueIndex >= 0
+                    ? property.enumDisplayNames[property.enumValueIndex]
+                    : property.enumValueIndex.ToString(),
                 _ => "..."
             };
         }
@@ -500,6 +603,14 @@ namespace Xeon.XScriptableDB.Editor
                 serializedTable = new SerializedObject(table);
                 recordsProperty = serializedTable.FindProperty("records")
                     ?? serializedTable.FindProperty("data");
+
+                virtualizedList?.ClearCache();
+                virtualizedList?.ResetScroll();
+                if (virtualizedList != null)
+                {
+                    virtualizedList.ExpandedIndex = -1;
+                    virtualizedList.SelectedIndex = -1;
+                }
             }
             else
             {
@@ -535,6 +646,11 @@ namespace Xeon.XScriptableDB.Editor
 
             serializedTable.Update();
             selectedRecordIndex = tableAsset.Count - 1;
+            virtualizedList?.ClearCache();
+
+            // 新しいレコードにスクロール
+            virtualizedList?.ScrollToIndex(selectedRecordIndex);
+
             Repaint();
         }
 
@@ -552,9 +668,13 @@ namespace Xeon.XScriptableDB.Editor
 
             tableAsset.RemoveRecordAt(selectedRecordIndex);
             serializedTable.Update();
+            virtualizedList?.ClearCache();
 
             if (selectedRecordIndex >= tableAsset.Count)
                 selectedRecordIndex = tableAsset.Count - 1;
+
+            if (virtualizedList != null)
+                virtualizedList.SelectedIndex = selectedRecordIndex;
 
             Repaint();
         }
@@ -570,6 +690,7 @@ namespace Xeon.XScriptableDB.Editor
                 method.Invoke(selectedTable, null);
                 EditorUtility.SetDirty(selectedTable);
                 serializedTable.Update();
+                virtualizedList?.ClearCache();
                 Repaint();
             }
         }
