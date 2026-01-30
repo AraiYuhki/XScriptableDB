@@ -13,6 +13,7 @@
 | v0.3.0 | Phase 7 | Performance (Cache, LazyLoad, Profiler) | ✅ 完了 |
 | v0.4.0 | Phase 8 | 大量データ対応 (VirtualScroll, Streaming, Batch) | ✅ 完了 |
 | v0.5.0 | Phase 9 | 高度なSQL機能 (JOIN, Aggregate, GROUP BY, CASE) | ✅ 完了 |
+| v0.6.0 | Phase 10 | 追加ツール (Schema比較, Migration, Backup, CLI, DataGen) | ✅ 完了 |
 
 ---
 
@@ -269,11 +270,11 @@ var testData = generator.Generate(1000);
 ```
 
 ### 完了条件
-- [ ] スキーマ比較ツールが動作する
-- [ ] マイグレーション機能が動作する
-- [ ] バックアップ/リストアが動作する
-- [ ] CLIが動作する
-- [ ] データ生成ツールが動作する
+- [x] スキーマ比較ツールが動作する
+- [x] マイグレーション機能が動作する
+- [x] バックアップ/リストアが動作する
+- [x] CLIが動作する
+- [x] データ生成ツールが動作する
 
 ---
 
