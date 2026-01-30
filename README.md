@@ -9,10 +9,12 @@ Unity用のScriptableObjectベースのデータベースパッケージです�
 - **GC Alloc 0**: ref structを使用したメモリ効率の良いクエリ結果
 - **CSV/TSV対応**: インポート・エクスポート機能、エンコーディング自動検出
 - **Diff Viewer**: インポート前の変更プレビュー、選択的な適用
-- **SQL Editor**: SQLライクなクエリでデータ検索・更新
+- **SQL Editor**: 高度なSQL機能（JOIN, 集計関数, GROUP BY, CASE式, サブクエリ）
 - **Database Browser**: テーブル一覧とスキーマ確認
 - **データ検証**: 属性ベースのバリデーション（Required, Range, ForeignKey等）
 - **パフォーマンス最適化**: LRUキャッシュ、遅延ロード、プロファイリング
+- **スキーマ管理**: スキーマ比較、マイグレーション、自動バックアップ
+- **開発ツール**: CLI、テストデータ生成
 
 ## 動作環境
 
@@ -172,8 +174,30 @@ int count = result.Count;
 SQLライクなクエリでデータを検索・更新できます。
 
 ```sql
--- 検索
+-- 基本的な検索
 SELECT * FROM ItemTable WHERE Category = 'Weapon' AND Price > 1000 ORDER BY Price DESC LIMIT 10
+
+-- JOIN
+SELECT i.Name, c.CategoryName
+FROM ItemTable i
+INNER JOIN CategoryTable c ON i.CategoryId = c.Id
+
+-- 集計関数
+SELECT Category, COUNT(*), SUM(Price), AVG(Price)
+FROM ItemTable
+GROUP BY Category
+HAVING COUNT(*) > 5
+
+-- CASE式
+SELECT Name,
+  CASE WHEN Price > 1000 THEN 'High'
+       WHEN Price > 500 THEN 'Medium'
+       ELSE 'Low' END AS PriceLevel
+FROM ItemTable
+
+-- サブクエリ
+SELECT * FROM ItemTable
+WHERE Price > (SELECT AVG(Price) FROM ItemTable)
 
 -- 更新
 UPDATE ItemTable SET Price = 500 WHERE Id = 1001
@@ -183,7 +207,14 @@ DELETE FROM ItemTable WHERE Price = 0
 ```
 
 **サポートされる構文:**
-- SELECT: カラム指定, WHERE, ORDER BY (ASC/DESC), LIMIT, OFFSET
+- SELECT: カラム指定, DISTINCT, WHERE, ORDER BY (ASC/DESC), LIMIT, OFFSET
+- JOIN: INNER JOIN, LEFT JOIN, RIGHT JOIN, CROSS JOIN
+- 集計関数: COUNT, SUM, AVG, MIN, MAX
+- グルーピング: GROUP BY, HAVING
+- CASE式: CASE WHEN ... THEN ... ELSE ... END
+- サブクエリ: WHERE句、IN句でのサブクエリ
+- 算術演算: +, -, *, /
+- 文字列関数: UPPER, LOWER, CONCAT, SUBSTRING, TRIM, LENGTH
 - UPDATE: SET, WHERE
 - DELETE: WHERE
 - 演算子: =, !=, <>, <, <=, >, >=, LIKE, IN, IS NULL, IS NOT NULL
@@ -222,6 +253,64 @@ CSVインポート時に変更内容をプレビューし、選択的に適用�
 - 削除されたレコード（赤）
 - 変更されたレコード（黄）
 - フィールドレベルの差分表示
+
+### Schema Compare
+
+`Window > XScriptableDB > スキーマ比較`
+
+2つのテーブル型のスキーマを比較し、差分を表示します。
+
+- フィールド追加/削除/型変更の検出
+- PrimaryKey/SecondaryKey変更の検出
+- マイグレーションコードの自動生成
+
+### Backup Manager
+
+`Tools > XScriptableDB > バックアップ管理`
+
+テーブルデータのバックアップと復元を管理します。
+
+- 手動/自動バックアップの作成
+- バックアップからのリストア
+- バックアップ世代管理
+- フィルタリングと検索
+
+### Data Generator
+
+`Window > XScriptableDB > データ生成`
+
+テストデータを自動生成します。
+
+- 連番、ランダム、パターン等の生成ルール
+- フィールド名からの自動推測（Name、Price、Level等）
+- カスタム生成設定
+
+## CLI（コマンドラインインターフェース）
+
+バッチモードでの操作が可能です。
+
+```bash
+# テーブルのエクスポート
+Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Export -table=ItemTable -output=./items.csv
+
+# CSVのインポート
+Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Import -table=ItemTable -input=./items.csv
+
+# バリデーション実行
+Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Validate -table=ItemTable
+
+# SQLクエリ実行
+Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Query -sql="SELECT * FROM ItemTable WHERE Price > 100"
+
+# バックアップ作成
+Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Backup -table=ItemTable
+
+# テーブル一覧
+Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.ListTables
+
+# スキーマ情報表示
+Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Schema -table=ItemTable
+```
 
 ## CSV/TSV形式
 
@@ -348,11 +437,12 @@ Package Managerからインポートできます:
 - v0.1.0: CSV/TSVインポート・エクスポート、Diff Viewer
 - v0.2.0: SQL Editor、Database Browser、データ検証
 - v0.3.0: キャッシュシステム、遅延ロード、パフォーマンス計測
+- v0.4.0: 大量データ対応（仮想スクロール、ストリーミング、バッチ処理）
+- v0.5.0: 高度なSQL機能（JOIN, 集計関数, GROUP BY, CASE式, サブクエリ）
+- v0.6.0: 追加ツール（スキーマ比較, マイグレーション, バックアップ, CLI, テストデータ生成）
 
 **計画中の機能:**
-- v0.4.0: 大量データ対応（仮想スクロール、ストリーミング）
-- v0.5.0: 高度なSQL機能（JOIN, 集計関数, GROUP BY）
-- v0.6.0: 追加ツール（マイグレーション, CLI, バックアップ）
+- v1.0.0: 安定版リリース（テストカバレッジ向上、ドキュメント整備、サンプル拡充）
 
 ## ライセンス
 
