@@ -14,6 +14,41 @@ namespace Xeon.XScriptableDB.Editor
     }
 
     /// <summary>
+    /// JOIN の種類。
+    /// </summary>
+    public enum JoinType
+    {
+        Inner,
+        Left,
+        Right,
+        Cross
+    }
+
+    /// <summary>
+    /// 集計関数の種類。
+    /// </summary>
+    public enum AggregateFunction
+    {
+        Count,
+        Sum,
+        Avg,
+        Min,
+        Max
+    }
+
+    /// <summary>
+    /// 算術演算子。
+    /// </summary>
+    public enum ArithmeticOperator
+    {
+        Add,        // +
+        Subtract,   // -
+        Multiply,   // *
+        Divide,     // /
+        Modulo      // %
+    }
+
+    /// <summary>
     /// 比較演算子。
     /// </summary>
     public enum ComparisonOperator
@@ -153,6 +188,147 @@ namespace Xeon.XScriptableDB.Editor
     }
 
     /// <summary>
+    /// 集計関数式。
+    /// </summary>
+    public class AggregateExpression : SqlExpression
+    {
+        public AggregateFunction Function { get; set; }
+        public SqlExpression Argument { get; set; }
+        public bool IsDistinct { get; set; }
+
+        public override string ToString()
+        {
+            var distinct = IsDistinct ? "DISTINCT " : "";
+            var arg = Argument?.ToString() ?? "*";
+            return $"{Function.ToString().ToUpper()}({distinct}{arg})";
+        }
+    }
+
+    /// <summary>
+    /// 算術式。
+    /// </summary>
+    public class ArithmeticExpression : SqlExpression
+    {
+        public SqlExpression Left { get; set; }
+        public ArithmeticOperator Operator { get; set; }
+        public SqlExpression Right { get; set; }
+
+        public override string ToString()
+        {
+            var op = Operator switch
+            {
+                ArithmeticOperator.Add => "+",
+                ArithmeticOperator.Subtract => "-",
+                ArithmeticOperator.Multiply => "*",
+                ArithmeticOperator.Divide => "/",
+                ArithmeticOperator.Modulo => "%",
+                _ => "?"
+            };
+            return $"({Left} {op} {Right})";
+        }
+    }
+
+    /// <summary>
+    /// CASE式。
+    /// </summary>
+    public class CaseExpression : SqlExpression
+    {
+        public List<WhenClause> WhenClauses { get; set; } = new();
+        public SqlExpression ElseExpression { get; set; }
+
+        public override string ToString()
+        {
+            var whens = string.Join(" ", WhenClauses);
+            var elseStr = ElseExpression != null ? $" ELSE {ElseExpression}" : "";
+            return $"CASE {whens}{elseStr} END";
+        }
+    }
+
+    /// <summary>
+    /// WHEN句。
+    /// </summary>
+    public class WhenClause
+    {
+        public SqlExpression Condition { get; set; }
+        public SqlExpression Result { get; set; }
+
+        public override string ToString() => $"WHEN {Condition} THEN {Result}";
+    }
+
+    /// <summary>
+    /// 関数呼び出し式。
+    /// </summary>
+    public class FunctionCallExpression : SqlExpression
+    {
+        public string FunctionName { get; set; }
+        public List<SqlExpression> Arguments { get; set; } = new();
+
+        public override string ToString()
+        {
+            var args = string.Join(", ", Arguments);
+            return $"{FunctionName}({args})";
+        }
+    }
+
+    /// <summary>
+    /// サブクエリ式。
+    /// </summary>
+    public class SubqueryExpression : SqlExpression
+    {
+        public SelectStatement Subquery { get; set; }
+
+        public override string ToString() => $"({Subquery})";
+    }
+
+    /// <summary>
+    /// JOIN句。
+    /// </summary>
+    public class JoinClause
+    {
+        public JoinType JoinType { get; set; }
+        public string TableName { get; set; }
+        public string Alias { get; set; }
+        public SqlExpression OnCondition { get; set; }
+
+        public override string ToString()
+        {
+            var joinStr = JoinType switch
+            {
+                JoinType.Inner => "INNER JOIN",
+                JoinType.Left => "LEFT JOIN",
+                JoinType.Right => "RIGHT JOIN",
+                JoinType.Cross => "CROSS JOIN",
+                _ => "JOIN"
+            };
+            var alias = string.IsNullOrEmpty(Alias) ? "" : $" {Alias}";
+            var on = JoinType == JoinType.Cross ? "" : $" ON {OnCondition}";
+            return $"{joinStr} {TableName}{alias}{on}";
+        }
+    }
+
+    /// <summary>
+    /// テーブル参照（エイリアス付き）。
+    /// </summary>
+    public class TableReference
+    {
+        public string TableName { get; set; }
+        public string Alias { get; set; }
+
+        public override string ToString() =>
+            string.IsNullOrEmpty(Alias) ? TableName : $"{TableName} {Alias}";
+    }
+
+    /// <summary>
+    /// GROUP BY句の項目。
+    /// </summary>
+    public class GroupByItem
+    {
+        public SqlExpression Expression { get; set; }
+
+        public override string ToString() => Expression.ToString();
+    }
+
+    /// <summary>
     /// SELECT句の列指定。
     /// </summary>
     public class SelectColumn
@@ -210,7 +386,12 @@ namespace Xeon.XScriptableDB.Editor
     /// </summary>
     public class SelectStatement : SqlStatement
     {
+        public bool IsDistinct { get; set; }
         public List<SelectColumn> Columns { get; set; } = new();
+        public TableReference FromTable { get; set; }
+        public List<JoinClause> Joins { get; set; } = new();
+        public List<GroupByItem> GroupBy { get; set; } = new();
+        public SqlExpression HavingClause { get; set; }
         public List<OrderByItem> OrderBy { get; set; } = new();
         public int? Limit { get; set; }
         public int? Offset { get; set; }
@@ -222,11 +403,22 @@ namespace Xeon.XScriptableDB.Editor
 
         public override string ToString()
         {
+            var distinct = IsDistinct ? "DISTINCT " : "";
             var columns = Columns.Count > 0 ? string.Join(", ", Columns) : "*";
-            var sql = $"SELECT {columns} FROM {TableName}";
+            var fromStr = FromTable?.ToString() ?? TableName;
+            var sql = $"SELECT {distinct}{columns} FROM {fromStr}";
+
+            foreach (var join in Joins)
+                sql += $" {join}";
 
             if (WhereClause != null)
                 sql += $" WHERE {WhereClause}";
+
+            if (GroupBy.Count > 0)
+                sql += $" GROUP BY {string.Join(", ", GroupBy)}";
+
+            if (HavingClause != null)
+                sql += $" HAVING {HavingClause}";
 
             if (OrderBy.Count > 0)
                 sql += $" ORDER BY {string.Join(", ", OrderBy)}";

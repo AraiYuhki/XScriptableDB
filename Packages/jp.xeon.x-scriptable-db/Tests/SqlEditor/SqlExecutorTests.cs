@@ -25,6 +25,15 @@ namespace Xeon.XScriptableDB.Tests
             public string Name;
             public int Value;
             public bool Active;
+            public int CategoryId;
+        }
+
+        [Serializable]
+        private class CategoryRecord
+        {
+            [PrimaryKey]
+            public int Id;
+            public string CategoryName;
         }
 
         /// <summary>
@@ -60,20 +69,29 @@ namespace Xeon.XScriptableDB.Tests
 
         #endregion
 
+        private MockTableAsset<CategoryRecord> categoryTable;
+
         [SetUp]
         public void SetUp()
         {
             executor = new SqlExecutor();
             testTable = new MockTableAsset<TestRecord>();
+            categoryTable = new MockTableAsset<CategoryRecord>();
 
             // テストデータを追加
-            testTable.AddRecord(new TestRecord { Id = 1, Name = "Alice", Value = 100, Active = true });
-            testTable.AddRecord(new TestRecord { Id = 2, Name = "Bob", Value = 200, Active = true });
-            testTable.AddRecord(new TestRecord { Id = 3, Name = "Charlie", Value = 150, Active = false });
-            testTable.AddRecord(new TestRecord { Id = 4, Name = "Diana", Value = 300, Active = true });
-            testTable.AddRecord(new TestRecord { Id = 5, Name = "Eve", Value = 50, Active = false });
+            testTable.AddRecord(new TestRecord { Id = 1, Name = "Alice", Value = 100, Active = true, CategoryId = 1 });
+            testTable.AddRecord(new TestRecord { Id = 2, Name = "Bob", Value = 200, Active = true, CategoryId = 1 });
+            testTable.AddRecord(new TestRecord { Id = 3, Name = "Charlie", Value = 150, Active = false, CategoryId = 2 });
+            testTable.AddRecord(new TestRecord { Id = 4, Name = "Diana", Value = 300, Active = true, CategoryId = 2 });
+            testTable.AddRecord(new TestRecord { Id = 5, Name = "Eve", Value = 50, Active = false, CategoryId = 3 });
+
+            // カテゴリデータを追加
+            categoryTable.AddRecord(new CategoryRecord { Id = 1, CategoryName = "Electronics" });
+            categoryTable.AddRecord(new CategoryRecord { Id = 2, CategoryName = "Clothing" });
+            categoryTable.AddRecord(new CategoryRecord { Id = 3, CategoryName = "Books" });
 
             executor.RegisterTable("TestTable", testTable);
+            executor.RegisterTable("Categories", categoryTable);
         }
 
         #region SELECT Tests
@@ -367,6 +385,196 @@ namespace Xeon.XScriptableDB.Tests
             var result = executor.Execute("SELECT * FROM TestTable");
 
             Assert.That(result.ExecutionTimeMs, Is.GreaterThanOrEqualTo(0));
+        }
+
+        #endregion
+
+        #region JOIN Tests
+
+        [Test]
+        public void Execute_InnerJoin_ReturnsMatchingRecords()
+        {
+            var result = executor.Execute("SELECT * FROM TestTable t INNER JOIN Categories c ON t.CategoryId = c.Id");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(5)); // 全レコードがカテゴリとマッチ
+        }
+
+        [Test]
+        public void Execute_LeftJoin_ReturnsAllLeftRecords()
+        {
+            // カテゴリ4が存在しないレコードを追加
+            testTable.AddRecord(new TestRecord { Id = 6, Name = "Frank", Value = 400, Active = true, CategoryId = 99 });
+
+            var result = executor.Execute("SELECT * FROM TestTable t LEFT JOIN Categories c ON t.CategoryId = c.Id");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(6)); // Frankも含まれる
+        }
+
+        [Test]
+        public void Execute_CrossJoin_ReturnsCartesianProduct()
+        {
+            var result = executor.Execute("SELECT * FROM TestTable CROSS JOIN Categories");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(15)); // 5 * 3 = 15
+        }
+
+        #endregion
+
+        #region Aggregate Function Tests
+
+        [Test]
+        public void Execute_CountStar_ReturnsRecordCount()
+        {
+            var result = executor.Execute("SELECT COUNT(*) FROM TestTable");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(1));
+
+            var row = result.Records[0] as ResultRow;
+            Assert.That(row, Is.Not.Null);
+            Assert.That(row.Values.Values.First(), Is.EqualTo(5));
+        }
+
+        [Test]
+        public void Execute_SumFunction_ReturnsSumOfValues()
+        {
+            var result = executor.Execute("SELECT SUM(Value) FROM TestTable");
+
+            Assert.That(result.IsSuccess, Is.True);
+            var row = result.Records[0] as ResultRow;
+            Assert.That(Convert.ToDouble(row.Values.Values.First()), Is.EqualTo(800.0)); // 100+200+150+300+50
+        }
+
+        [Test]
+        public void Execute_AvgFunction_ReturnsAverageOfValues()
+        {
+            var result = executor.Execute("SELECT AVG(Value) FROM TestTable");
+
+            Assert.That(result.IsSuccess, Is.True);
+            var row = result.Records[0] as ResultRow;
+            Assert.That(Convert.ToDouble(row.Values.Values.First()), Is.EqualTo(160.0)); // 800/5
+        }
+
+        [Test]
+        public void Execute_MinFunction_ReturnsMinValue()
+        {
+            var result = executor.Execute("SELECT MIN(Value) FROM TestTable");
+
+            Assert.That(result.IsSuccess, Is.True);
+            var row = result.Records[0] as ResultRow;
+            Assert.That(Convert.ToInt32(row.Values.Values.First()), Is.EqualTo(50));
+        }
+
+        [Test]
+        public void Execute_MaxFunction_ReturnsMaxValue()
+        {
+            var result = executor.Execute("SELECT MAX(Value) FROM TestTable");
+
+            Assert.That(result.IsSuccess, Is.True);
+            var row = result.Records[0] as ResultRow;
+            Assert.That(Convert.ToInt32(row.Values.Values.First()), Is.EqualTo(300));
+        }
+
+        [Test]
+        public void Execute_MultipleAggregates_ReturnsAllResults()
+        {
+            var result = executor.Execute("SELECT COUNT(*), SUM(Value), AVG(Value), MIN(Value), MAX(Value) FROM TestTable");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(1));
+            var row = result.Records[0] as ResultRow;
+            Assert.That(row.Values.Count, Is.EqualTo(5));
+        }
+
+        #endregion
+
+        #region GROUP BY Tests
+
+        [Test]
+        public void Execute_GroupByWithCount_ReturnsGroupedCounts()
+        {
+            var result = executor.Execute("SELECT CategoryId, COUNT(*) FROM TestTable GROUP BY CategoryId");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(3)); // 3つのカテゴリ
+        }
+
+        [Test]
+        public void Execute_GroupByWithSum_ReturnsGroupedSums()
+        {
+            var result = executor.Execute("SELECT CategoryId, SUM(Value) FROM TestTable GROUP BY CategoryId");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Execute_GroupByWithHaving_FiltersGroups()
+        {
+            var result = executor.Execute("SELECT CategoryId, COUNT(*) FROM TestTable GROUP BY CategoryId HAVING COUNT(*) > 1");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(2)); // CategoryId 1 と 2 のみ (各2レコード)
+        }
+
+        #endregion
+
+        #region DISTINCT Tests
+
+        [Test]
+        public void Execute_SelectDistinct_RemovesDuplicates()
+        {
+            var result = executor.Execute("SELECT DISTINCT CategoryId FROM TestTable");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(3)); // 3つのユニークなカテゴリ
+        }
+
+        [Test]
+        public void Execute_SelectDistinct_Active_ReturnsUniqueValues()
+        {
+            var result = executor.Execute("SELECT DISTINCT Active FROM TestTable");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(2)); // true と false
+        }
+
+        #endregion
+
+        #region Arithmetic Expression Tests
+
+        [Test]
+        public void Execute_ArithmeticInWhere_EvaluatesCorrectly()
+        {
+            var result = executor.Execute("SELECT * FROM TestTable WHERE Value * 2 > 300");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(2)); // Bob (400), Diana (600)
+        }
+
+        #endregion
+
+        #region String Function Tests
+
+        [Test]
+        public void Execute_WhereWithUpperFunction_MatchesCaseInsensitive()
+        {
+            var result = executor.Execute("SELECT * FROM TestTable WHERE UPPER(Name) = 'ALICE'");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Execute_WhereWithLowerFunction_MatchesCaseInsensitive()
+        {
+            var result = executor.Execute("SELECT * FROM TestTable WHERE LOWER(Name) = 'bob'");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Records.Count, Is.EqualTo(1));
         }
 
         #endregion

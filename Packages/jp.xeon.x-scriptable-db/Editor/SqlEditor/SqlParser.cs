@@ -17,9 +17,26 @@ namespace Xeon.XScriptableDB.Editor
         Update, Set, Delete, Insert, Into, Values,
         In, Like, Is, Null, Between,
 
+        // JOIN keywords
+        Join, Inner, Left, Right, Cross, Outer, On,
+
+        // Aggregate keywords
+        Group, Having, Distinct,
+        Count, Sum, Avg, Min, Max,
+
+        // Set operations
+        Union, Intersect, Except, All,
+
+        // CASE expression
+        Case, When, Then, Else, End,
+
+        // String functions
+        Upper, Lower, Concat, Substring, Trim, Length,
+
         // Symbols
         Star, Comma, Dot, LeftParen, RightParen,
         Equal, NotEqual, LessThan, LessOrEqual, GreaterThan, GreaterOrEqual,
+        Plus, Minus, Slash, Percent,
 
         // Literals
         Identifier, StringLiteral, NumberLiteral,
@@ -79,7 +96,42 @@ namespace Xeon.XScriptableDB.Editor
             { "LIKE", TokenType.Like },
             { "IS", TokenType.Is },
             { "NULL", TokenType.Null },
-            { "BETWEEN", TokenType.Between }
+            { "BETWEEN", TokenType.Between },
+            // JOIN keywords
+            { "JOIN", TokenType.Join },
+            { "INNER", TokenType.Inner },
+            { "LEFT", TokenType.Left },
+            { "RIGHT", TokenType.Right },
+            { "CROSS", TokenType.Cross },
+            { "OUTER", TokenType.Outer },
+            { "ON", TokenType.On },
+            // Aggregate keywords
+            { "GROUP", TokenType.Group },
+            { "HAVING", TokenType.Having },
+            { "DISTINCT", TokenType.Distinct },
+            { "COUNT", TokenType.Count },
+            { "SUM", TokenType.Sum },
+            { "AVG", TokenType.Avg },
+            { "MIN", TokenType.Min },
+            { "MAX", TokenType.Max },
+            // Set operations
+            { "UNION", TokenType.Union },
+            { "INTERSECT", TokenType.Intersect },
+            { "EXCEPT", TokenType.Except },
+            { "ALL", TokenType.All },
+            // CASE expression
+            { "CASE", TokenType.Case },
+            { "WHEN", TokenType.When },
+            { "THEN", TokenType.Then },
+            { "ELSE", TokenType.Else },
+            { "END", TokenType.End },
+            // String functions
+            { "UPPER", TokenType.Upper },
+            { "LOWER", TokenType.Lower },
+            { "CONCAT", TokenType.Concat },
+            { "SUBSTRING", TokenType.Substring },
+            { "TRIM", TokenType.Trim },
+            { "LENGTH", TokenType.Length }
         };
 
         public SqlLexer(string input)
@@ -127,6 +179,9 @@ namespace Xeon.XScriptableDB.Editor
                 case '(': position++; return new Token(TokenType.LeftParen, "(", startPos);
                 case ')': position++; return new Token(TokenType.RightParen, ")", startPos);
                 case '=': position++; return new Token(TokenType.Equal, "=", startPos);
+                case '+': position++; return new Token(TokenType.Plus, "+", startPos);
+                case '/': position++; return new Token(TokenType.Slash, "/", startPos);
+                case '%': position++; return new Token(TokenType.Percent, "%", startPos);
             }
 
             // Two character operators
@@ -163,6 +218,13 @@ namespace Xeon.XScriptableDB.Editor
                 return new Token(TokenType.GreaterThan, ">", startPos);
             }
 
+            // Minus (演算子として処理)
+            if (c == '-')
+            {
+                position++;
+                return new Token(TokenType.Minus, "-", startPos);
+            }
+
             // String literal
             if (c == '\'' || c == '"')
             {
@@ -170,7 +232,7 @@ namespace Xeon.XScriptableDB.Editor
             }
 
             // Number literal
-            if (char.IsDigit(c) || (c == '-' && position + 1 < input.Length && char.IsDigit(input[position + 1])))
+            if (char.IsDigit(c))
             {
                 return ReadNumberLiteral();
             }
@@ -218,12 +280,6 @@ namespace Xeon.XScriptableDB.Editor
         {
             var startPos = position;
             var sb = new StringBuilder();
-
-            if (input[position] == '-')
-            {
-                sb.Append('-');
-                position++;
-            }
 
             while (position < input.Length && (char.IsDigit(input[position]) || input[position] == '.'))
             {
@@ -291,13 +347,34 @@ namespace Xeon.XScriptableDB.Editor
             var stmt = new SelectStatement();
 
             Expect(TokenType.Select, "SELECT");
+
+            // DISTINCT
+            if (Match(TokenType.Distinct))
+                stmt.IsDistinct = true;
+
             stmt.Columns = ParseSelectColumns();
 
             Expect(TokenType.From, "FROM");
-            stmt.TableName = ParseTableName();
+            stmt.FromTable = ParseTableReference();
+            stmt.TableName = stmt.FromTable.TableName;
+
+            // JOIN句
+            while (IsJoinKeyword())
+                stmt.Joins.Add(ParseJoinClause());
 
             if (Match(TokenType.Where))
                 stmt.WhereClause = ParseExpression();
+
+            // GROUP BY
+            if (Match(TokenType.Group))
+            {
+                Expect(TokenType.By, "BY");
+                stmt.GroupBy = ParseGroupBy();
+
+                // HAVING
+                if (Match(TokenType.Having))
+                    stmt.HavingClause = ParseExpression();
+            }
 
             if (Match(TokenType.Order))
             {
@@ -318,6 +395,100 @@ namespace Xeon.XScriptableDB.Editor
             }
 
             return stmt;
+        }
+
+        private bool IsJoinKeyword()
+        {
+            return Check(TokenType.Join) || Check(TokenType.Inner) ||
+                   Check(TokenType.Left) || Check(TokenType.Right) ||
+                   Check(TokenType.Cross);
+        }
+
+        private JoinClause ParseJoinClause()
+        {
+            var join = new JoinClause();
+
+            // JOINタイプの判定
+            if (Match(TokenType.Inner))
+            {
+                join.JoinType = JoinType.Inner;
+                Expect(TokenType.Join, "JOIN");
+            }
+            else if (Match(TokenType.Left))
+            {
+                join.JoinType = JoinType.Left;
+                Match(TokenType.Outer); // OUTER は省略可能
+                Expect(TokenType.Join, "JOIN");
+            }
+            else if (Match(TokenType.Right))
+            {
+                join.JoinType = JoinType.Right;
+                Match(TokenType.Outer); // OUTER は省略可能
+                Expect(TokenType.Join, "JOIN");
+            }
+            else if (Match(TokenType.Cross))
+            {
+                join.JoinType = JoinType.Cross;
+                Expect(TokenType.Join, "JOIN");
+            }
+            else if (Match(TokenType.Join))
+            {
+                join.JoinType = JoinType.Inner; // 単独のJOINはINNER JOINとして扱う
+            }
+
+            // テーブル名
+            var tableRef = ParseTableReference();
+            join.TableName = tableRef.TableName;
+            join.Alias = tableRef.Alias;
+
+            // ON条件（CROSS JOIN以外）
+            if (join.JoinType != JoinType.Cross)
+            {
+                Expect(TokenType.On, "ON");
+                join.OnCondition = ParseExpression();
+            }
+
+            return join;
+        }
+
+        private TableReference ParseTableReference()
+        {
+            var tableRef = new TableReference();
+            tableRef.TableName = ParseTableName();
+
+            // エイリアス（AS は省略可能）
+            if (MatchKeyword("AS"))
+            {
+                var aliasToken = Expect(TokenType.Identifier, "alias");
+                tableRef.Alias = aliasToken.Value;
+            }
+            else if (Check(TokenType.Identifier) && !IsReservedKeyword())
+            {
+                tableRef.Alias = Advance().Value;
+            }
+
+            return tableRef;
+        }
+
+        private bool IsReservedKeyword()
+        {
+            if (IsAtEnd())
+                return false;
+
+            var token = Peek();
+            return token.Type != TokenType.Identifier;
+        }
+
+        private List<GroupByItem> ParseGroupBy()
+        {
+            var items = new List<GroupByItem>();
+
+            do
+            {
+                items.Add(new GroupByItem { Expression = ParseColumnExpression() });
+            } while (Match(TokenType.Comma));
+
+            return items;
         }
 
         private UpdateStatement ParseUpdate()
@@ -364,7 +535,7 @@ namespace Xeon.XScriptableDB.Editor
                 {
                     var column = new SelectColumn
                     {
-                        Expression = ParseColumnExpression()
+                        Expression = ParseSelectExpression()
                     };
 
                     // Check for AS alias
@@ -373,12 +544,237 @@ namespace Xeon.XScriptableDB.Editor
                         var aliasToken = Expect(TokenType.Identifier, "alias");
                         column.Alias = aliasToken.Value;
                     }
+                    else if (Check(TokenType.Identifier) && !IsReservedKeyword())
+                    {
+                        // AS なしのエイリアス
+                        column.Alias = Advance().Value;
+                    }
 
                     columns.Add(column);
                 }
             } while (Match(TokenType.Comma));
 
             return columns;
+        }
+
+        private SqlExpression ParseSelectExpression()
+        {
+            return ParseAdditiveExpression();
+        }
+
+        private SqlExpression ParseAdditiveExpression()
+        {
+            var left = ParseMultiplicativeExpression();
+
+            while (Check(TokenType.Plus) || Check(TokenType.Minus))
+            {
+                ArithmeticOperator op;
+                if (Match(TokenType.Plus))
+                    op = ArithmeticOperator.Add;
+                else if (Match(TokenType.Minus))
+                    op = ArithmeticOperator.Subtract;
+                else
+                    break;
+
+                var right = ParseMultiplicativeExpression();
+                left = new ArithmeticExpression { Left = left, Operator = op, Right = right };
+            }
+
+            return left;
+        }
+
+        private SqlExpression ParseMultiplicativeExpression()
+        {
+            var left = ParseUnaryExpression();
+
+            while (Check(TokenType.Star) || Check(TokenType.Slash) || Check(TokenType.Percent))
+            {
+                ArithmeticOperator op;
+                if (Match(TokenType.Star))
+                    op = ArithmeticOperator.Multiply;
+                else if (Match(TokenType.Slash))
+                    op = ArithmeticOperator.Divide;
+                else if (Match(TokenType.Percent))
+                    op = ArithmeticOperator.Modulo;
+                else
+                    break;
+
+                var right = ParseUnaryExpression();
+                left = new ArithmeticExpression { Left = left, Operator = op, Right = right };
+            }
+
+            return left;
+        }
+
+        private SqlExpression ParseUnaryExpression()
+        {
+            // マイナス符号
+            if (Match(TokenType.Minus))
+            {
+                var expr = ParseUnaryExpression();
+                return new ArithmeticExpression
+                {
+                    Left = new LiteralExpression(0),
+                    Operator = ArithmeticOperator.Subtract,
+                    Right = expr
+                };
+            }
+
+            return ParsePrimaryExpression();
+        }
+
+        private SqlExpression ParsePrimaryExpression()
+        {
+            // 括弧
+            if (Match(TokenType.LeftParen))
+            {
+                // サブクエリかグループ化か判定
+                if (Check(TokenType.Select))
+                {
+                    var subquery = ParseSelect();
+                    Expect(TokenType.RightParen, ")");
+                    return new SubqueryExpression { Subquery = subquery };
+                }
+
+                var expr = ParseSelectExpression();
+                Expect(TokenType.RightParen, ")");
+                return expr;
+            }
+
+            // CASE式
+            if (Check(TokenType.Case))
+                return ParseCaseExpression();
+
+            // 集計関数
+            if (IsAggregateFunction())
+                return ParseAggregateFunction();
+
+            // 文字列関数
+            if (IsStringFunction())
+                return ParseStringFunction();
+
+            // リテラル
+            if (Match(TokenType.StringLiteral))
+                return new LiteralExpression(Previous().Value);
+
+            if (Match(TokenType.NumberLiteral))
+            {
+                var value = Previous().Value;
+                if (value.Contains("."))
+                    return new LiteralExpression(double.Parse(value, CultureInfo.InvariantCulture));
+                return new LiteralExpression(long.Parse(value));
+            }
+
+            if (Match(TokenType.Null))
+                return new LiteralExpression(null);
+
+            // カラム参照
+            return ParseColumnExpression();
+        }
+
+        private bool IsAggregateFunction()
+        {
+            return Check(TokenType.Count) || Check(TokenType.Sum) ||
+                   Check(TokenType.Avg) || Check(TokenType.Min) || Check(TokenType.Max);
+        }
+
+        private SqlExpression ParseAggregateFunction()
+        {
+            AggregateFunction func;
+
+            if (Match(TokenType.Count))
+                func = AggregateFunction.Count;
+            else if (Match(TokenType.Sum))
+                func = AggregateFunction.Sum;
+            else if (Match(TokenType.Avg))
+                func = AggregateFunction.Avg;
+            else if (Match(TokenType.Min))
+                func = AggregateFunction.Min;
+            else if (Match(TokenType.Max))
+                func = AggregateFunction.Max;
+            else
+                throw new SqlParseException("Expected aggregate function", CurrentPosition);
+
+            Expect(TokenType.LeftParen, "(");
+
+            var aggExpr = new AggregateExpression { Function = func };
+
+            // DISTINCT
+            if (Match(TokenType.Distinct))
+                aggExpr.IsDistinct = true;
+
+            // COUNT(*) の特殊ケース
+            if (func == AggregateFunction.Count && Match(TokenType.Star))
+            {
+                aggExpr.Argument = null; // COUNT(*) は引数なし
+            }
+            else
+            {
+                aggExpr.Argument = ParseSelectExpression();
+            }
+
+            Expect(TokenType.RightParen, ")");
+            return aggExpr;
+        }
+
+        private bool IsStringFunction()
+        {
+            return Check(TokenType.Upper) || Check(TokenType.Lower) ||
+                   Check(TokenType.Concat) || Check(TokenType.Substring) ||
+                   Check(TokenType.Trim) || Check(TokenType.Length);
+        }
+
+        private SqlExpression ParseStringFunction()
+        {
+            string funcName;
+
+            if (Match(TokenType.Upper))
+                funcName = "UPPER";
+            else if (Match(TokenType.Lower))
+                funcName = "LOWER";
+            else if (Match(TokenType.Concat))
+                funcName = "CONCAT";
+            else if (Match(TokenType.Substring))
+                funcName = "SUBSTRING";
+            else if (Match(TokenType.Trim))
+                funcName = "TRIM";
+            else if (Match(TokenType.Length))
+                funcName = "LENGTH";
+            else
+                throw new SqlParseException("Expected string function", CurrentPosition);
+
+            Expect(TokenType.LeftParen, "(");
+
+            var args = new List<SqlExpression>();
+            do
+            {
+                args.Add(ParseSelectExpression());
+            } while (Match(TokenType.Comma));
+
+            Expect(TokenType.RightParen, ")");
+
+            return new FunctionCallExpression { FunctionName = funcName, Arguments = args };
+        }
+
+        private SqlExpression ParseCaseExpression()
+        {
+            Expect(TokenType.Case, "CASE");
+
+            var caseExpr = new CaseExpression();
+
+            while (Match(TokenType.When))
+            {
+                var condition = ParseExpression();
+                Expect(TokenType.Then, "THEN");
+                var result = ParseSelectExpression();
+                caseExpr.WhenClauses.Add(new WhenClause { Condition = condition, Result = result });
+            }
+
+            if (Match(TokenType.Else))
+                caseExpr.ElseExpression = ParseSelectExpression();
+
+            Expect(TokenType.End, "END");
+            return caseExpr;
         }
 
         private string ParseTableName()

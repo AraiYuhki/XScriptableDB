@@ -1,8 +1,10 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Xeon.XScriptableDB.Editor
@@ -44,6 +46,33 @@ namespace Xeon.XScriptableDB.Editor
 
         public object this[string columnName] =>
             Values.TryGetValue(columnName, out var value) ? value : null;
+    }
+
+    /// <summary>
+    /// JOIN結果のレコード。
+    /// </summary>
+    public class JoinedRecord
+    {
+        /// <summary>テーブル名/エイリアス → レコードのマップ</summary>
+        public Dictionary<string, object> TableRecords { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>テーブル名/エイリアス → レコード型のマップ</summary>
+        public Dictionary<string, Type> TableTypes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public object GetRecord(string tableAlias) =>
+            TableRecords.TryGetValue(tableAlias, out var record) ? record : null;
+
+        public Type GetRecordType(string tableAlias) =>
+            TableTypes.TryGetValue(tableAlias, out var type) ? type : null;
+    }
+
+    /// <summary>
+    /// 集計結果のグループ。
+    /// </summary>
+    public class AggregateGroup
+    {
+        public List<object> GroupKeyValues { get; set; } = new();
+        public List<object> Records { get; set; } = new();
     }
 
     /// <summary>
@@ -131,47 +160,786 @@ namespace Xeon.XScriptableDB.Editor
         /// </summary>
         private void ExecuteSelect(SelectStatement stmt, SqlQueryResult result)
         {
-            if (!tables.TryGetValue(stmt.TableName, out var table))
+            // メインテーブルの取得
+            var mainTableName = stmt.FromTable?.TableName ?? stmt.TableName;
+            if (!tables.TryGetValue(mainTableName, out var mainTable))
             {
-                result.ErrorMessage = $"Table not found: {stmt.TableName}";
+                result.ErrorMessage = $"Table not found: {mainTableName}";
                 return;
             }
 
-            var recordType = table.RecordType;
+            var mainAlias = stmt.FromTable?.Alias ?? mainTableName;
+
+            // JOINがある場合
+            if (stmt.Joins.Count > 0)
+            {
+                ExecuteSelectWithJoin(stmt, mainTable, mainAlias, result);
+                return;
+            }
+
+            // GROUP BY がある場合
+            if (stmt.GroupBy.Count > 0 || HasAggregateFunction(stmt.Columns))
+            {
+                ExecuteSelectWithGroupBy(stmt, mainTable, result);
+                return;
+            }
+
+            // 通常のSELECT
+            var recordType = mainTable.RecordType;
             var records = new List<object>();
 
             // フィルタリング
-            foreach (var record in table.Records)
+            foreach (var record in mainTable.Records)
             {
-                if (record == null) continue;
+                if (record == null)
+                    continue;
 
                 if (stmt.WhereClause == null || EvaluateExpression(stmt.WhereClause, record, recordType))
-                {
                     records.Add(record);
-                }
             }
 
             // ソート
             if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
-            {
                 records = SortRecords(records, stmt.OrderBy, recordType);
-            }
+
+            // DISTINCT
+            if (stmt.IsDistinct)
+                records = ApplyDistinct(records, stmt.Columns, recordType);
 
             // OFFSET
             if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
-            {
                 records = records.Skip(stmt.Offset.Value).ToList();
-            }
 
             // LIMIT
             if (stmt.Limit.HasValue)
-            {
                 records = records.Take(stmt.Limit.Value).ToList();
-            }
 
             // カラム名の決定
             result.ColumnNames = GetColumnNames(stmt.Columns, recordType);
             result.Records = records;
+        }
+
+        /// <summary>
+        /// JOINを含むSELECTを実行する。
+        /// </summary>
+        private void ExecuteSelectWithJoin(SelectStatement stmt, ITableAsset mainTable, string mainAlias, SqlQueryResult result)
+        {
+            // JOIN対象のテーブルを取得
+            var joinTables = new List<(ITableAsset table, string alias, JoinClause clause)>();
+            foreach (var join in stmt.Joins)
+            {
+                if (!tables.TryGetValue(join.TableName, out var joinTable))
+                {
+                    result.ErrorMessage = $"Table not found: {join.TableName}";
+                    return;
+                }
+                var alias = join.Alias ?? join.TableName;
+                joinTables.Add((joinTable, alias, join));
+            }
+
+            // JOINの実行
+            var joinedRecords = new List<JoinedRecord>();
+
+            foreach (var mainRecord in mainTable.Records)
+            {
+                if (mainRecord == null)
+                    continue;
+
+                var currentResults = new List<JoinedRecord>
+                {
+                    new JoinedRecord
+                    {
+                        TableRecords = { [mainAlias] = mainRecord },
+                        TableTypes = { [mainAlias] = mainTable.RecordType }
+                    }
+                };
+
+                foreach (var (joinTable, joinAlias, joinClause) in joinTables)
+                {
+                    var nextResults = new List<JoinedRecord>();
+
+                    foreach (var currentRecord in currentResults)
+                    {
+                        var matched = false;
+
+                        foreach (var joinRecord in joinTable.Records)
+                        {
+                            if (joinRecord == null)
+                                continue;
+
+                            // ON条件の評価
+                            var testRecord = new JoinedRecord
+                            {
+                                TableRecords = new Dictionary<string, object>(currentRecord.TableRecords, StringComparer.OrdinalIgnoreCase)
+                                {
+                                    [joinAlias] = joinRecord
+                                },
+                                TableTypes = new Dictionary<string, Type>(currentRecord.TableTypes, StringComparer.OrdinalIgnoreCase)
+                                {
+                                    [joinAlias] = joinTable.RecordType
+                                }
+                            };
+
+                            if (joinClause.JoinType == JoinType.Cross ||
+                                EvaluateJoinCondition(joinClause.OnCondition, testRecord))
+                            {
+                                nextResults.Add(testRecord);
+                                matched = true;
+                            }
+                        }
+
+                        // LEFT JOINでマッチしなかった場合
+                        if (!matched && joinClause.JoinType == JoinType.Left)
+                        {
+                            var nullRecord = new JoinedRecord
+                            {
+                                TableRecords = new Dictionary<string, object>(currentRecord.TableRecords, StringComparer.OrdinalIgnoreCase)
+                                {
+                                    [joinAlias] = null
+                                },
+                                TableTypes = new Dictionary<string, Type>(currentRecord.TableTypes, StringComparer.OrdinalIgnoreCase)
+                                {
+                                    [joinAlias] = joinTable.RecordType
+                                }
+                            };
+                            nextResults.Add(nullRecord);
+                        }
+                    }
+
+                    currentResults = nextResults;
+                }
+
+                joinedRecords.AddRange(currentResults);
+            }
+
+            // RIGHT JOINの処理
+            foreach (var (joinTable, joinAlias, joinClause) in joinTables)
+            {
+                if (joinClause.JoinType != JoinType.Right)
+                    continue;
+
+                foreach (var joinRecord in joinTable.Records)
+                {
+                    if (joinRecord == null)
+                        continue;
+
+                    var hasMatch = joinedRecords.Any(jr =>
+                        jr.TableRecords.TryGetValue(joinAlias, out var rec) && rec != null &&
+                        ReferenceEquals(rec, joinRecord));
+
+                    if (!hasMatch)
+                    {
+                        var nullRecord = new JoinedRecord
+                        {
+                            TableRecords = { [mainAlias] = null, [joinAlias] = joinRecord },
+                            TableTypes = { [mainAlias] = mainTable.RecordType, [joinAlias] = joinTable.RecordType }
+                        };
+                        joinedRecords.Add(nullRecord);
+                    }
+                }
+            }
+
+            // WHERE句の適用
+            if (stmt.WhereClause != null)
+            {
+                joinedRecords = joinedRecords
+                    .Where(jr => EvaluateJoinCondition(stmt.WhereClause, jr))
+                    .ToList();
+            }
+
+            // GROUP BY がある場合
+            if (stmt.GroupBy.Count > 0 || HasAggregateFunction(stmt.Columns))
+            {
+                ExecuteJoinedGroupBy(stmt, joinedRecords, result);
+                return;
+            }
+
+            // 結果の構築
+            var resultRecords = new List<object>();
+            var columnNames = new List<string>();
+
+            // カラム名の決定
+            foreach (var col in stmt.Columns)
+            {
+                if (col.IsWildcard)
+                {
+                    columnNames.Add(mainAlias + ".*");
+                    foreach (var (_, alias, _) in joinTables)
+                        columnNames.Add(alias + ".*");
+                }
+                else
+                {
+                    var colName = GetJoinedColumnName(col);
+                    columnNames.Add(col.Alias ?? colName);
+                }
+            }
+
+            result.ColumnNames = columnNames;
+            result.Records = joinedRecords.Cast<object>().ToList();
+        }
+
+        /// <summary>
+        /// GROUP BYを含むSELECTを実行する。
+        /// </summary>
+        private void ExecuteSelectWithGroupBy(SelectStatement stmt, ITableAsset table, SqlQueryResult result)
+        {
+            var recordType = table.RecordType;
+            var records = new List<object>();
+
+            // WHEREフィルタリング
+            foreach (var record in table.Records)
+            {
+                if (record == null)
+                    continue;
+
+                if (stmt.WhereClause == null || EvaluateExpression(stmt.WhereClause, record, recordType))
+                    records.Add(record);
+            }
+
+            // グルーピング
+            var groups = new Dictionary<string, AggregateGroup>();
+
+            foreach (var record in records)
+            {
+                var keyValues = new List<object>();
+                foreach (var groupItem in stmt.GroupBy)
+                {
+                    var value = ResolveValue(groupItem.Expression, record, recordType);
+                    keyValues.Add(value);
+                }
+
+                var key = string.Join("|", keyValues.Select(v => v?.ToString() ?? "NULL"));
+
+                if (!groups.TryGetValue(key, out var group))
+                {
+                    group = new AggregateGroup { GroupKeyValues = keyValues };
+                    groups[key] = group;
+                }
+                group.Records.Add(record);
+            }
+
+            // GROUP BY がない場合は全レコードを1グループに
+            if (stmt.GroupBy.Count == 0)
+                groups[""] = new AggregateGroup { Records = records };
+
+            // HAVING フィルタリング
+            var filteredGroups = groups.Values.ToList();
+            if (stmt.HavingClause != null)
+            {
+                filteredGroups = filteredGroups
+                    .Where(g => EvaluateHavingCondition(stmt.HavingClause, g, recordType))
+                    .ToList();
+            }
+
+            // 結果の構築
+            var resultRows = new List<ResultRow>();
+
+            foreach (var group in filteredGroups)
+            {
+                var row = new ResultRow();
+                var keyIndex = 0;
+
+                foreach (var col in stmt.Columns)
+                {
+                    if (col.IsWildcard)
+                        continue;
+
+                    var colName = col.Alias ?? GetExpressionName(col.Expression);
+                    object value;
+
+                    if (col.Expression is AggregateExpression aggExpr)
+                    {
+                        value = EvaluateAggregate(aggExpr, group.Records, recordType);
+                    }
+                    else if (col.Expression is ColumnExpression && keyIndex < group.GroupKeyValues.Count)
+                    {
+                        value = group.GroupKeyValues[keyIndex++];
+                    }
+                    else
+                    {
+                        value = group.Records.Count > 0
+                            ? ResolveValue(col.Expression, group.Records[0], recordType)
+                            : null;
+                    }
+
+                    row.Values[colName] = value;
+                }
+
+                resultRows.Add(row);
+            }
+
+            // ORDER BY
+            if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
+                resultRows = SortResultRows(resultRows, stmt.OrderBy);
+
+            // OFFSET/LIMIT
+            if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
+                resultRows = resultRows.Skip(stmt.Offset.Value).ToList();
+
+            if (stmt.Limit.HasValue)
+                resultRows = resultRows.Take(stmt.Limit.Value).ToList();
+
+            result.ColumnNames = stmt.Columns
+                .Where(c => !c.IsWildcard)
+                .Select(c => c.Alias ?? GetExpressionName(c.Expression))
+                .ToList();
+            result.Records = resultRows.Cast<object>().ToList();
+        }
+
+        /// <summary>
+        /// JOIN結果に対してGROUP BYを実行する。
+        /// </summary>
+        private void ExecuteJoinedGroupBy(SelectStatement stmt, List<JoinedRecord> joinedRecords, SqlQueryResult result)
+        {
+            var groups = new Dictionary<string, List<JoinedRecord>>();
+
+            foreach (var jr in joinedRecords)
+            {
+                var keyValues = new List<object>();
+                foreach (var groupItem in stmt.GroupBy)
+                {
+                    var value = ResolveJoinedValue(groupItem.Expression, jr);
+                    keyValues.Add(value);
+                }
+
+                var key = string.Join("|", keyValues.Select(v => v?.ToString() ?? "NULL"));
+
+                if (!groups.TryGetValue(key, out var groupList))
+                {
+                    groupList = new List<JoinedRecord>();
+                    groups[key] = groupList;
+                }
+                groupList.Add(jr);
+            }
+
+            // GROUP BY がない場合は全レコードを1グループに
+            if (stmt.GroupBy.Count == 0)
+                groups[""] = joinedRecords;
+
+            // 結果の構築
+            var resultRows = new List<ResultRow>();
+
+            foreach (var kvp in groups)
+            {
+                var groupRecords = kvp.Value;
+                var row = new ResultRow();
+
+                foreach (var col in stmt.Columns)
+                {
+                    if (col.IsWildcard)
+                        continue;
+
+                    var colName = col.Alias ?? GetExpressionName(col.Expression);
+                    object value;
+
+                    if (col.Expression is AggregateExpression aggExpr)
+                    {
+                        value = EvaluateJoinedAggregate(aggExpr, groupRecords);
+                    }
+                    else
+                    {
+                        value = groupRecords.Count > 0
+                            ? ResolveJoinedValue(col.Expression, groupRecords[0])
+                            : null;
+                    }
+
+                    row.Values[colName] = value;
+                }
+
+                resultRows.Add(row);
+            }
+
+            result.ColumnNames = stmt.Columns
+                .Where(c => !c.IsWildcard)
+                .Select(c => c.Alias ?? GetExpressionName(c.Expression))
+                .ToList();
+            result.Records = resultRows.Cast<object>().ToList();
+        }
+
+        /// <summary>
+        /// 集計関数があるかチェックする。
+        /// </summary>
+        private bool HasAggregateFunction(List<SelectColumn> columns)
+        {
+            return columns.Any(c => c.Expression is AggregateExpression);
+        }
+
+        /// <summary>
+        /// 集計関数を評価する。
+        /// </summary>
+        private object EvaluateAggregate(AggregateExpression aggExpr, List<object> records, Type recordType)
+        {
+            if (records.Count == 0)
+            {
+                return aggExpr.Function == AggregateFunction.Count ? 0 : null;
+            }
+
+            var values = new List<object>();
+
+            if (aggExpr.Argument == null)
+            {
+                // COUNT(*)
+                return records.Count;
+            }
+
+            foreach (var record in records)
+            {
+                var value = ResolveValue(aggExpr.Argument, record, recordType);
+                if (value != null)
+                    values.Add(value);
+            }
+
+            if (aggExpr.IsDistinct)
+                values = values.Distinct().ToList();
+
+            return aggExpr.Function switch
+            {
+                AggregateFunction.Count => values.Count,
+                AggregateFunction.Sum => CalculateSum(values),
+                AggregateFunction.Avg => CalculateAvg(values),
+                AggregateFunction.Min => CalculateMin(values),
+                AggregateFunction.Max => CalculateMax(values),
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// JOIN結果に対して集計関数を評価する。
+        /// </summary>
+        private object EvaluateJoinedAggregate(AggregateExpression aggExpr, List<JoinedRecord> records)
+        {
+            if (records.Count == 0)
+            {
+                return aggExpr.Function == AggregateFunction.Count ? 0 : null;
+            }
+
+            var values = new List<object>();
+
+            if (aggExpr.Argument == null)
+            {
+                // COUNT(*)
+                return records.Count;
+            }
+
+            foreach (var record in records)
+            {
+                var value = ResolveJoinedValue(aggExpr.Argument, record);
+                if (value != null)
+                    values.Add(value);
+            }
+
+            if (aggExpr.IsDistinct)
+                values = values.Distinct().ToList();
+
+            return aggExpr.Function switch
+            {
+                AggregateFunction.Count => values.Count,
+                AggregateFunction.Sum => CalculateSum(values),
+                AggregateFunction.Avg => CalculateAvg(values),
+                AggregateFunction.Min => CalculateMin(values),
+                AggregateFunction.Max => CalculateMax(values),
+                _ => null
+            };
+        }
+
+        private object CalculateSum(List<object> values)
+        {
+            if (values.Count == 0)
+                return null;
+
+            double sum = 0;
+            foreach (var value in values)
+            {
+                if (IsNumeric(value))
+                    sum += Convert.ToDouble(value);
+            }
+            return sum;
+        }
+
+        private object CalculateAvg(List<object> values)
+        {
+            if (values.Count == 0)
+                return null;
+
+            var numericValues = values.Where(IsNumeric).ToList();
+            if (numericValues.Count == 0)
+                return null;
+
+            return numericValues.Average(v => Convert.ToDouble(v));
+        }
+
+        private object CalculateMin(List<object> values)
+        {
+            if (values.Count == 0)
+                return null;
+
+            object min = null;
+            foreach (var value in values)
+            {
+                if (min == null || Compare(value, min) < 0)
+                    min = value;
+            }
+            return min;
+        }
+
+        private object CalculateMax(List<object> values)
+        {
+            if (values.Count == 0)
+                return null;
+
+            object max = null;
+            foreach (var value in values)
+            {
+                if (max == null || Compare(value, max) > 0)
+                    max = value;
+            }
+            return max;
+        }
+
+        /// <summary>
+        /// HAVING条件を評価する。
+        /// </summary>
+        private bool EvaluateHavingCondition(SqlExpression expr, AggregateGroup group, Type recordType)
+        {
+            switch (expr)
+            {
+                case LogicalExpression logical:
+                    var leftResult = EvaluateHavingCondition(logical.Left, group, recordType);
+                    var rightResult = EvaluateHavingCondition(logical.Right, group, recordType);
+
+                    return logical.Operator switch
+                    {
+                        LogicalOperator.And => leftResult && rightResult,
+                        LogicalOperator.Or => leftResult || rightResult,
+                        _ => false
+                    };
+
+                case ComparisonExpression comparison:
+                    return EvaluateHavingComparison(comparison, group, recordType);
+
+                default:
+                    return false;
+            }
+        }
+
+        private bool EvaluateHavingComparison(ComparisonExpression expr, AggregateGroup group, Type recordType)
+        {
+            var leftValue = ResolveHavingValue(expr.Left, group, recordType);
+            var rightValue = ResolveHavingValue(expr.Right, group, recordType);
+
+            return expr.Operator switch
+            {
+                ComparisonOperator.Equal => AreEqual(leftValue, rightValue),
+                ComparisonOperator.NotEqual => !AreEqual(leftValue, rightValue),
+                ComparisonOperator.LessThan => Compare(leftValue, rightValue) < 0,
+                ComparisonOperator.LessOrEqual => Compare(leftValue, rightValue) <= 0,
+                ComparisonOperator.GreaterThan => Compare(leftValue, rightValue) > 0,
+                ComparisonOperator.GreaterOrEqual => Compare(leftValue, rightValue) >= 0,
+                _ => false
+            };
+        }
+
+        private object ResolveHavingValue(SqlExpression expr, AggregateGroup group, Type recordType)
+        {
+            return expr switch
+            {
+                AggregateExpression aggExpr => EvaluateAggregate(aggExpr, group.Records, recordType),
+                LiteralExpression literal => literal.Value,
+                ColumnExpression column => group.Records.Count > 0
+                    ? GetFieldValue(group.Records[0], recordType, column.ColumnName)
+                    : null,
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// JOIN条件を評価する。
+        /// </summary>
+        private bool EvaluateJoinCondition(SqlExpression expr, JoinedRecord joinedRecord)
+        {
+            switch (expr)
+            {
+                case LogicalExpression logical:
+                    var leftResult = EvaluateJoinCondition(logical.Left, joinedRecord);
+                    var rightResult = EvaluateJoinCondition(logical.Right, joinedRecord);
+
+                    return logical.Operator switch
+                    {
+                        LogicalOperator.And => leftResult && rightResult,
+                        LogicalOperator.Or => leftResult || rightResult,
+                        _ => false
+                    };
+
+                case ComparisonExpression comparison:
+                    return EvaluateJoinComparison(comparison, joinedRecord);
+
+                default:
+                    return false;
+            }
+        }
+
+        private bool EvaluateJoinComparison(ComparisonExpression expr, JoinedRecord joinedRecord)
+        {
+            var leftValue = ResolveJoinedValue(expr.Left, joinedRecord);
+
+            switch (expr.Operator)
+            {
+                case ComparisonOperator.IsNull:
+                    return leftValue == null;
+                case ComparisonOperator.IsNotNull:
+                    return leftValue != null;
+                default:
+                    var rightValue = ResolveJoinedValue(expr.Right, joinedRecord);
+                    return expr.Operator switch
+                    {
+                        ComparisonOperator.Equal => AreEqual(leftValue, rightValue),
+                        ComparisonOperator.NotEqual => !AreEqual(leftValue, rightValue),
+                        ComparisonOperator.LessThan => Compare(leftValue, rightValue) < 0,
+                        ComparisonOperator.LessOrEqual => Compare(leftValue, rightValue) <= 0,
+                        ComparisonOperator.GreaterThan => Compare(leftValue, rightValue) > 0,
+                        ComparisonOperator.GreaterOrEqual => Compare(leftValue, rightValue) >= 0,
+                        _ => false
+                    };
+            }
+        }
+
+        /// <summary>
+        /// JOIN結果から値を取得する。
+        /// </summary>
+        private object ResolveJoinedValue(SqlExpression expr, JoinedRecord joinedRecord)
+        {
+            switch (expr)
+            {
+                case LiteralExpression literal:
+                    return literal.Value;
+
+                case ColumnExpression column:
+                    // テーブルエイリアスが指定されている場合
+                    if (!string.IsNullOrEmpty(column.TableAlias))
+                    {
+                        var record = joinedRecord.GetRecord(column.TableAlias);
+                        var recordType = joinedRecord.GetRecordType(column.TableAlias);
+                        if (record != null && recordType != null)
+                            return GetFieldValue(record, recordType, column.ColumnName);
+                        return null;
+                    }
+
+                    // テーブルエイリアスがない場合は全テーブルから検索
+                    foreach (var kvp in joinedRecord.TableRecords)
+                    {
+                        var record = kvp.Value;
+                        if (record == null)
+                            continue;
+
+                        var recordType = joinedRecord.GetRecordType(kvp.Key);
+                        var value = GetFieldValue(record, recordType, column.ColumnName);
+                        if (value != null)
+                            return value;
+                    }
+                    return null;
+
+                case AggregateExpression:
+                case ArithmeticExpression:
+                case CaseExpression:
+                case FunctionCallExpression:
+                    // これらは別途処理が必要
+                    return null;
+
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// DISTINCTを適用する。
+        /// </summary>
+        private List<object> ApplyDistinct(List<object> records, List<SelectColumn> columns, Type recordType)
+        {
+            var seen = new HashSet<string>();
+            var result = new List<object>();
+
+            foreach (var record in records)
+            {
+                var keyParts = new List<string>();
+
+                foreach (var col in columns)
+                {
+                    if (col.IsWildcard)
+                    {
+                        foreach (var field in recordType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                        {
+                            var value = field.GetValue(record);
+                            keyParts.Add(value?.ToString() ?? "NULL");
+                        }
+                    }
+                    else if (col.Expression is ColumnExpression colExpr)
+                    {
+                        var value = GetFieldValue(record, recordType, colExpr.ColumnName);
+                        keyParts.Add(value?.ToString() ?? "NULL");
+                    }
+                }
+
+                var key = string.Join("|", keyParts);
+                if (seen.Add(key))
+                    result.Add(record);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 式の名前を取得する。
+        /// </summary>
+        private string GetExpressionName(SqlExpression expr)
+        {
+            return expr switch
+            {
+                ColumnExpression col => col.ToString(),
+                AggregateExpression agg => agg.ToString(),
+                FunctionCallExpression func => func.ToString(),
+                _ => expr.ToString()
+            };
+        }
+
+        /// <summary>
+        /// JOINカラム名を取得する。
+        /// </summary>
+        private string GetJoinedColumnName(SelectColumn col)
+        {
+            if (col.Expression is ColumnExpression colExpr)
+                return colExpr.ToString();
+            return col.Expression.ToString();
+        }
+
+        /// <summary>
+        /// ResultRowのソート。
+        /// </summary>
+        private List<ResultRow> SortResultRows(List<ResultRow> rows, List<OrderByItem> orderBy)
+        {
+            IOrderedEnumerable<ResultRow> ordered = null;
+
+            for (var i = 0; i < orderBy.Count; i++)
+            {
+                var item = orderBy[i];
+                var columnName = GetExpressionName(item.Expression);
+
+                Func<ResultRow, object> keySelector = r => r[columnName];
+
+                if (i == 0)
+                {
+                    ordered = item.Order == SortOrder.Descending
+                        ? rows.OrderByDescending(keySelector, new ObjectComparer())
+                        : rows.OrderBy(keySelector, new ObjectComparer());
+                }
+                else
+                {
+                    ordered = item.Order == SortOrder.Descending
+                        ? ordered.ThenByDescending(keySelector, new ObjectComparer())
+                        : ordered.ThenBy(keySelector, new ObjectComparer());
+                }
+            }
+
+            return ordered?.ToList() ?? rows;
         }
 
         /// <summary>
@@ -323,12 +1091,118 @@ namespace Xeon.XScriptableDB.Editor
         /// </summary>
         private object ResolveValue(SqlExpression expr, object record, Type recordType)
         {
-            return expr switch
+            switch (expr)
             {
-                LiteralExpression literal => literal.Value,
-                ColumnExpression column => GetFieldValue(record, recordType, column.ColumnName),
+                case LiteralExpression literal:
+                    return literal.Value;
+
+                case ColumnExpression column:
+                    return GetFieldValue(record, recordType, column.ColumnName);
+
+                case ArithmeticExpression arith:
+                    return EvaluateArithmetic(arith, record, recordType);
+
+                case CaseExpression caseExpr:
+                    return EvaluateCase(caseExpr, record, recordType);
+
+                case FunctionCallExpression funcExpr:
+                    return EvaluateFunction(funcExpr, record, recordType);
+
+                case AggregateExpression:
+                    // 集計関数は単一レコードでは評価できない
+                    return null;
+
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// 算術式を評価する。
+        /// </summary>
+        private object EvaluateArithmetic(ArithmeticExpression expr, object record, Type recordType)
+        {
+            var left = ResolveValue(expr.Left, record, recordType);
+            var right = ResolveValue(expr.Right, record, recordType);
+
+            if (!IsNumeric(left) || !IsNumeric(right))
+                return null;
+
+            var leftVal = Convert.ToDouble(left);
+            var rightVal = Convert.ToDouble(right);
+
+            return expr.Operator switch
+            {
+                ArithmeticOperator.Add => leftVal + rightVal,
+                ArithmeticOperator.Subtract => leftVal - rightVal,
+                ArithmeticOperator.Multiply => leftVal * rightVal,
+                ArithmeticOperator.Divide => rightVal != 0 ? leftVal / rightVal : null,
+                ArithmeticOperator.Modulo => rightVal != 0 ? leftVal % rightVal : null,
                 _ => null
             };
+        }
+
+        /// <summary>
+        /// CASE式を評価する。
+        /// </summary>
+        private object EvaluateCase(CaseExpression expr, object record, Type recordType)
+        {
+            foreach (var when in expr.WhenClauses)
+            {
+                if (EvaluateExpression(when.Condition, record, recordType))
+                    return ResolveValue(when.Result, record, recordType);
+            }
+
+            if (expr.ElseExpression != null)
+                return ResolveValue(expr.ElseExpression, record, recordType);
+
+            return null;
+        }
+
+        /// <summary>
+        /// 関数を評価する。
+        /// </summary>
+        private object EvaluateFunction(FunctionCallExpression expr, object record, Type recordType)
+        {
+            var args = expr.Arguments.Select(a => ResolveValue(a, record, recordType)).ToList();
+
+            return expr.FunctionName.ToUpper() switch
+            {
+                "UPPER" => args.FirstOrDefault()?.ToString()?.ToUpper(),
+                "LOWER" => args.FirstOrDefault()?.ToString()?.ToLower(),
+                "TRIM" => args.FirstOrDefault()?.ToString()?.Trim(),
+                "LENGTH" => args.FirstOrDefault()?.ToString()?.Length ?? 0,
+                "CONCAT" => string.Concat(args.Select(a => a?.ToString() ?? "")),
+                "SUBSTRING" => EvaluateSubstring(args),
+                _ => null
+            };
+        }
+
+        private object EvaluateSubstring(List<object> args)
+        {
+            if (args.Count < 2)
+                return null;
+
+            var str = args[0]?.ToString();
+            if (string.IsNullOrEmpty(str))
+                return null;
+
+            if (!int.TryParse(args[1]?.ToString(), out var start))
+                return null;
+
+            // SQLのSUBSTRINGは1始まり
+            start = Math.Max(0, start - 1);
+
+            if (args.Count >= 3 && int.TryParse(args[2]?.ToString(), out var length))
+            {
+                if (start >= str.Length)
+                    return "";
+                return str.Substring(start, Math.Min(length, str.Length - start));
+            }
+
+            if (start >= str.Length)
+                return "";
+            return str.Substring(start);
         }
 
         /// <summary>
