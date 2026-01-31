@@ -204,7 +204,31 @@ namespace Xeon.XScriptableDB.Editor
 
             // DISTINCT
             if (stmt.IsDistinct)
+            {
+                // 特定カラムのみのDISTINCTの場合、ResultRowを返す
+                var hasSpecificColumns = stmt.Columns.Any(c => !c.IsWildcard);
+                if (hasSpecificColumns)
+                {
+                    var distinctRows = ApplyDistinctAsResultRows(records, stmt.Columns, recordType);
+
+                    // ソート
+                    if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
+                        distinctRows = SortResultRows(distinctRows, stmt.OrderBy);
+
+                    // OFFSET
+                    if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
+                        distinctRows = distinctRows.Skip(stmt.Offset.Value).ToList();
+
+                    // LIMIT
+                    if (stmt.Limit.HasValue)
+                        distinctRows = distinctRows.Take(stmt.Limit.Value).ToList();
+
+                    result.ColumnNames = GetColumnNames(stmt.Columns, recordType);
+                    result.Records = distinctRows.Cast<object>().ToList();
+                    return;
+                }
                 records = ApplyDistinct(records, stmt.Columns, recordType);
+            }
 
             // OFFSET
             if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
@@ -216,7 +240,63 @@ namespace Xeon.XScriptableDB.Editor
 
             // カラム名の決定
             result.ColumnNames = GetColumnNames(stmt.Columns, recordType);
-            result.Records = records;
+
+            // 算術演算や関数呼び出しがある場合はResultRowを構築する
+            if (NeedsResultRowProjection(stmt.Columns))
+            {
+                var resultRows = new List<ResultRow>();
+                foreach (var record in records)
+                {
+                    var row = new ResultRow { SourceRecord = record };
+                    foreach (var col in stmt.Columns)
+                    {
+                        if (col.IsWildcard)
+                        {
+                            // ワイルドカードの場合は全フィールドを追加
+                            foreach (var field in recordType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                            {
+                                row.Values[field.Name] = field.GetValue(record);
+                            }
+                        }
+                        else
+                        {
+                            var colName = col.Alias ?? GetExpressionName(col.Expression);
+                            row.Values[colName] = ResolveValue(col.Expression, record, recordType);
+                        }
+                    }
+                    resultRows.Add(row);
+                }
+                result.Records = resultRows.Cast<object>().ToList();
+            }
+            else
+            {
+                result.Records = records;
+            }
+        }
+
+        /// <summary>
+        /// カラムリストにResultRowへの射影が必要な式が含まれているかチェックする。
+        /// </summary>
+        private bool NeedsResultRowProjection(List<SelectColumn> columns)
+        {
+            foreach (var col in columns)
+            {
+                if (col.IsWildcard)
+                    continue;
+
+                switch (col.Expression)
+                {
+                    case ArithmeticExpression:
+                    case CaseExpression:
+                    case FunctionCallExpression:
+                        return true;
+                }
+
+                // エイリアスがある場合もResultRowが必要
+                if (!string.IsNullOrEmpty(col.Alias))
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -516,10 +596,19 @@ namespace Xeon.XScriptableDB.Editor
             if (stmt.GroupBy.Count == 0)
                 groups[""] = joinedRecords;
 
+            // HAVINGフィルタリング
+            var filteredGroups = groups.ToList();
+            if (stmt.HavingClause != null)
+            {
+                filteredGroups = filteredGroups
+                    .Where(kvp => EvaluateJoinedHavingCondition(stmt.HavingClause, kvp.Value))
+                    .ToList();
+            }
+
             // 結果の構築
             var resultRows = new List<ResultRow>();
 
-            foreach (var kvp in groups)
+            foreach (var kvp in filteredGroups)
             {
                 var groupRecords = kvp.Value;
                 var row = new ResultRow();
@@ -554,6 +643,62 @@ namespace Xeon.XScriptableDB.Editor
                 .Select(c => c.Alias ?? GetExpressionName(c.Expression))
                 .ToList();
             result.Records = resultRows.Cast<object>().ToList();
+        }
+
+        /// <summary>
+        /// JOIN結果グループに対するHAVING条件を評価する。
+        /// </summary>
+        private bool EvaluateJoinedHavingCondition(SqlExpression expr, List<JoinedRecord> groupRecords)
+        {
+            switch (expr)
+            {
+                case LogicalExpression logical:
+                    var leftResult = EvaluateJoinedHavingCondition(logical.Left, groupRecords);
+                    var rightResult = EvaluateJoinedHavingCondition(logical.Right, groupRecords);
+
+                    return logical.Operator switch
+                    {
+                        LogicalOperator.And => leftResult && rightResult,
+                        LogicalOperator.Or => leftResult || rightResult,
+                        _ => false
+                    };
+
+                case ComparisonExpression comparison:
+                    return EvaluateJoinedHavingComparison(comparison, groupRecords);
+
+                default:
+                    return false;
+            }
+        }
+
+        private bool EvaluateJoinedHavingComparison(ComparisonExpression expr, List<JoinedRecord> groupRecords)
+        {
+            var leftValue = ResolveJoinedHavingValue(expr.Left, groupRecords);
+            var rightValue = ResolveJoinedHavingValue(expr.Right, groupRecords);
+
+            return expr.Operator switch
+            {
+                ComparisonOperator.Equal => AreEqual(leftValue, rightValue),
+                ComparisonOperator.NotEqual => !AreEqual(leftValue, rightValue),
+                ComparisonOperator.LessThan => Compare(leftValue, rightValue) < 0,
+                ComparisonOperator.LessOrEqual => Compare(leftValue, rightValue) <= 0,
+                ComparisonOperator.GreaterThan => Compare(leftValue, rightValue) > 0,
+                ComparisonOperator.GreaterOrEqual => Compare(leftValue, rightValue) >= 0,
+                _ => false
+            };
+        }
+
+        private object ResolveJoinedHavingValue(SqlExpression expr, List<JoinedRecord> groupRecords)
+        {
+            return expr switch
+            {
+                AggregateExpression aggExpr => EvaluateJoinedAggregate(aggExpr, groupRecords),
+                LiteralExpression literal => literal.Value,
+                ColumnExpression column => groupRecords.Count > 0
+                    ? ResolveJoinedValue(column, groupRecords[0])
+                    : null,
+                _ => null
+            };
         }
 
         /// <summary>
@@ -888,6 +1033,47 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
+        /// DISTINCTを適用し、ResultRowとして返す。
+        /// </summary>
+        private List<ResultRow> ApplyDistinctAsResultRows(List<object> records, List<SelectColumn> columns, Type recordType)
+        {
+            var seen = new HashSet<string>();
+            var result = new List<ResultRow>();
+
+            foreach (var record in records)
+            {
+                var row = new ResultRow { SourceRecord = record };
+                var keyParts = new List<string>();
+
+                foreach (var col in columns)
+                {
+                    if (col.IsWildcard)
+                    {
+                        foreach (var field in recordType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                        {
+                            var value = field.GetValue(record);
+                            row.Values[field.Name] = value;
+                            keyParts.Add(value?.ToString() ?? "NULL");
+                        }
+                    }
+                    else
+                    {
+                        var colName = col.Alias ?? GetExpressionName(col.Expression);
+                        var value = ResolveValue(col.Expression, record, recordType);
+                        row.Values[colName] = value;
+                        keyParts.Add(value?.ToString() ?? "NULL");
+                    }
+                }
+
+                var key = string.Join("|", keyParts);
+                if (seen.Add(key))
+                    result.Add(row);
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// 式の名前を取得する。
         /// </summary>
         private string GetExpressionName(SqlExpression expr)
@@ -1059,6 +1245,19 @@ namespace Xeon.XScriptableDB.Editor
                     return leftValue != null;
 
                 case ComparisonOperator.In:
+                    // サブクエリの場合
+                    if (expr.Right is SubqueryExpression subqueryExpr)
+                    {
+                        var subqueryValues = ExecuteSubquery(subqueryExpr.Subquery);
+                        foreach (var subValue in subqueryValues)
+                        {
+                            if (AreEqual(leftValue, subValue))
+                                return true;
+                        }
+                        return false;
+                    }
+
+                    // 通常のINリスト
                     if (expr.Right is InListExpression inList)
                     {
                         foreach (var item in inList.Values)
@@ -1071,7 +1270,18 @@ namespace Xeon.XScriptableDB.Editor
                     return false;
 
                 default:
-                    var rightValue = ResolveValue(expr.Right, record, recordType);
+                    // サブクエリの場合
+                    object rightValue;
+                    if (expr.Right is SubqueryExpression subquery)
+                    {
+                        var subqueryValues = ExecuteSubquery(subquery.Subquery);
+                        rightValue = subqueryValues.FirstOrDefault();
+                    }
+                    else
+                    {
+                        rightValue = ResolveValue(expr.Right, record, recordType);
+                    }
+
                     return expr.Operator switch
                     {
                         ComparisonOperator.Equal => AreEqual(leftValue, rightValue),
@@ -1084,6 +1294,48 @@ namespace Xeon.XScriptableDB.Editor
                         _ => false
                     };
             }
+        }
+
+        /// <summary>
+        /// サブクエリを実行して結果の値リストを返す。
+        /// </summary>
+        private List<object> ExecuteSubquery(SelectStatement subquery)
+        {
+            var result = new SqlQueryResult();
+            ExecuteSelect(subquery, result);
+
+            if (!result.IsSuccess || result.Records.Count == 0)
+                return new List<object>();
+
+            var values = new List<object>();
+
+            foreach (var record in result.Records)
+            {
+                if (record is ResultRow row)
+                {
+                    // ResultRowの場合、最初のカラムの値を取得
+                    var firstValue = row.Values.Values.FirstOrDefault();
+                    values.Add(firstValue);
+                }
+                else
+                {
+                    // 通常レコードの場合、選択されたカラムの値を取得
+                    var recordType = record.GetType();
+                    if (subquery.Columns.Count > 0 && !subquery.Columns[0].IsWildcard)
+                    {
+                        var colExpr = subquery.Columns[0].Expression;
+                        var value = ResolveValue(colExpr, record, recordType);
+                        values.Add(value);
+                    }
+                    else
+                    {
+                        // ワイルドカードの場合、レコード全体を追加
+                        values.Add(record);
+                    }
+                }
+            }
+
+            return values;
         }
 
         /// <summary>

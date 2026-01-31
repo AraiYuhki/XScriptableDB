@@ -397,7 +397,7 @@ namespace Xeon.XScriptableDB.Editor
                 }
                 else
                 {
-                    var csv = Xeon.XScriptableDB.IO.CsvParser.ToCsv(records, table.RecordType);
+                    var csv = IO.CsvParser.ToCSV(records, table.RecordType);
                     File.WriteAllText(outputPath, csv);
                 }
             }

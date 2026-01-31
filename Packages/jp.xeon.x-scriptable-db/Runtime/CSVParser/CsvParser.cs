@@ -81,8 +81,10 @@ namespace Xeon.XScriptableDB.IO
         }
 
         private static (Dictionary<string, CsvColumn> attributes, Dictionary<string, MemberInfo> members) GetMembers<T>()
+            => GetMembers(typeof(T));
+
+        private static (Dictionary<string, CsvColumn> attributes, Dictionary<string, MemberInfo> members) GetMembers(Type type)
         {
-            var type = typeof(T);
             var attributes = new Dictionary<string, CsvColumn>();
             var members = new Dictionary<string, MemberInfo>();
             var fields = type.GetFields(MemberFlags).Select(field => field as MemberInfo);
@@ -222,12 +224,17 @@ namespace Xeon.XScriptableDB.IO
             => ToCSV(data, defaultSeparator);
 
         public static string ToCSV<T>(List<T> data, string separator)
+            => ToCSV((IEnumerable<object>)data.Cast<object>(), typeof(T), separator);
+
+        public static string ToCSV(IEnumerable<object> data, Type recordType)
+            => ToCSV(data, recordType, defaultSeparator);
+
+        public static string ToCSV(IEnumerable<object> data, Type recordType, string separator)
         {
             var builder = new StringBuilder();
-            var (attributes, members) = GetMembers<T>();
+            var (attributes, members) = GetMembers(recordType);
             builder.AppendLine(string.Join(separator, attributes.Keys));
 
-            var type = typeof(T);
             foreach (var row in data)
             {
                 var values = new List<string>();
@@ -235,8 +242,8 @@ namespace Xeon.XScriptableDB.IO
                 {
                     object value = member.MemberType switch
                     {
-                        MemberTypes.Property => type.GetProperty(member.Name)?.GetValue(row),
-                        MemberTypes.Field => type.GetField(member.Name, MemberFlags)?.GetValue(row),
+                        MemberTypes.Property => recordType.GetProperty(member.Name)?.GetValue(row),
+                        MemberTypes.Field => recordType.GetField(member.Name, MemberFlags)?.GetValue(row),
                         _ => null
                     };
                     values.Add(ValueToString(value));

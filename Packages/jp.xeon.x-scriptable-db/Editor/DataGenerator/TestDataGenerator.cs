@@ -101,7 +101,9 @@ namespace Xeon.XScriptableDB.Editor
                 generatedCount++;
             }
 
-            EditorUtility.SetDirty(table as UnityEngine.Object);
+            var unityObject = table as UnityEngine.Object;
+            if (unityObject != null)
+                EditorUtility.SetDirty(unityObject);
             return generatedCount;
         }
 
@@ -198,7 +200,9 @@ namespace Xeon.XScriptableDB.Editor
             {
                 if (fieldType == typeof(int))
                     return Random.Range(10, 10000);
-                if (fieldType == typeof(float) || fieldType == typeof(double))
+                if (fieldType == typeof(float))
+                    return (float)Math.Round(Random.Range(10f, 10000f), 2);
+                if (fieldType == typeof(double))
                     return Math.Round(Random.Range(10f, 10000f), 2);
             }
 
@@ -214,7 +218,9 @@ namespace Xeon.XScriptableDB.Editor
 
             if (nameLower.Contains("rate") || nameLower.Contains("percent"))
             {
-                if (fieldType == typeof(float) || fieldType == typeof(double))
+                if (fieldType == typeof(float))
+                    return (float)Math.Round(Random.Range(0f, 1f), 2);
+                if (fieldType == typeof(double))
                     return Math.Round(Random.Range(0f, 1f), 2);
                 return Random.Range(0, 101);
             }
@@ -320,12 +326,17 @@ namespace Xeon.XScriptableDB.Editor
         /// </summary>
         public static void ClearTable(ITableAsset table)
         {
+            if (table == null)
+                return;
+
             while (table.Count > 0)
             {
                 table.RemoveRecordAt(0);
             }
 
-            EditorUtility.SetDirty(table as UnityEngine.Object);
+            var unityObject = table as UnityEngine.Object;
+            if (unityObject != null)
+                EditorUtility.SetDirty(unityObject);
         }
 
         /// <summary>

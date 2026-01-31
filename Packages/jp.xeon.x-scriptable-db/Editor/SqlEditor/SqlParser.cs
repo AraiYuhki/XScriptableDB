@@ -674,8 +674,12 @@ namespace Xeon.XScriptableDB.Editor
 
         private bool IsAggregateFunction()
         {
-            return Check(TokenType.Count) || Check(TokenType.Sum) ||
-                   Check(TokenType.Avg) || Check(TokenType.Min) || Check(TokenType.Max);
+            if (!(Check(TokenType.Count) || Check(TokenType.Sum) ||
+                  Check(TokenType.Avg) || Check(TokenType.Min) || Check(TokenType.Max)))
+                return false;
+
+            // 次のトークンが ( であるかチェック（関数呼び出しの場合のみ true）
+            return current + 1 < tokens.Count && tokens[current + 1].Type == TokenType.LeftParen;
         }
 
         private SqlExpression ParseAggregateFunction()
@@ -719,9 +723,13 @@ namespace Xeon.XScriptableDB.Editor
 
         private bool IsStringFunction()
         {
-            return Check(TokenType.Upper) || Check(TokenType.Lower) ||
-                   Check(TokenType.Concat) || Check(TokenType.Substring) ||
-                   Check(TokenType.Trim) || Check(TokenType.Length);
+            if (!(Check(TokenType.Upper) || Check(TokenType.Lower) ||
+                  Check(TokenType.Concat) || Check(TokenType.Substring) ||
+                  Check(TokenType.Trim) || Check(TokenType.Length)))
+                return false;
+
+            // 次のトークンが ( であるかチェック（関数呼び出しの場合のみ true）
+            return current + 1 < tokens.Count && tokens[current + 1].Type == TokenType.LeftParen;
         }
 
         private SqlExpression ParseStringFunction()
@@ -876,7 +884,8 @@ namespace Xeon.XScriptableDB.Editor
                 return expr;
             }
 
-            var left = ParseValue();
+            // 算術式、関数、集計関数を含む式をパースする
+            var left = ParseSelectExpression();
 
             // IS NULL / IS NOT NULL
             if (Match(TokenType.Is))
@@ -915,7 +924,8 @@ namespace Xeon.XScriptableDB.Editor
             if (op == null)
                 return left;
 
-            var right = ParseValue();
+            // 算術式、関数、集計関数を含む式をパースする
+            var right = ParseSelectExpression();
 
             return new ComparisonExpression
             {
@@ -925,9 +935,17 @@ namespace Xeon.XScriptableDB.Editor
             };
         }
 
-        private InListExpression ParseInList()
+        private SqlExpression ParseInList()
         {
             Expect(TokenType.LeftParen, "(");
+
+            // サブクエリのチェック
+            if (Check(TokenType.Select))
+            {
+                var subquery = ParseSelect();
+                Expect(TokenType.RightParen, ")");
+                return new SubqueryExpression { Subquery = subquery };
+            }
 
             var list = new InListExpression();
             do
@@ -960,7 +978,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private SqlExpression ParseColumnExpression()
         {
-            var token = Expect(TokenType.Identifier, "column name");
+            var token = ExpectIdentifierOrKeyword("column name");
             var columnName = token.Value;
             string tableAlias = null;
 
@@ -968,11 +986,41 @@ namespace Xeon.XScriptableDB.Editor
             if (Match(TokenType.Dot))
             {
                 tableAlias = columnName;
-                var columnToken = Expect(TokenType.Identifier, "column name");
+                var columnToken = ExpectIdentifierOrKeyword("column name");
                 columnName = columnToken.Value;
             }
 
             return new ColumnExpression(columnName, tableAlias);
+        }
+
+        private Token ExpectIdentifierOrKeyword(string expected)
+        {
+            var token = Peek();
+
+            // Identifier は直接許可
+            if (token.Type == TokenType.Identifier)
+            {
+                Advance();
+                return token;
+            }
+
+            // 関数名として使われるキーワードもカラム名として許可
+            if (IsKeywordUsableAsColumnName(token.Type))
+            {
+                Advance();
+                return token;
+            }
+
+            throw new SqlParseException($"Expected {expected} at position {token.Position}", token.Position);
+        }
+
+        private bool IsKeywordUsableAsColumnName(TokenType type)
+        {
+            return type == TokenType.Count || type == TokenType.Sum ||
+                   type == TokenType.Avg || type == TokenType.Min || type == TokenType.Max ||
+                   type == TokenType.Upper || type == TokenType.Lower ||
+                   type == TokenType.Concat || type == TokenType.Substring ||
+                   type == TokenType.Trim || type == TokenType.Length;
         }
 
         #region Helper Methods
