@@ -15,7 +15,8 @@ namespace Xeon.XScriptableDB.Editor
             if (string.IsNullOrEmpty(path))
                 return;
             var definition = LoadDefinition(path);
-            Debug.Log(ClassGenerator.Generate(definition));
+            Debug.Log(ClassGenerator.GenerateTable(definition));
+            Debug.Log(ClassGenerator.GenerateRecord(definition));
         }
 
         public static TableDefinition LoadDefinition(string path)

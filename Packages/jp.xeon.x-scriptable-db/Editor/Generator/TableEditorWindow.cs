@@ -1,4 +1,4 @@
-using System.IO;
+ï»¿using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
@@ -15,33 +15,33 @@ namespace Xeon.XScriptableDB.Editor
         private Vector2 scrollPosition;
         private ReorderableList columnView;
         private ReorderableList indeciesView;
+        private string[] columnsCache;
 
         private void OnGUI()
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("V‹Kì¬"))
+                if (GUILayout.Button("æ–°è¦ä½œæˆ"))
                 {
                     tableDefinition = new TableDefinition();
                     CreateColumnView();
                     CreateIndeciesView();
                 }
 
-                if (GUILayout.Button("YAML“Ç‚Ýž‚Ý"))
+                if (GUILayout.Button("YAMLèª­ã¿è¾¼ã¿"))
                 {
                     LoadYaml();
                 }
             }
             if (tableDefinition == null)
             {
-                EditorGUILayout.HelpBox("•ÒW‚·‚éƒtƒ@ƒCƒ‹‚ð‘I‘ð‚·‚é‚©AV‹Kì¬‚µ‚Ä‚­‚¾‚³‚¢", MessageType.Info);
+                EditorGUILayout.HelpBox("ç·¨é›†ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é¸æŠžã™ã‚‹ã‹ã€æ–°è¦ä½œæˆã—ã¦ãã ã•ã„", MessageType.Info);
                 return;
             }
 
-            if (tableDefinition.Columns.Count(column => column.IsPrimaryKey) > 1)
-                EditorGUILayout.HelpBox("ƒvƒ‰ƒCƒ}ƒŠ[ƒL[‚Í•K‚¸ˆê‚ÂÝ’è‚µ‚Ä‚­‚¾‚³‚¢", MessageType.Error);
+            Validate();
 
-            tableDefinition.TableName = EditorGUILayout.TextField("ƒe[ƒuƒ‹–¼", tableDefinition.TableName);
+            tableDefinition.TableName = EditorGUILayout.TextField("ãƒ†ãƒ¼ãƒ–ãƒ«å", tableDefinition.TableName);
             if (columnView == null)
                 CreateColumnView();
             if (indeciesView == null)
@@ -52,6 +52,17 @@ namespace Xeon.XScriptableDB.Editor
                 indeciesView.DoLayoutList();
                 scrollPosition = scrollView.scrollPosition;
             }
+        }
+
+        private void Validate()
+        {
+            if (tableDefinition.Columns.Count(column => column.IsPrimaryKey) > 1)
+                EditorGUILayout.HelpBox("ãƒ—ãƒ©ã‚¤ãƒžãƒªãƒ¼ã‚­ãƒ¼ã¯å¿…ãšä¸€ã¤è¨­å®šã—ã¦ãã ã•ã„", MessageType.Error);
+            if (columnsCache.Length != columnsCache.Distinct().Count())
+                EditorGUILayout.HelpBox("åŒåã®ã‚«ãƒ©ãƒ ã¯ä½œæˆã§ãã¾ã›ã‚“", MessageType.Error);
+            if (tableDefinition.Indecies.Count != tableDefinition.Indecies.Distinct().Count())
+                EditorGUILayout.HelpBox("åŒã˜ã‚«ãƒ©ãƒ ã‚’è¤‡æ•°ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã«æŒ‡å®šã§ãã¾ã›ã‚“", MessageType.Error);
+
         }
 
         private void LoadYaml()
@@ -69,14 +80,62 @@ namespace Xeon.XScriptableDB.Editor
             columnView = new ReorderableList(tableDefinition.Columns, typeof(ColumnDefinition));
             columnView.drawElementCallback = DrawColumn;
             columnView.drawHeaderCallback = rect => EditorGUI.LabelField(rect, $"Columns({tableDefinition.Columns.Count})");
+            columnView.onAddCallback = OnAddColumn;
+            columnView.onRemoveCallback = OnRemoveColumn;
+            columnView.onReorderCallback = _ => UpdateColumnsCache();
+            columnView.onChangedCallback = _ => UpdateColumnsCache();
+            UpdateColumnsCache();
         }
 
         private void CreateIndeciesView()
         {
             indeciesView = new ReorderableList(tableDefinition.Indecies, typeof(string));
-            indeciesView.drawElementCallback = (rect, index, isActive, isFocused)
-                => tableDefinition.Indecies[index] = EditorGUI.TextField(rect, tableDefinition.Indecies[index]);
+            indeciesView.drawElementCallback = DrawIndex;
             indeciesView.drawHeaderCallback = rect => EditorGUI.LabelField(rect, $"Indecies({tableDefinition.Indecies.Count})");
+            UpdateColumnsCache();
+        }
+
+        private void OnAddColumn(ReorderableList list)
+        {
+            tableDefinition.Columns.Add(new ColumnDefinition { Name = "NewColumn", Type = "string" });
+            UpdateColumnsCache();
+        }
+
+        private void OnRemoveColumn(ReorderableList list)
+        {
+            if (list.index >= 0 && list.index < tableDefinition.Columns.Count)
+                tableDefinition.Columns.RemoveAt(list.index);
+            UpdateColumnsCache();
+        }
+
+        private void UpdateColumnsCache()
+        {
+            if (tableDefinition == null || tableDefinition.Columns == null)
+            {
+                columnsCache = new string[0];
+                return;
+            }
+            columnsCache = tableDefinition.Columns.Select(c => c.Name ?? string.Empty).ToArray();
+        }
+
+        private void DrawIndex(Rect rect, int index, bool isActive, bool isFocused)
+        {
+            if (columnsCache == null || columnsCache.Length == 0)
+            {
+                EditorGUI.LabelField(rect, "No columns");
+                if (tableDefinition.Indecies[index] != string.Empty)
+                    tableDefinition.Indecies[index] = string.Empty;
+                return;
+            }
+
+            var selectedIndex = System.Array.IndexOf(columnsCache, tableDefinition.Indecies[index]);
+            if (selectedIndex < 0)
+                selectedIndex = 0;
+            EditorGUI.BeginChangeCheck();
+            selectedIndex = EditorGUI.Popup(rect, selectedIndex, columnsCache);
+            if (EditorGUI.EndChangeCheck())
+                tableDefinition.Indecies[index] = columnsCache[selectedIndex];
+
         }
 
         private void DrawColumn(Rect rect, int index, bool isActive, bool isFocused)
@@ -104,7 +163,14 @@ namespace Xeon.XScriptableDB.Editor
             var primaryKeyRect = new Rect(x, y, primaryKeyWidth, lineHeight);
 
             // Draw fields without labels to keep a compact horizontal layout
-            column.Name = EditorGUI.TextField(nameRect, column.Name);
+            EditorGUI.BeginChangeCheck();
+            var newName = EditorGUI.TextField(nameRect, column.Name);
+            if (EditorGUI.EndChangeCheck())
+            {
+                column.Name = newName;
+                UpdateColumnsCache();
+            }
+
             column.Type = EditorGUI.TextField(typeRect, column.Type);
             column.IsNullable = EditorGUI.ToggleLeft(nullableRect, "Nullable", column.IsNullable);
             column.IsPrimaryKey = EditorGUI.ToggleLeft(primaryKeyRect, "PK", column.IsPrimaryKey);

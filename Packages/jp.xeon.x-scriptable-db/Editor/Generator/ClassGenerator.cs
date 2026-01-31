@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Xeon.XScriptableDB.Editor
@@ -12,11 +13,29 @@ namespace Xeon.XScriptableDB.Editor
             "bool", "char", "DateTime"
         };
 
-        public static string Generate(TableDefinition definition)
+        public static string GenerateTable(TableDefinition definition)
         {
             var namespaceName = "Xeon.XScriptableDB.Generated";
             var className = ToCamelCase(definition.TableName);
-            var fields = GenerateFields(definition.Columns);
+            var primaryKey = definition.Columns.FirstOrDefault(column => column.IsPrimaryKey) ?? definition.Columns[0];
+            var primaryKeyType = primaryKey.Type;
+            return $@"using UnityEngine;
+using Xeon.XScriptableDB;
+namespace {namespaceName}
+{{
+    [CreateAssetMenu(fileName = ""{className}"", menuName = ""Xeon/XScriptableDB/{className}"")]
+    public class {className} : TableAsset<{className}Record, {primaryKeyType}>
+    {{
+    }}
+}}
+";
+        }
+
+        public static string GenerateRecord(TableDefinition definition)
+        {
+            var namespaceName = "Xeon.XScriptableDB.Generated";
+            var className = ToCamelCase(definition.TableName);
+            var fields = GenerateFields(definition);
             var properties = GenerateProperties(definition.Columns);
             return $@"using System;
 using Xeon.XScriptableDB;
@@ -34,19 +53,18 @@ namespace {namespaceName}
         }
 
 
-        private static string GenerateFields(List<ColumnDefinition> columns)
+        private static string GenerateFields(TableDefinition tableDefinition)
         {
+            var columns = tableDefinition.Columns;
             var fieldList = new List<string>(columns.Count);
 
             foreach (var column in columns)
-            {
-                fieldList.Add(GenerateField(column));
-            }
+                fieldList.Add(GenerateField(tableDefinition, column));
 
             return string.Join("\n\n", fieldList);
         }
 
-        private static string GenerateField(ColumnDefinition column)
+        private static string GenerateField(TableDefinition tableDefinition, ColumnDefinition column)
         {
             var type = ConvertType(column.Type, column.IsNullable);
             var fieldName = ToPascalCase(column.Name);
@@ -54,6 +72,8 @@ namespace {namespaceName}
 
             if (column.IsPrimaryKey)
                 sb.Append("        [PrimaryKey]\n");
+            if (tableDefinition.Indecies.Contains(column.Name))
+                sb.Append("        [SecondaryKey]\n");
 
             sb.Append("        [SerializeField]\n");
             sb.Append($"        private {type} {fieldName};");
@@ -66,9 +86,7 @@ namespace {namespaceName}
             var propertyList = new List<string>(columns.Count);
 
             foreach (var column in columns)
-            {
                 propertyList.Add(GenerateProperty(column));
-            }
 
             return string.Join("\n\n", propertyList);
         }
