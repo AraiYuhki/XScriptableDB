@@ -124,7 +124,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (GUILayout.Button("テーブルエディタを開く", GUILayout.Height(30)))
             {
-                TableEditorWindow.Open();
+                DataEditorWindow.Open();
             }
         }
 
