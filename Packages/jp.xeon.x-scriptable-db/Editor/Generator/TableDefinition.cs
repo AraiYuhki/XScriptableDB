@@ -13,6 +13,10 @@ namespace Xeon.XScriptableDB.Editor
         [SerializeField]
         private List<ColumnDefinition> columns = new();
 
+        // TODO: •¡‡ƒL[‚É‘Î‰‚·‚é
+        [SerializeField]
+        private List<string> indecies = new();
+
         public string TableName
         {
             get => tableName;
@@ -25,9 +29,15 @@ namespace Xeon.XScriptableDB.Editor
             set => columns = value;
         }
 
+        public List<string> Indecies
+        {
+            get => indecies;
+            set => indecies = value;
+        }
+
         public override string ToString()
         {
-            return $"Table: {tableName}\nColumns:\n{string.Join('\n', columns)}";
+            return $"Table: {tableName}\nColumns:\n{string.Join('\n', columns)}\n{string.Join('\n', indecies)}";
         }
     }
 }

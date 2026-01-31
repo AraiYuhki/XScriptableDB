@@ -1,11 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Text;
-using UnityEngine;
 
 namespace Xeon.XScriptableDB.Editor
 {
-    public static class RecordClassGenerator
+    public static class ClassGenerator
     {
         private static readonly HashSet<string> PrimitiveTypeList = new() {
             "byte", "sbyte", "short", "ushort",
@@ -14,7 +12,7 @@ namespace Xeon.XScriptableDB.Editor
             "bool", "char", "DateTime"
         };
 
-        public static string GenerateRecordClass(TableDefinition definition)
+        public static string Generate(TableDefinition definition)
         {
             var namespaceName = "Xeon.XScriptableDB.Generated";
             var className = ToCamelCase(definition.TableName);
@@ -88,7 +86,7 @@ namespace {namespaceName}
         }}";
         }
 
-        public static string ConvertType(string typeName, bool isNullable)
+        private static string ConvertType(string typeName, bool isNullable)
         {
             var result = typeName.ToLower();
 
@@ -172,18 +170,5 @@ namespace {namespaceName}
 
             return char.ToLower(origin[0]) + origin.Substring(1);
         }
-    }
-
-    [Serializable]
-    public class UserRecord
-    {
-        [PrimaryKey]
-        private int id;
-
-        [SerializeField]
-        private string name;
-
-        [SerializeField]
-        private DateTime createdAt;
     }
 }

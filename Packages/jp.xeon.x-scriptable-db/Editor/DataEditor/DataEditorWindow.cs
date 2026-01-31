@@ -13,7 +13,7 @@ namespace Xeon.XScriptableDB.Editor
     /// TableAssetを編集するためのEditorWindow。
     /// 仮想スクロールにより大量レコードの表示に対応。
     /// </summary>
-    public class TableEditorWindow : EditorWindow
+    public class DataEditorWindow : EditorWindow
     {
         private enum FileFormat
         {
@@ -21,11 +21,11 @@ namespace Xeon.XScriptableDB.Editor
             TSV
         }
 
-        [MenuItem("Tools/XScriptableDB/テーブルエディタ")]
+        [MenuItem("Tools/XScriptableDB/データエディタ")]
         public static void Open()
         {
-            var window = GetWindow<TableEditorWindow>();
-            window.titleContent = new GUIContent("Table Editor");
+            var window = GetWindow<DataEditorWindow>();
+            window.titleContent = new GUIContent("Data Editor");
             window.Show();
         }
 

@@ -434,7 +434,7 @@ namespace Xeon.XScriptableDB.Editor
             if (selectedTable?.Asset == null) return;
 
             // TableEditorWindowを開く
-            var window = EditorWindow.GetWindow<TableEditorWindow>();
+            var window = EditorWindow.GetWindow<DataEditorWindow>();
             window.Show();
 
             // TODO: 選択したテーブルを開く処理を追加

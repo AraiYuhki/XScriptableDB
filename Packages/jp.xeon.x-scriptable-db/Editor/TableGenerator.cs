@@ -30,25 +30,25 @@ namespace Xeon.XScriptableDB.Editor
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                tableCreatePath = EditorGUILayout.TextField("�e�[�u���쐬��", tableCreatePath);
+                tableCreatePath = EditorGUILayout.TextField("テーブル作成先", tableCreatePath);
                 if (GUILayout.Button("...", GUILayout.Width(50f)))
                     tableCreatePath = SelectCreatePath(tableCreatePath);
             }
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                infoCreatePath = EditorGUILayout.TextField("Info�N���X�쐬��", infoCreatePath);
+                infoCreatePath = EditorGUILayout.TextField("Info作成先", infoCreatePath);
                 if (GUILayout.Button("...", GUILayout.Width(50f)))
                     infoCreatePath = SelectCreatePath(infoCreatePath);
             }
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                tableName = EditorGUILayout.TextField("�e�[�u���N���X��", tableName);
-                infoName = EditorGUILayout.TextField("Info�N���X��", infoName);
+                tableName = EditorGUILayout.TextField("テーブルクラス名", tableName);
+                infoName = EditorGUILayout.TextField("Infoクラス名", infoName);
             }
 
-            if (GUILayout.Button("����"))
+            if (GUILayout.Button("生成"))
             {
                 GenerateTableClass();
                 GenerateInfoClass();
@@ -63,7 +63,7 @@ namespace Xeon.XScriptableDB.Editor
             var directoryName = currentPath;
             if (!string.IsNullOrEmpty(Path.GetExtension(directoryName)))
                 directoryName = Path.GetDirectoryName(directoryName);
-            directoryName = EditorUtility.SaveFolderPanel("�������I��", directoryName, directoryName);
+            directoryName = EditorUtility.SaveFolderPanel("保存先を選択", directoryName, directoryName);
             if (!string.IsNullOrEmpty(directoryName))
                 return directoryName;
             return currentPath;

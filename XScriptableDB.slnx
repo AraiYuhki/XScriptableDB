@@ -1,5 +1,6 @@
 ﻿<Solution>
   <Project Path="jp.xeon.x-scriptable-db.Runtime.csproj" />
-  <Project Path="jp.xeon.x-scriptable-db.Editor.csproj" />
   <Project Path="jp.xeon.x-scriptable-db.Tests.csproj" />
+  <Project Path="jp.xeon.x-scriptable-db.Editor.csproj" />
+  <Project Path="jp.xeon.x-scriptable-db.Sample.csproj" />
 </Solution>

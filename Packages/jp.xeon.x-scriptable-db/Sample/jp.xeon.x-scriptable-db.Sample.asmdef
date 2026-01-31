@@ -1,0 +1,16 @@
+{
+    "name": "jp.xeon.x-scriptable-db.Sample",
+    "rootNamespace": "",
+    "references": [
+        "GUID:5fc94121fee664da2bda104bcc5b8b7c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

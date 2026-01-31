@@ -43,9 +43,8 @@ namespace Xeon.XScriptableDB.Editor
         public override string ToString()
         {
             var sb = new StringBuilder();
-            var realType = RecordClassGenerator.ConvertType(type, isNullable);
             sb.AppendLine($"Name: {name}");
-            sb.AppendLine($"Type: {type}({realType})");
+            sb.AppendLine($"Type: {type}");
             if (isNullable)
                 sb.Append("Is Nullable");
             if (isPrimaryKey)
