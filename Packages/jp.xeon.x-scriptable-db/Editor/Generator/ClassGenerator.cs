@@ -24,7 +24,7 @@ using Xeon.XScriptableDB;
 namespace {namespaceName}
 {{
     [CreateAssetMenu(fileName = ""{className}"", menuName = ""Xeon/XScriptableDB/{className}"")]
-    public class {className} : TableAsset<{className}Record, {primaryKeyType}>
+    public class {className}Table : TableAsset<{className}Record, {primaryKeyType}>
     {{
     }}
 }}
@@ -36,8 +36,9 @@ namespace {namespaceName}
             var namespaceName = "Xeon.XScriptableDB.Generated";
             var className = ToCamelCase(definition.TableName);
             var fields = GenerateFields(definition);
-            var properties = GenerateProperties(definition.Columns);
+            var properties = GenerateProperties(definition.Columns, definition.IsReadOnly);
             return $@"using System;
+using UnityEngine;
 using Xeon.XScriptableDB;
 
 namespace {namespaceName}
@@ -67,40 +68,52 @@ namespace {namespaceName}
         private static string GenerateField(TableDefinition tableDefinition, ColumnDefinition column)
         {
             var type = ConvertType(column.Type, column.IsNullable);
-            var fieldName = ToPascalCase(column.Name);
+            var fieldName = column.Name.ToPascalCase();
             var sb = new StringBuilder();
 
-            if (column.IsPrimaryKey)
-                sb.Append("        [PrimaryKey]\n");
-            if (tableDefinition.Indecies.Contains(column.Name))
-                sb.Append("        [SecondaryKey]\n");
+            var attributes = new List<string>() { "SerializeField" };
 
-            sb.Append("        [SerializeField]\n");
+            if (column.IsPrimaryKey)
+                attributes.Add("PrimaryKey");
+            if (tableDefinition.Indecies.Contains(column.Name))
+                attributes.Add("SecondaryKey");
+
+            sb.Append($"        [{string.Join(", ", attributes)}]\n");
             sb.Append($"        private {type} {fieldName};");
 
             return sb.ToString();
         }
 
-        private static string GenerateProperties(List<ColumnDefinition> columns)
+        private static string GenerateProperties(List<ColumnDefinition> columns, bool isReadOnly)
         {
             var propertyList = new List<string>(columns.Count);
 
             foreach (var column in columns)
-                propertyList.Add(GenerateProperty(column));
+                propertyList.Add(GenerateProperty(column, isReadOnly));
 
             return string.Join("\n\n", propertyList);
         }
 
-        private static string GenerateProperty(ColumnDefinition column)
+        private static string GenerateProperty(ColumnDefinition column, bool isReadOnly)
         {
             var type = ConvertType(column.Type, column.IsNullable);
-            var fieldName = ToPascalCase(column.Name);
-            var propertyName = ToCamelCase(column.Name);
+            var fieldName = column.Name.ToPascalCase();
+            var propertyName = column.Name.ToCamelCase();
+            if (!isReadOnly)
+            {
+                return $@"        public {type} {propertyName}
+        {{
+            get => {fieldName};
+            set => {fieldName} = value;
+        }}";
+            }
 
             return $@"        public {type} {propertyName}
         {{
             get => {fieldName};
+#if UNITY_EDITOR
             set => {fieldName} = value;
+#endif
         }}";
         }
 

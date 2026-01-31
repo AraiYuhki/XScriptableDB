@@ -11,6 +11,7 @@ namespace Xeon.XScriptableDB.Editor
         [MenuItem("Tools/XScriptableDB/Table Editor")]
         public static void Open() => GetWindow<TableEditorWindow>("Table Editor");
 
+        private string filePath = string.Empty;
         private TableDefinition tableDefinition;
         private Vector2 scrollPosition;
         private ReorderableList columnView;
@@ -33,15 +34,33 @@ namespace Xeon.XScriptableDB.Editor
                     LoadYaml();
                 }
             }
+
             if (tableDefinition == null)
             {
                 EditorGUILayout.HelpBox("編集するファイルを選択するか、新規作成してください", MessageType.Info);
                 return;
             }
 
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("名前を付けて保存"))
+                    SaveAs();
+                EditorGUI.BeginDisabledGroup(string.IsNullOrEmpty(filePath));
+                if (GUILayout.Button("上書き保存"))
+                    OverrideSave();
+
+                if (GUILayout.Button("C#ファイル生成"))
+                    GenerateFiles();
+                EditorGUI.EndDisabledGroup();
+            }
+
             Validate();
 
-            tableDefinition.TableName = EditorGUILayout.TextField("テーブル名", tableDefinition.TableName);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                tableDefinition.TableName = EditorGUILayout.TextField("テーブル名", tableDefinition.TableName);
+                tableDefinition.IsReadOnly = EditorGUILayout.ToggleLeft("読み取り専用", tableDefinition.IsReadOnly, GUILayout.Width(100f));
+            }
             if (columnView == null)
                 CreateColumnView();
             if (indeciesView == null)
@@ -70,9 +89,47 @@ namespace Xeon.XScriptableDB.Editor
             var filePath = EditorUtility.OpenFilePanel("Select open Table definition YAML file", Path.Combine(Application.dataPath, "../"), "yaml,yml");
             if (string.IsNullOrEmpty(filePath))
                 return;
+            this.filePath = filePath;
             tableDefinition = DefinitionLoader.LoadDefinition(filePath);
             CreateColumnView();
             CreateIndeciesView();
+        }
+
+        private void SaveAs()
+        {
+            var defaultPath = string.IsNullOrEmpty(filePath) ? "NewTable" : filePath;
+            var saveFilePath = EditorUtility.SaveFilePanel("YAMLファイルの保存先を選択してください", Path.Combine(Application.dataPath, "../"), defaultPath, "yaml,yml");
+            if (string.IsNullOrEmpty(saveFilePath))
+                return;
+            filePath = saveFilePath;
+            DefinitionLoader.ExportYAML(tableDefinition, saveFilePath);
+            EditorUtility.DisplayDialog("ファイルを保存しました", $"{saveFilePath}に保存しました", "OK");
+        }
+
+        private void OverrideSave()
+        {
+            if (string.IsNullOrEmpty(filePath))
+                return;
+            DefinitionLoader.ExportYAML(tableDefinition, filePath);
+            EditorUtility.DisplayDialog("ファイルを保存しました", $"{filePath}に上書き保存しました", "OK");
+        }
+
+        private void GenerateFiles()
+        {
+            var savePath = TableGenerateSetting.Instance.SavePath;
+            var tableFilePath = Path.Join(Application.dataPath, savePath, tableDefinition.TableName.ToCamelCase() + "Table.cs");
+            var recordFilePath = Path.Join(Application.dataPath, savePath, tableDefinition.TableName.ToCamelCase() + "Record.cs");
+
+            var directoryInfo = new DirectoryInfo(Path.Join(Application.dataPath, savePath));
+            if (!directoryInfo.Exists)
+                directoryInfo.Create();
+
+            File.WriteAllText(tableFilePath, ClassGenerator.GenerateTable(tableDefinition));
+            File.WriteAllText(recordFilePath, ClassGenerator.GenerateRecord(tableDefinition));
+            EditorUtility.DisplayDialog("ファイルの生成完了", $"以下のファイルを生成しました\n{tableFilePath}\n{recordFilePath}", "OK");
+            AssetDatabase.ImportAsset(tableFilePath.Replace(Application.dataPath, "Assets"));
+            AssetDatabase.ImportAsset(recordFilePath.Replace(Application.dataPath, "Assets"));
+            AssetDatabase.Refresh();
         }
 
         private void CreateColumnView()

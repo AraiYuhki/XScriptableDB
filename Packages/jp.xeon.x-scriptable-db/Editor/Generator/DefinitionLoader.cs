@@ -29,16 +29,11 @@ namespace Xeon.XScriptableDB.Editor
             return definition;
         }
 
-        [MenuItem("Tools/Export YAML from table definition")]
-        public static void ExportYAML(TableDefinition definition)
+        public static void ExportYAML(TableDefinition definition, string savePath)
         {
-            string path = EditorUtility.SaveFilePanel("Select save path YAML definition file", Path.Join(Application.dataPath, "../"), definition.TableName, "yaml,yml");
-            if (string.IsNullOrEmpty(path))
-                return;
-
             var serializer = new SerializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
             var outputText = serializer.Serialize(definition);
-            File.WriteAllText(path, outputText);
+            File.WriteAllText(savePath, outputText);
         }
 
     }

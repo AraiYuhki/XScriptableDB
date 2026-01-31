@@ -9,6 +9,8 @@ namespace Xeon.XScriptableDB.Editor
     {
         [SerializeField]
         private string tableName;
+        [SerializeField]
+        private bool isReadOnly = true;
 
         [SerializeField]
         private List<ColumnDefinition> columns = new();
@@ -21,6 +23,12 @@ namespace Xeon.XScriptableDB.Editor
         {
             get => tableName;
             set => tableName = value;
+        }
+
+        public bool IsReadOnly
+        {
+            get => isReadOnly;
+            set => isReadOnly = value;
         }
 
         public List<ColumnDefinition> Columns
