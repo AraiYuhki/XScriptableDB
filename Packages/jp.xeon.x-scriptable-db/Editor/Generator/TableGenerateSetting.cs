@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -24,14 +25,17 @@ namespace Xeon.XScriptableDB.Editor
                     var guids = AssetDatabase.FindAssets($"t:{nameof(TableGenerateSetting)}");
                     if (guids == null || guids.Length <= 0)
                     {
-                        instance = ScriptableObject.CreateInstance<TableGenerateSetting>();
-                        var path = "Assets/Editor/XScriptableDB/Settings/TableGenerateSetting.asset";
+                        instance = CreateInstance<TableGenerateSetting>();
+                        var directoryPath = "Assets/Editor/XScriptableDB/Settings";
+                        if (!Directory.Exists(directoryPath))
+                            Directory.CreateDirectory(directoryPath);
+                        var path = $"{directoryPath}/TableGenerateSetting.asset";
                         AssetDatabase.CreateAsset(instance, path);
                         AssetDatabase.ImportAsset(path);
                     }
                     else
                     {
-                        // İ’èƒtƒ@ƒCƒ‹‚ÍƒvƒƒWƒFƒNƒg“à‚Éˆê‚Â‚¾‚¯‚ÉŒÀ’è‚·‚é
+                        // è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã¯ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆå†…ã«ä¸€ã¤ã ã‘ã«é™å®šã™ã‚‹
                         var path = AssetDatabase.GUIDToAssetPath(new GUID(guids[0]));
                         instance = AssetDatabase.LoadAssetAtPath<TableGenerateSetting>(path);
                     }

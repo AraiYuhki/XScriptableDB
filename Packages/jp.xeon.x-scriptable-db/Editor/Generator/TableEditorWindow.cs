@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
@@ -15,7 +15,7 @@ namespace Xeon.XScriptableDB.Editor
         private TableDefinition tableDefinition;
         private Vector2 scrollPosition;
         private ReorderableList columnView;
-        private ReorderableList indeciesView;
+        private ReorderableList indicesView;
         private string[] columnsCache;
 
         private void OnGUI()
@@ -26,13 +26,11 @@ namespace Xeon.XScriptableDB.Editor
                 {
                     tableDefinition = new TableDefinition();
                     CreateColumnView();
-                    CreateIndeciesView();
+                    CreateIndicesView();
                 }
 
                 if (GUILayout.Button("YAML読み込み"))
-                {
                     LoadYaml();
-                }
             }
 
             if (tableDefinition == null)
@@ -63,12 +61,12 @@ namespace Xeon.XScriptableDB.Editor
             }
             if (columnView == null)
                 CreateColumnView();
-            if (indeciesView == null)
-                CreateIndeciesView();
+            if (indicesView == null)
+                CreateIndicesView();
             using (var scrollView = new EditorGUILayout.ScrollViewScope(scrollPosition))
             {
                 columnView.DoLayoutList();
-                indeciesView.DoLayoutList();
+                indicesView.DoLayoutList();
                 scrollPosition = scrollView.scrollPosition;
             }
         }
@@ -77,11 +75,10 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (tableDefinition.Columns.Count(column => column.IsPrimaryKey) > 1)
                 EditorGUILayout.HelpBox("プライマリーキーは必ず一つ設定してください", MessageType.Error);
-            if (columnsCache.Length != columnsCache.Distinct().Count())
+            if (columnsCache != null && columnsCache.Length != columnsCache.Distinct().Count())
                 EditorGUILayout.HelpBox("同名のカラムは作成できません", MessageType.Error);
-            if (tableDefinition.Indecies.Count != tableDefinition.Indecies.Distinct().Count())
+            if (tableDefinition.Indices.Count != tableDefinition.Indices.Distinct().Count())
                 EditorGUILayout.HelpBox("同じカラムを複数のインデックスに指定できません", MessageType.Error);
-
         }
 
         private void LoadYaml()
@@ -92,7 +89,7 @@ namespace Xeon.XScriptableDB.Editor
             this.filePath = filePath;
             tableDefinition = DefinitionLoader.LoadDefinition(filePath);
             CreateColumnView();
-            CreateIndeciesView();
+            CreateIndicesView();
         }
 
         private void SaveAs()
@@ -117,8 +114,8 @@ namespace Xeon.XScriptableDB.Editor
         private void GenerateFiles()
         {
             var savePath = TableGenerateSetting.Instance.SavePath;
-            var tableFilePath = Path.Join(Application.dataPath, savePath, tableDefinition.TableName.ToCamelCase() + "Table.cs");
-            var recordFilePath = Path.Join(Application.dataPath, savePath, tableDefinition.TableName.ToCamelCase() + "Record.cs");
+            var tableFilePath = Path.Join(Application.dataPath, savePath, tableDefinition.TableName.ToPascalCase() + "Table.cs");
+            var recordFilePath = Path.Join(Application.dataPath, savePath, tableDefinition.TableName.ToPascalCase() + "Record.cs");
 
             var directoryInfo = new DirectoryInfo(Path.Join(Application.dataPath, savePath));
             if (!directoryInfo.Exists)
@@ -144,11 +141,11 @@ namespace Xeon.XScriptableDB.Editor
             UpdateColumnsCache();
         }
 
-        private void CreateIndeciesView()
+        private void CreateIndicesView()
         {
-            indeciesView = new ReorderableList(tableDefinition.Indecies, typeof(string));
-            indeciesView.drawElementCallback = DrawIndex;
-            indeciesView.drawHeaderCallback = rect => EditorGUI.LabelField(rect, $"Indecies({tableDefinition.Indecies.Count})");
+            indicesView = new ReorderableList(tableDefinition.Indices, typeof(string));
+            indicesView.drawElementCallback = DrawIndex;
+            indicesView.drawHeaderCallback = rect => EditorGUI.LabelField(rect, $"Indices({tableDefinition.Indices.Count})");
             UpdateColumnsCache();
         }
 
@@ -180,30 +177,27 @@ namespace Xeon.XScriptableDB.Editor
             if (columnsCache == null || columnsCache.Length == 0)
             {
                 EditorGUI.LabelField(rect, "No columns");
-                if (tableDefinition.Indecies[index] != string.Empty)
-                    tableDefinition.Indecies[index] = string.Empty;
+                if (tableDefinition.Indices[index] != string.Empty)
+                    tableDefinition.Indices[index] = string.Empty;
                 return;
             }
 
-            var selectedIndex = System.Array.IndexOf(columnsCache, tableDefinition.Indecies[index]);
+            var selectedIndex = System.Array.IndexOf(columnsCache, tableDefinition.Indices[index]);
             if (selectedIndex < 0)
                 selectedIndex = 0;
             EditorGUI.BeginChangeCheck();
             selectedIndex = EditorGUI.Popup(rect, selectedIndex, columnsCache);
             if (EditorGUI.EndChangeCheck())
-                tableDefinition.Indecies[index] = columnsCache[selectedIndex];
-
+                tableDefinition.Indices[index] = columnsCache[selectedIndex];
         }
 
         private void DrawColumn(Rect rect, int index, bool isActive, bool isFocused)
         {
             var column = tableDefinition.Columns[index];
             var lineHeight = EditorGUIUtility.singleLineHeight;
-            // center vertically
             var y = rect.y + (rect.height - lineHeight) / 2f;
             var padding = 6f;
 
-            // layout: Name | Type | Nullable | PrimaryKey
             var totalWidth = rect.width;
             var nameWidth = totalWidth * 0.35f;
             var typeWidth = totalWidth * 0.35f;
@@ -219,7 +213,6 @@ namespace Xeon.XScriptableDB.Editor
             x += nullableWidth + padding;
             var primaryKeyRect = new Rect(x, y, primaryKeyWidth, lineHeight);
 
-            // Draw fields without labels to keep a compact horizontal layout
             EditorGUI.BeginChangeCheck();
             var newName = EditorGUI.TextField(nameRect, column.Name);
             if (EditorGUI.EndChangeCheck())

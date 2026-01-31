@@ -15,9 +15,9 @@ namespace Xeon.XScriptableDB.Editor
         [SerializeField]
         private List<ColumnDefinition> columns = new();
 
-        // TODO: •¡‡ƒL[‚É‘Î‰‚·‚é
+        // TODO: è¤‡åˆã‚­ãƒ¼ã«å¯¾å¿œã™ã‚‹
         [SerializeField]
-        private List<string> indecies = new();
+        private List<string> indices = new();
 
         public string TableName
         {
@@ -37,15 +37,15 @@ namespace Xeon.XScriptableDB.Editor
             set => columns = value;
         }
 
-        public List<string> Indecies
+        public List<string> Indices
         {
-            get => indecies;
-            set => indecies = value;
+            get => indices;
+            set => indices = value;
         }
 
         public override string ToString()
         {
-            return $"Table: {tableName}\nColumns:\n{string.Join('\n', columns)}\n{string.Join('\n', indecies)}";
+            return $"Table: {tableName}\nColumns:\n{string.Join('\n', columns)}\n{string.Join('\n', indices)}";
         }
     }
 }

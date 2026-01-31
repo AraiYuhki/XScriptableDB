@@ -16,7 +16,7 @@ namespace Xeon.XScriptableDB.Editor
         public static string GenerateTable(TableDefinition definition)
         {
             var namespaceName = "Xeon.XScriptableDB.Generated";
-            var className = ToCamelCase(definition.TableName);
+            var className = definition.TableName.ToPascalCase();
             var primaryKey = definition.Columns.FirstOrDefault(column => column.IsPrimaryKey) ?? definition.Columns[0];
             var primaryKeyType = primaryKey.Type;
             return $@"using UnityEngine;
@@ -34,7 +34,7 @@ namespace {namespaceName}
         public static string GenerateRecord(TableDefinition definition)
         {
             var namespaceName = "Xeon.XScriptableDB.Generated";
-            var className = ToCamelCase(definition.TableName);
+            var className = definition.TableName.ToPascalCase();
             var fields = GenerateFields(definition);
             var properties = GenerateProperties(definition.Columns, definition.IsReadOnly);
             return $@"using System;
@@ -68,14 +68,14 @@ namespace {namespaceName}
         private static string GenerateField(TableDefinition tableDefinition, ColumnDefinition column)
         {
             var type = ConvertType(column.Type, column.IsNullable);
-            var fieldName = column.Name.ToPascalCase();
+            var fieldName = column.Name.ToCamelCase();
             var sb = new StringBuilder();
 
             var attributes = new List<string>() { "SerializeField" };
 
             if (column.IsPrimaryKey)
                 attributes.Add("PrimaryKey");
-            if (tableDefinition.Indecies.Contains(column.Name))
+            if (tableDefinition.Indices.Contains(column.Name))
                 attributes.Add("SecondaryKey");
 
             sb.Append($"        [{string.Join(", ", attributes)}]\n");
@@ -97,8 +97,8 @@ namespace {namespaceName}
         private static string GenerateProperty(ColumnDefinition column, bool isReadOnly)
         {
             var type = ConvertType(column.Type, column.IsNullable);
-            var fieldName = column.Name.ToPascalCase();
-            var propertyName = column.Name.ToCamelCase();
+            var fieldName = column.Name.ToCamelCase();
+            var propertyName = column.Name.ToPascalCase();
             if (!isReadOnly)
             {
                 return $@"        public {type} {propertyName}
@@ -179,27 +179,5 @@ namespace {namespaceName}
         }
 
         private static bool IsPrimitiveOrValueType(string typeName) => PrimitiveTypeList.Contains(typeName);
-
-        public static string ToCamelCase(string origin)
-        {
-            if (string.IsNullOrEmpty(origin))
-                return origin;
-
-            if (origin.Length == 1)
-                return origin.ToLower();
-
-            return char.ToUpper(origin[0]) + origin.Substring(1);
-        }
-
-        public static string ToPascalCase(string origin)
-        {
-            if (string.IsNullOrEmpty(origin))
-                return origin;
-
-            if (origin.Length == 1)
-                return origin.ToLower();
-
-            return char.ToLower(origin[0]) + origin.Substring(1);
-        }
     }
 }
