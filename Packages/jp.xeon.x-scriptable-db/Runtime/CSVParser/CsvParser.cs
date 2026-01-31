@@ -224,7 +224,7 @@ namespace Xeon.XScriptableDB.IO
             => ToCSV(data, defaultSeparator);
 
         public static string ToCSV<T>(List<T> data, string separator)
-            => ToCSV((IEnumerable<object>)data.Cast<object>(), typeof(T), separator);
+            => ToCSV(data.Cast<object>(), typeof(T), separator);
 
         public static string ToCSV(IEnumerable<object> data, Type recordType)
             => ToCSV(data, recordType, defaultSeparator);
