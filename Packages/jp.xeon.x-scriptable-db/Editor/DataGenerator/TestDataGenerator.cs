@@ -9,46 +9,6 @@ using Random = UnityEngine.Random;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// データ生成ルール。
-    /// </summary>
-    public enum GeneratorRule
-    {
-        Sequential,     // 連番
-        Random,         // ランダム
-        RandomRange,    // 範囲指定ランダム
-        RandomChoice,   // 選択肢からランダム
-        Pattern,        // パターン文字列
-        Fixed           // 固定値
-    }
-
-    /// <summary>
-    /// フィールド生成設定。
-    /// </summary>
-    [Serializable]
-    public class FieldGeneratorConfig
-    {
-        public string FieldName;
-        public GeneratorRule Rule = GeneratorRule.Random;
-        public string MinValue = "0";
-        public string MaxValue = "100";
-        public List<string> Choices = new();
-        public string Pattern = "{0}";
-        public string FixedValue = "";
-        public int StartValue = 1;
-    }
-
-    /// <summary>
-    /// テーブル生成設定。
-    /// </summary>
-    [Serializable]
-    public class TableGeneratorConfig
-    {
-        public string TableName;
-        public int RecordCount = 100;
-        public List<FieldGeneratorConfig> FieldConfigs = new();
-    }
-
-    /// <summary>
     /// テストデータ生成器。
     /// </summary>
     public static class TestDataGenerator
@@ -63,7 +23,7 @@ namespace Xeon.XScriptableDB.Editor
         public static int Generate(ITableAsset table, int count, TableGeneratorConfig config = null)
         {
             var recordType = table.RecordType;
-            var fields = recordType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var fields = recordType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             var generatedCount = 0;
 
             // 既存のPrimaryKey値を取得
@@ -350,7 +310,7 @@ namespace Xeon.XScriptableDB.Editor
                 RecordCount = 100
             };
 
-            var fields = table.RecordType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var fields = table.RecordType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
             foreach (var field in fields)
             {
