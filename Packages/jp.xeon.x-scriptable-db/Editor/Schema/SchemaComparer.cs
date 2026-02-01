@@ -50,7 +50,7 @@ namespace Xeon.XScriptableDB.Editor
             foreach (var name in targetFieldNames.Except(sourceFieldNames))
             {
                 var field = targetFields[name];
-                result.Differences.Add(new (SchemaDifferenceType.FieldAdded,name, null, field.FieldType.Name));
+                result.Differences.Add(new (SchemaDifferenceType.FieldAdded, name, null, field.FieldType.Name));
             }
 
             // 削除されたフィールド

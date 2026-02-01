@@ -11,7 +11,6 @@
         public string NewValue { get; }
         public string Description { get; }
 
-
         public SchemaDifference(SchemaDifferenceType type, string fieldName, string oldValue, string newValue) : this(type, fieldName)
         {
             OldValue = oldValue;
