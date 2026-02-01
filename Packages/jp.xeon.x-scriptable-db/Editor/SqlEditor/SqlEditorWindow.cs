@@ -422,7 +422,8 @@ namespace Xeon.XScriptableDB.Editor
 
         private string FormatValue(object value)
         {
-            if (value == null) return "(null)";
+            if (value == null)
+                return "(null)";
 
             return value switch
             {
@@ -430,6 +431,7 @@ namespace Xeon.XScriptableDB.Editor
                 bool b => b ? "true" : "false",
                 float f => f.ToString("F2"),
                 double d => d.ToString("F2"),
+                DateTime dt => DateTimeEditorUtility.FormatDateTime(dt),
                 _ => value.ToString()
             };
         }

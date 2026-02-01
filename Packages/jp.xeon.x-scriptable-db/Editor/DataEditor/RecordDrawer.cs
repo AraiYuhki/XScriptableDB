@@ -174,6 +174,15 @@ namespace Xeon.XScriptableDB.Editor
 
         private static string GetPropertyValueString(SerializedProperty property)
         {
+            if (property.propertyType == SerializedPropertyType.Generic)
+            {
+                if (DateTimeEditorUtility.IsDateTimeProperty(property))
+                {
+                    var dateTime = DateTimeEditorUtility.GetDateTime(property);
+                    return DateTimeEditorUtility.FormatDateTime(dateTime);
+                }
+            }
+
             return property.propertyType switch
             {
                 SerializedPropertyType.Integer => property.intValue.ToString(),

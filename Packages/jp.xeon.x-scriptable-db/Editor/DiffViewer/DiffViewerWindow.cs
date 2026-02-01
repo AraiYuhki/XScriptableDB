@@ -322,6 +322,9 @@ namespace Xeon.XScriptableDB.Editor
             if (value == null)
                 return "(null)";
 
+            if (value is DateTime dt)
+                return DateTimeEditorUtility.FormatDateTime(dt);
+
             var str = value.ToString();
             if (str.Length > 20)
                 str = str.Substring(0, 17) + "...";

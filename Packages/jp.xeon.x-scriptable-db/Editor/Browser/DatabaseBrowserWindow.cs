@@ -21,7 +21,8 @@ namespace Xeon.XScriptableDB.Editor
             { typeof(float), "float" },
             { typeof(double), "double" },
             { typeof(bool), "bool" },
-            { typeof(string), "string" }
+            { typeof(string), "string" },
+            { typeof(DateTime), "DateTime" }
         };
 
         private List<TableInfo> tables = new();
@@ -415,13 +416,16 @@ namespace Xeon.XScriptableDB.Editor
 
         private string FormatPreviewValue(object value)
         {
-            if (value == null) return "(null)";
+            if (value == null)
+                return "(null)";
+
+            if (value is DateTime dt)
+                return DateTimeEditorUtility.FormatDateTime(dt);
 
             var str = value.ToString();
             if (str.Length > 15)
-            {
                 return str.Substring(0, 12) + "...";
-            }
+
             return str;
         }
 

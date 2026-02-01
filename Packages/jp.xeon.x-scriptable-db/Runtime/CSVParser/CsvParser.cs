@@ -215,6 +215,13 @@ namespace Xeon.XScriptableDB.IO
                 Debug.LogWarning($"Failed to parse '{value}' as {targetType.Name} for member '{memberName}'");
                 return Activator.CreateInstance(targetType);
             }
+            if (targetType == typeof(DateTime))
+            {
+                if (TryParseDateTime(value, out var dateTimeValue))
+                    return dateTimeValue;
+                Debug.LogWarning($"Failed to parse '{value}' as DateTime for member '{memberName}'");
+                return DateTime.MinValue;
+            }
 
             Debug.LogWarning($"Type '{targetType}' is not supported for member '{memberName}'");
             return null;
@@ -259,7 +266,42 @@ namespace Xeon.XScriptableDB.IO
                 return "\"\"";
             if (value is string s)
                 return s.ToCsv();
+            if (value is DateTime dt)
+                return dt.ToString("yyyy-MM-dd HH:mm:ss");
             return value.ToString();
+        }
+
+        private static bool TryParseDateTime(string value, out DateTime result)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                result = DateTime.MinValue;
+                return true;
+            }
+
+            var formats = new[]
+            {
+                "yyyy-MM-dd HH:mm:ss",
+                "yyyy/MM/dd HH:mm:ss",
+                "yyyy-MM-dd",
+                "yyyy/MM/dd",
+                "MM/dd/yyyy HH:mm:ss",
+                "MM/dd/yyyy",
+                "dd/MM/yyyy HH:mm:ss",
+                "dd/MM/yyyy",
+                "yyyy-MM-ddTHH:mm:ss",
+                "yyyy-MM-ddTHH:mm:ssZ",
+                "o"
+            };
+
+            return DateTime.TryParseExact(
+                value,
+                formats,
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None,
+                out result) ||
+                DateTime.TryParse(value, System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out result);
         }
     }
 }
