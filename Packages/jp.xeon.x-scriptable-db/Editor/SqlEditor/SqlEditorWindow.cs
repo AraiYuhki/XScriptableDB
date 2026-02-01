@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -11,6 +12,8 @@ namespace Xeon.XScriptableDB.Editor
     /// </summary>
     public class SqlEditorWindow : EditorWindow
     {
+        private const BindingFlags FieldBindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
         private string sqlText = "SELECT * FROM ";
         private Vector2 sqlScrollPosition;
         private Vector2 resultScrollPosition;
@@ -322,7 +325,7 @@ namespace Xeon.XScriptableDB.Editor
             {
                 // カラム名がない場合はレコードから取得
                 var recordType = records[0].GetType();
-                columnNames = recordType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                columnNames = recordType.GetFields(FieldBindingFlags)
                     .Select(f => f.Name)
                     .ToList();
             }
@@ -406,13 +409,11 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (record == null || recordType == null) return null;
 
-            var field = recordType.GetField(fieldName,
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            var field = recordType.GetField(fieldName, FieldBindingFlags);
             if (field != null)
                 return field.GetValue(record);
 
-            var property = recordType.GetProperty(fieldName,
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            var property = recordType.GetProperty(fieldName, BindingFlags.Public | BindingFlags.Instance);
             if (property?.CanRead == true)
                 return property.GetValue(record);
 
