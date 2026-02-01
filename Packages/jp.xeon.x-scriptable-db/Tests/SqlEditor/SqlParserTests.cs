@@ -1,6 +1,4 @@
 using NUnit.Framework;
-using System;
-using System.Linq;
 using Xeon.XScriptableDB.Editor;
 
 namespace Xeon.XScriptableDB.Tests

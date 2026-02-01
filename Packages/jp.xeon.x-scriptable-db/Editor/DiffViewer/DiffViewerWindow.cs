@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -297,7 +296,7 @@ namespace Xeon.XScriptableDB.Editor
                 return;
 
             var type = record.GetType();
-            var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            var fields = ReflectionUtility.GetSerializableFields(type);
             var count = 0;
 
             using (new EditorGUILayout.HorizontalScope())

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using Xeon.XScriptableDB;
 
 namespace Xeon.XScriptableDB.Editor
 {
@@ -276,7 +276,7 @@ namespace Xeon.XScriptableDB.Editor
             if (selectedTable == null)
                 return "0";
 
-            var fields = selectedTable.RecordType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var fields = ReflectionUtility.GetSerializableFields(selectedTable.RecordType);
             var estimatedRecordSize = 0;
 
             foreach (var field in fields)

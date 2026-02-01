@@ -2,7 +2,6 @@
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEngine;
-using Xeon.XScriptableDB;
 
 namespace Xeon.XScriptableDB.Editor
 {

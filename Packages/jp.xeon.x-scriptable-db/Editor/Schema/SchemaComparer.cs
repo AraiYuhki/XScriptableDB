@@ -50,14 +50,14 @@ namespace Xeon.XScriptableDB.Editor
             foreach (var name in targetFieldNames.Except(sourceFieldNames))
             {
                 var field = targetFields[name];
-                result.Differences.Add(new (SchemaDifferenceType.FieldAdded, name, null, field.FieldType.Name));
+                result.Differences.Add(new(SchemaDifferenceType.FieldAdded, name, null, field.FieldType.Name));
             }
 
             // 削除されたフィールド
             foreach (var name in sourceFieldNames.Except(targetFieldNames))
             {
                 var field = sourceFields[name];
-                result.Differences.Add(new (SchemaDifferenceType.FieldRemoved, name, field.FieldType.Name, null));
+                result.Differences.Add(new(SchemaDifferenceType.FieldRemoved, name, field.FieldType.Name, null));
                 result.IsCompatible = false;
                 result.CompatibilityNote = "フィールドが削除されているため、データ損失の可能性があります";
             }
@@ -71,7 +71,7 @@ namespace Xeon.XScriptableDB.Editor
                 // 型の変更
                 if (sourceField.FieldType != targetField.FieldType)
                 {
-                    result.Differences.Add(new (SchemaDifferenceType.FieldTypeChanged, name, sourceField.FieldType.Name, targetField.FieldType.Name));
+                    result.Differences.Add(new(SchemaDifferenceType.FieldTypeChanged, name, sourceField.FieldType.Name, targetField.FieldType.Name));
 
                     if (!IsTypeConvertible(sourceField.FieldType, targetField.FieldType))
                     {
@@ -83,17 +83,17 @@ namespace Xeon.XScriptableDB.Editor
                 // PrimaryKeyの変更
                 if (sourceField.IsPrimaryKey != targetField.IsPrimaryKey)
                 {
-                    result.Differences.Add(new (SchemaDifferenceType.PrimaryKeyChanged, name, sourceField.IsPrimaryKey, targetField.IsPrimaryKey));
+                    result.Differences.Add(new(SchemaDifferenceType.PrimaryKeyChanged, name, sourceField.IsPrimaryKey, targetField.IsPrimaryKey));
                 }
 
                 // SecondaryKeyの変更
                 if (sourceField.IsSecondaryKey && !targetField.IsSecondaryKey)
                 {
-                    result.Differences.Add(new (SchemaDifferenceType.SecondaryKeyRemoved, name));
+                    result.Differences.Add(new(SchemaDifferenceType.SecondaryKeyRemoved, name));
                 }
                 else if (!sourceField.IsSecondaryKey && targetField.IsSecondaryKey)
                 {
-                    result.Differences.Add(new (SchemaDifferenceType.SecondaryKeyAdded, name));
+                    result.Differences.Add(new(SchemaDifferenceType.SecondaryKeyAdded, name));
                 }
             }
 

@@ -1,5 +1,3 @@
-using System;
-
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>

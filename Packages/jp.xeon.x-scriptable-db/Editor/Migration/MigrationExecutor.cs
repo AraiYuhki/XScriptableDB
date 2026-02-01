@@ -1,8 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -143,7 +141,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private static void ApplyOperation(object record, Type recordType, MigrationOperation operation)
         {
-            var field = recordType.GetField(operation.FieldName, BindingFlags.Public | BindingFlags.Instance);
+            var field = ReflectionUtility.GetSerializableField(recordType, operation.FieldName);
 
             switch (operation.OperationType)
             {
@@ -163,7 +161,7 @@ namespace Xeon.XScriptableDB.Editor
                 case MigrationOperationType.CopyField:
                     if (field != null)
                     {
-                        var targetField = recordType.GetField(operation.NewFieldName, BindingFlags.Public | BindingFlags.Instance);
+                        var targetField = ReflectionUtility.GetSerializableField(recordType, operation.NewFieldName);
                         if (targetField != null)
                         {
                             var value = field.GetValue(record);
@@ -336,7 +334,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private static void ValidateOperation(MigrationOperation operation, Type recordType, MigrationResult result)
         {
-            var field = recordType.GetField(operation.FieldName, BindingFlags.Public | BindingFlags.Instance);
+            var field = ReflectionUtility.GetSerializableField(recordType, operation.FieldName);
 
             switch (operation.OperationType)
             {

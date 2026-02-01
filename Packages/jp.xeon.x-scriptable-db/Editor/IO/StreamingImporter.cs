@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using UnityEditor;
 using UnityEngine;
+using Xeon.XScriptableDB;
 using Xeon.XScriptableDB.IO;
 
 namespace Xeon.XScriptableDB.Editor
@@ -465,7 +465,7 @@ namespace Xeon.XScriptableDB.Editor
         private void PopulateRecord<T>(T record, Dictionary<string, string> values) where T : CsvData
         {
             var type = typeof(T);
-            foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            foreach (var field in ReflectionUtility.GetSerializableFields(type))
             {
                 var csvAttr = field.GetCustomAttribute<CsvColumn>();
                 var columnName = csvAttr?.Name ?? field.Name;
@@ -480,7 +480,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private void PopulateRecordReflection(object record, Type recordType, Dictionary<string, string> values)
         {
-            foreach (var field in recordType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
             {
                 var csvAttr = field.GetCustomAttribute<CsvColumn>();
                 var columnName = csvAttr?.Name ?? field.Name;

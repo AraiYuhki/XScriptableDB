@@ -1,11 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
+using Xeon.XScriptableDB;
 
 namespace Xeon.XScriptableDB.Editor
 {
@@ -253,7 +252,7 @@ namespace Xeon.XScriptableDB.Editor
                         if (col.IsWildcard)
                         {
                             // ワイルドカードの場合は全フィールドを追加
-                            foreach (var field in recordType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                            foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
                             {
                                 row.Values[field.Name] = field.GetValue(record);
                             }
@@ -1011,7 +1010,7 @@ namespace Xeon.XScriptableDB.Editor
                 {
                     if (col.IsWildcard)
                     {
-                        foreach (var field in recordType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                        foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
                         {
                             var value = field.GetValue(record);
                             keyParts.Add(value?.ToString() ?? "NULL");
@@ -1049,7 +1048,7 @@ namespace Xeon.XScriptableDB.Editor
                 {
                     if (col.IsWildcard)
                     {
-                        foreach (var field in recordType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                        foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
                         {
                             var value = field.GetValue(record);
                             row.Values[field.Name] = value;
@@ -1718,7 +1717,7 @@ namespace Xeon.XScriptableDB.Editor
                 if (column.IsWildcard)
                 {
                     // *の場合は全フィールドを追加
-                    foreach (var field in recordType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                    foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
                     {
                         names.Add(field.Name);
                     }
