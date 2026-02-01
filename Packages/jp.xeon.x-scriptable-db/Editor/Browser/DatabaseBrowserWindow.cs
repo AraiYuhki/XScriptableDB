@@ -8,36 +8,12 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// テーブル情報。
-    /// </summary>
-    public class TableInfo
-    {
-        public string Name { get; set; }
-        public string AssetPath { get; set; }
-        public ScriptableObject Asset { get; set; }
-        public ITableAsset TableAsset { get; set; }
-        public Type RecordType { get; set; }
-        public int RecordCount { get; set; }
-        public List<ColumnInfo> Columns { get; set; } = new();
-    }
-
-    /// <summary>
-    /// カラム情報。
-    /// </summary>
-    public class ColumnInfo
-    {
-        public string Name { get; set; }
-        public Type FieldType { get; set; }
-        public bool IsPrimaryKey { get; set; }
-        public bool IsSecondaryKey { get; set; }
-        public string TypeDisplayName { get; set; }
-    }
-
-    /// <summary>
     /// データベースブラウザウィンドウ。
     /// </summary>
     public class DatabaseBrowserWindow : EditorWindow
     {
+        private const BindingFlags FieldFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
         private List<TableInfo> tables = new();
         private TableInfo selectedTable;
         private Vector2 tableListScrollPosition;
@@ -93,10 +69,15 @@ namespace Xeon.XScriptableDB.Editor
             var recordType = tableAsset.RecordType;
             var columns = new List<ColumnInfo>();
 
-            foreach (var field in recordType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            foreach (var field in recordType.GetFields(FieldFlags))
             {
+                var isSerializable = field.GetCustomAttribute<SerializeField>() != null;
                 var isPrimaryKey = field.GetCustomAttribute<PrimaryKeyAttribute>() != null;
                 var isSecondaryKey = field.GetCustomAttribute<SecondaryKeyAttribute>() != null;
+
+                // privateの場合は、SerializeFieldが無ければ対象にしない
+                if (field.IsPrivate && !isSerializable)
+                    continue;
 
                 columns.Add(new ColumnInfo
                 {
@@ -122,12 +103,18 @@ namespace Xeon.XScriptableDB.Editor
 
         private string GetTypeDisplayName(Type type)
         {
-            if (type == typeof(int)) return "int";
-            if (type == typeof(long)) return "long";
-            if (type == typeof(float)) return "float";
-            if (type == typeof(double)) return "double";
-            if (type == typeof(bool)) return "bool";
-            if (type == typeof(string)) return "string";
+            if (type == typeof(int))
+                return "int";
+            if (type == typeof(long))
+                return "long";
+            if (type == typeof(float))
+                return "float";
+            if (type == typeof(double))
+                return "double";
+            if (type == typeof(bool))
+                return "bool";
+            if (type == typeof(string))
+                return "string";
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             {
                 var itemType = type.GetGenericArguments()[0];
@@ -408,8 +395,10 @@ namespace Xeon.XScriptableDB.Editor
             var rowCount = 0;
             foreach (var record in selectedTable.TableAsset.Records)
             {
-                if (record == null) continue;
-                if (rowCount >= PreviewRowCount) break;
+                if (record == null)
+                    continue;
+                if (rowCount >= PreviewRowCount)
+                    break;
 
                 EditorGUILayout.BeginHorizontal();
 
@@ -436,7 +425,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private object GetFieldValue(object record, string fieldName)
         {
-            var field = selectedTable.RecordType.GetField(fieldName, BindingFlags.Public | BindingFlags.Instance);
+            var field = selectedTable.RecordType.GetField(fieldName, FieldFlags);
             return field?.GetValue(record);
         }
 
