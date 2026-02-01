@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using Xeon.XScriptableDB.Validation;
 
 namespace Xeon.XScriptableDB.Editor
 {
@@ -13,6 +14,16 @@ namespace Xeon.XScriptableDB.Editor
     public class DatabaseBrowserWindow : EditorWindow
     {
         private const BindingFlags FieldFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+        private static readonly Dictionary<Type, string> TypeNameDictionary = new()
+        {
+            { typeof(int), "int" },
+            { typeof(long), "long" },
+            { typeof(float), "float" },
+            { typeof(double), "double" },
+            { typeof(bool), "bool" },
+            { typeof(string), "string" }
+        };
 
         private List<TableInfo> tables = new();
         private TableInfo selectedTable;
@@ -79,42 +90,16 @@ namespace Xeon.XScriptableDB.Editor
                 if (field.IsPrivate && !isSerializable)
                     continue;
 
-                columns.Add(new ColumnInfo
-                {
-                    Name = field.Name,
-                    FieldType = field.FieldType,
-                    IsPrimaryKey = isPrimaryKey,
-                    IsSecondaryKey = isSecondaryKey,
-                    TypeDisplayName = GetTypeDisplayName(field.FieldType)
-                });
+                columns.Add(new ColumnInfo(field.Name, field.FieldType, isPrimaryKey, isSecondaryKey, GetTypeDisplayName(field.FieldType)));
             }
 
-            return new TableInfo
-            {
-                Name = asset.name,
-                AssetPath = assetPath,
-                Asset = asset,
-                TableAsset = tableAsset,
-                RecordType = recordType,
-                RecordCount = tableAsset.Count,
-                Columns = columns
-            };
+            return new TableInfo(asset.name, assetPath, asset, tableAsset, recordType, tableAsset.Count, columns);
         }
 
         private string GetTypeDisplayName(Type type)
         {
-            if (type == typeof(int))
-                return "int";
-            if (type == typeof(long))
-                return "long";
-            if (type == typeof(float))
-                return "float";
-            if (type == typeof(double))
-                return "double";
-            if (type == typeof(bool))
-                return "bool";
-            if (type == typeof(string))
-                return "string";
+            if (TypeNameDictionary.TryGetValue(type, out var result))
+                return result;
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             {
                 var itemType = type.GetGenericArguments()[0];

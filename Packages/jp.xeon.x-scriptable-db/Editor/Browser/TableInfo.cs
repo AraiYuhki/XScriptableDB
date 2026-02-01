@@ -9,12 +9,23 @@ namespace Xeon.XScriptableDB.Editor
     /// </summary>
     public class TableInfo
     {
-        public string Name { get; set; }
-        public string AssetPath { get; set; }
-        public ScriptableObject Asset { get; set; }
-        public ITableAsset TableAsset { get; set; }
-        public Type RecordType { get; set; }
-        public int RecordCount { get; set; }
-        public List<ColumnInfo> Columns { get; set; } = new();
+        public string Name { get; }
+        public string AssetPath { get; }
+        public ScriptableObject Asset { get; }
+        public ITableAsset TableAsset { get; }
+        public Type RecordType { get; }
+        public int RecordCount { get; }
+        public List<ColumnInfo> Columns { get; };
+
+        public TableInfo(string name, string assetPath, ScriptableObject asset, ITableAsset tableAsset, Type recordType, int recordCount, List<ColumnInfo> columns)
+        {
+            Name = name;
+            AssetPath = assetPath;
+            Asset = asset;
+            TableAsset = tableAsset;
+            RecordType = recordType;
+            RecordCount = recordCount;
+            Columns = columns;
+        }
     }
 }
