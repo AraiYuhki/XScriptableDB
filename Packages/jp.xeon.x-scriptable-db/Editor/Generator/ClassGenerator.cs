@@ -53,7 +53,6 @@ namespace {namespaceName}
 }}";
         }
 
-
         private static string GenerateFields(TableDefinition tableDefinition)
         {
             var columns = tableDefinition.Columns;

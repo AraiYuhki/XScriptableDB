@@ -5,6 +5,9 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Xeon.XScriptableDB
 {
@@ -271,20 +274,19 @@ namespace Xeon.XScriptableDB
             }
         }
 
-        [UnityEditor.MenuItem("Tools/XScriptableDB/Clear Database")]
+        [MenuItem("Tools/XScriptableDB/Clear Database")]
         private static void ClearDatabase()
         {
             Clear();
             Debug.Log("Database cleared");
         }
 
-        [UnityEditor.MenuItem("Tools/XScriptableDB/Reload Database")]
+        [MenuItem("Tools/XScriptableDB/Reload Database")]
         private static void ReloadDatabase() => Reload();
 
-        [UnityEditor.MenuItem("Tools/XScriptableDB/Export to TSV")]
-        public static void ExportToTsv()
+        private static void ExportToFile(string extension)
         {
-            var folderPath = UnityEditor.EditorUtility.SaveFolderPanel(
+            var folderPath = EditorUtility.SaveFolderPanel(
                 "Select Export Folder",
                 Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                 "Masters");
@@ -294,23 +296,22 @@ namespace Xeon.XScriptableDB
             {
                 if (table is not IExportable exporter)
                     continue;
-                var filePath = Path.Combine(folderPath, table.name + ".tsv");
+                var filePath = Path.Combine(folderPath, table.name + extension);
                 exporter.Export(filePath, Encoding.UTF8);
                 Debug.Log($"Exported: {filePath}");
             }
         }
 
-        [UnityEditor.MenuItem("Tools/XScriptableDB/Import from TSV")]
-        public static void ImportFromTsv()
+        private static void ImportFromFile(string extension)
         {
-            var folderPath = UnityEditor.EditorUtility.OpenFolderPanel(
+            var folderPath = EditorUtility.OpenFolderPanel(
                 "Select Import Folder",
                 Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                 "Masters");
             if (string.IsNullOrEmpty(folderPath))
                 return;
             var directoryInfo = new DirectoryInfo(folderPath);
-            var files = directoryInfo.GetFiles("*.tsv", SearchOption.TopDirectoryOnly);
+            var files = directoryInfo.GetFiles($"*{extension}", SearchOption.TopDirectoryOnly);
             foreach (var file in files)
             {
                 var tableName = Path.GetFileNameWithoutExtension(file.Name);
@@ -320,11 +321,23 @@ namespace Xeon.XScriptableDB
                     continue;
                 Debug.Log($"Importing: {file.Name} -> {targetTable.name}");
                 importable.Import(file.FullName);
-                UnityEditor.EditorUtility.SetDirty(targetTable);
+                EditorUtility.SetDirty(targetTable);
             }
-            UnityEditor.AssetDatabase.SaveAssets();
-            UnityEditor.AssetDatabase.Refresh();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
+
+        [MenuItem("Tools/XScriptableDB/Export/CSV")]
+        public static void ExportToCsv() => ExportToFile(".csv");
+
+        [MenuItem("Tools/XScriptableDB/Export/TSV")]
+        public static void ExportToTsv() => ExportToFile(".tsv");
+
+        [MenuItem("Tools/XScriptableDB/Import/CSV")]
+        public static void ImportFromCsv() => ImportFromFile(".csv");
+
+        [MenuItem("Tools/XScriptableDB/Import/TSV")]
+        public static void ImportFromTsv() => ImportFromFile(".tsv");
 #endif
     }
 }
