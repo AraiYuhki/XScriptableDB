@@ -15,7 +15,7 @@ namespace Xeon.XScriptableDB.Editor
         public ITableAsset TableAsset { get; }
         public Type RecordType { get; }
         public int RecordCount { get; }
-        public List<ColumnInfo> Columns { get; };
+        public List<ColumnInfo> Columns { get; }
 
         public TableInfo(string name, string assetPath, ScriptableObject asset, ITableAsset tableAsset, Type recordType, int recordCount, List<ColumnInfo> columns)
         {

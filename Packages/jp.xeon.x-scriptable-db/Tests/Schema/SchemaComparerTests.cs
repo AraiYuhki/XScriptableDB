@@ -265,13 +265,7 @@ namespace Xeon.XScriptableDB.Tests
         [Test]
         public void SchemaDifference_FieldAdded_ToString()
         {
-            var diff = new SchemaDifference
-            {
-                Type = SchemaDifferenceType.FieldAdded,
-                FieldName = "NewField",
-                NewValue = "String"
-            };
-
+            var diff = new SchemaDifference(SchemaDifferenceType.FieldAdded, "NewField", null, "String");
             var str = diff.ToString();
 
             Assert.That(str, Does.Contain("フィールド追加"));
@@ -281,12 +275,7 @@ namespace Xeon.XScriptableDB.Tests
         [Test]
         public void SchemaDifference_FieldRemoved_ToString()
         {
-            var diff = new SchemaDifference
-            {
-                Type = SchemaDifferenceType.FieldRemoved,
-                FieldName = "OldField",
-                OldValue = "Int32"
-            };
+            var diff = new SchemaDifference(SchemaDifferenceType.FieldRemoved, "OldField", "Int32", null);
 
             var str = diff.ToString();
 
@@ -297,13 +286,7 @@ namespace Xeon.XScriptableDB.Tests
         [Test]
         public void SchemaDifference_FieldTypeChanged_ToString()
         {
-            var diff = new SchemaDifference
-            {
-                Type = SchemaDifferenceType.FieldTypeChanged,
-                FieldName = "Value",
-                OldValue = "Int32",
-                NewValue = "Single"
-            };
+            var diff = new SchemaDifference(SchemaDifferenceType.FieldTypeChanged, "Value", "Int32", "Single");
 
             var str = diff.ToString();
 

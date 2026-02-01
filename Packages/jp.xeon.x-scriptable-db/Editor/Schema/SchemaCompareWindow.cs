@@ -65,13 +65,9 @@ namespace Xeon.XScriptableDB.Editor
             DrawTableSelection();
 
             if (comparisonResult != null)
-            {
                 DrawComparisonResult();
-            }
             else
-            {
                 DrawSchemaViews();
-            }
 
             EditorGUILayout.EndVertical();
         }
@@ -142,6 +138,16 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUILayout.BeginHorizontal();
 
             // ソーススキーマ表示
+            DrawSourceSchemaView();
+
+            // ターゲットスキーマ表示
+            DrawTargetSchemaView();
+
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void DrawSourceSchemaView()
+        {
             EditorGUILayout.BeginVertical(GUILayout.Width(position.width / 2 - 10));
             if (sourceTable != null)
             {
@@ -155,8 +161,10 @@ namespace Xeon.XScriptableDB.Editor
                 EditorGUILayout.HelpBox("比較元テーブルを選択してください", MessageType.Info);
             }
             EditorGUILayout.EndVertical();
+        }
 
-            // ターゲットスキーマ表示
+        private void DrawTargetSchemaView()
+        {
             EditorGUILayout.BeginVertical(GUILayout.Width(position.width / 2 - 10));
             if (targetTable != null)
             {
@@ -170,8 +178,6 @@ namespace Xeon.XScriptableDB.Editor
                 EditorGUILayout.HelpBox("比較先テーブルを選択してください", MessageType.Info);
             }
             EditorGUILayout.EndVertical();
-
-            EditorGUILayout.EndHorizontal();
         }
 
         private void DrawSchemaInfo(Type type)
@@ -183,7 +189,7 @@ namespace Xeon.XScriptableDB.Editor
                 EditorGUILayout.BeginHorizontal();
 
                 var icon = GetFieldIcon(field);
-                GUILayout.Label(icon, GUILayout.Width(20));
+                GUILayout.Label(icon, GUILayout.Width(20), GUILayout.Height(EditorGUIUtility.singleLineHeight));
 
                 EditorGUILayout.LabelField(field.Name, GUILayout.Width(150));
                 EditorGUILayout.LabelField(field.FieldType.Name, GUILayout.Width(100));
@@ -227,15 +233,9 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
             EditorGUILayout.BeginVertical();
 
-            var statusIcon = comparisonResult.IsCompatible
-                ? EditorGUIUtility.IconContent("d_greenLight")
-                : EditorGUIUtility.IconContent("d_redLight");
-
             EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(statusIcon, GUILayout.Width(20));
-            EditorGUILayout.LabelField(
-                comparisonResult.IsCompatible ? "互換性あり" : "互換性に問題あり",
-                EditorStyles.boldLabel);
+            GUILayout.Label(comparisonResult.GetStatusIcon(), GUILayout.Width(20));
+            EditorGUILayout.LabelField(comparisonResult.GetStatusLabel(), EditorStyles.boldLabel);
             EditorGUILayout.EndHorizontal();
 
             if (!string.IsNullOrEmpty(comparisonResult.CompatibilityNote))

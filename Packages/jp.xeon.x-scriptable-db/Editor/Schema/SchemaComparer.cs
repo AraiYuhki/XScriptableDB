@@ -20,91 +20,25 @@ namespace Xeon.XScriptableDB.Editor
     }
 
     /// <summary>
-    /// スキーマ差分の詳細。
-    /// </summary>
-    public class SchemaDifference
-    {
-        public SchemaDifferenceType Type { get; set; }
-        public string FieldName { get; set; }
-        public string OldValue { get; set; }
-        public string NewValue { get; set; }
-        public string Description { get; set; }
-
-        public override string ToString()
-        {
-            return Type switch
-            {
-                SchemaDifferenceType.FieldAdded => $"フィールド追加: {FieldName} ({NewValue})",
-                SchemaDifferenceType.FieldRemoved => $"フィールド削除: {FieldName} ({OldValue})",
-                SchemaDifferenceType.FieldTypeChanged => $"型変更: {FieldName} ({OldValue} -> {NewValue})",
-                SchemaDifferenceType.FieldAttributeChanged => $"属性変更: {FieldName} - {Description}",
-                SchemaDifferenceType.PrimaryKeyChanged => $"PrimaryKey変更: {OldValue} -> {NewValue}",
-                SchemaDifferenceType.SecondaryKeyAdded => $"SecondaryKey追加: {FieldName}",
-                SchemaDifferenceType.SecondaryKeyRemoved => $"SecondaryKey削除: {FieldName}",
-                _ => Description ?? "不明な差分"
-            };
-        }
-    }
-
-    /// <summary>
-    /// スキーマ比較結果。
-    /// </summary>
-    public class SchemaComparisonResult
-    {
-        public Type SourceType { get; set; }
-        public Type TargetType { get; set; }
-        public List<SchemaDifference> Differences { get; set; } = new();
-        public bool HasDifferences => Differences.Count > 0;
-        public bool IsCompatible { get; set; } = true;
-        public string CompatibilityNote { get; set; }
-
-        public int AddedFieldCount => Differences.Count(d => d.Type == SchemaDifferenceType.FieldAdded);
-        public int RemovedFieldCount => Differences.Count(d => d.Type == SchemaDifferenceType.FieldRemoved);
-        public int ChangedFieldCount => Differences.Count(d => d.Type == SchemaDifferenceType.FieldTypeChanged);
-    }
-
-    /// <summary>
-    /// フィールド情報。
-    /// </summary>
-    public class FieldSchemaInfo
-    {
-        public string Name { get; set; }
-        public Type FieldType { get; set; }
-        public bool IsPrimaryKey { get; set; }
-        public bool IsSecondaryKey { get; set; }
-        public bool IsReadOnly { get; set; }
-        public List<Attribute> Attributes { get; set; } = new();
-
-        public static FieldSchemaInfo FromFieldInfo(FieldInfo field)
-        {
-            var info = new FieldSchemaInfo
-            {
-                Name = field.Name,
-                FieldType = field.FieldType,
-                IsPrimaryKey = field.GetCustomAttribute<PrimaryKeyAttribute>() != null,
-                IsSecondaryKey = field.GetCustomAttribute<SecondaryKeyAttribute>() != null,
-                IsReadOnly = field.GetCustomAttribute<ReadOnlyAttribute>() != null,
-                Attributes = field.GetCustomAttributes().ToList()
-            };
-            return info;
-        }
-    }
-
-    /// <summary>
     /// スキーマ比較ユーティリティ。
     /// </summary>
     public static class SchemaComparer
     {
+        private static readonly HashSet<Type> NumericTypes = new()
+        {
+            typeof(byte), typeof(sbyte),
+            typeof(short), typeof(ushort),
+            typeof(int), typeof(uint),
+            typeof(long), typeof(ulong),
+            typeof(float), typeof(double), typeof(decimal)
+        };
+
         /// <summary>
         /// 2つの型のスキーマを比較する。
         /// </summary>
         public static SchemaComparisonResult Compare(Type sourceType, Type targetType)
         {
-            var result = new SchemaComparisonResult
-            {
-                SourceType = sourceType,
-                TargetType = targetType
-            };
+            var result = new SchemaComparisonResult(sourceType, targetType);
 
             var sourceFields = GetFieldSchemas(sourceType);
             var targetFields = GetFieldSchemas(targetType);
@@ -116,24 +50,14 @@ namespace Xeon.XScriptableDB.Editor
             foreach (var name in targetFieldNames.Except(sourceFieldNames))
             {
                 var field = targetFields[name];
-                result.Differences.Add(new SchemaDifference
-                {
-                    Type = SchemaDifferenceType.FieldAdded,
-                    FieldName = name,
-                    NewValue = field.FieldType.Name
-                });
+                result.Differences.Add(new (SchemaDifferenceType.FieldAdded,name, null, field.FieldType.Name));
             }
 
             // 削除されたフィールド
             foreach (var name in sourceFieldNames.Except(targetFieldNames))
             {
                 var field = sourceFields[name];
-                result.Differences.Add(new SchemaDifference
-                {
-                    Type = SchemaDifferenceType.FieldRemoved,
-                    FieldName = name,
-                    OldValue = field.FieldType.Name
-                });
+                result.Differences.Add(new (SchemaDifferenceType.FieldRemoved, name, field.FieldType.Name, null));
                 result.IsCompatible = false;
                 result.CompatibilityNote = "フィールドが削除されているため、データ損失の可能性があります";
             }
@@ -147,13 +71,7 @@ namespace Xeon.XScriptableDB.Editor
                 // 型の変更
                 if (sourceField.FieldType != targetField.FieldType)
                 {
-                    result.Differences.Add(new SchemaDifference
-                    {
-                        Type = SchemaDifferenceType.FieldTypeChanged,
-                        FieldName = name,
-                        OldValue = sourceField.FieldType.Name,
-                        NewValue = targetField.FieldType.Name
-                    });
+                    result.Differences.Add(new (SchemaDifferenceType.FieldTypeChanged, name, sourceField.FieldType.Name, targetField.FieldType.Name));
 
                     if (!IsTypeConvertible(sourceField.FieldType, targetField.FieldType))
                     {
@@ -165,31 +83,17 @@ namespace Xeon.XScriptableDB.Editor
                 // PrimaryKeyの変更
                 if (sourceField.IsPrimaryKey != targetField.IsPrimaryKey)
                 {
-                    result.Differences.Add(new SchemaDifference
-                    {
-                        Type = SchemaDifferenceType.PrimaryKeyChanged,
-                        FieldName = name,
-                        OldValue = sourceField.IsPrimaryKey ? name : "(none)",
-                        NewValue = targetField.IsPrimaryKey ? name : "(none)"
-                    });
+                    result.Differences.Add(new (SchemaDifferenceType.PrimaryKeyChanged, name, sourceField.IsPrimaryKey, targetField.IsPrimaryKey));
                 }
 
                 // SecondaryKeyの変更
                 if (sourceField.IsSecondaryKey && !targetField.IsSecondaryKey)
                 {
-                    result.Differences.Add(new SchemaDifference
-                    {
-                        Type = SchemaDifferenceType.SecondaryKeyRemoved,
-                        FieldName = name
-                    });
+                    result.Differences.Add(new (SchemaDifferenceType.SecondaryKeyRemoved, name));
                 }
                 else if (!sourceField.IsSecondaryKey && targetField.IsSecondaryKey)
                 {
-                    result.Differences.Add(new SchemaDifference
-                    {
-                        Type = SchemaDifferenceType.SecondaryKeyAdded,
-                        FieldName = name
-                    });
+                    result.Differences.Add(new (SchemaDifferenceType.SecondaryKeyAdded, name));
                 }
             }
 
@@ -201,7 +105,7 @@ namespace Xeon.XScriptableDB.Editor
         /// </summary>
         public static Dictionary<string, FieldSchemaInfo> GetFieldSchemas(Type type)
         {
-            var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             var result = new Dictionary<string, FieldSchemaInfo>();
 
             foreach (var field in fields)
@@ -222,16 +126,7 @@ namespace Xeon.XScriptableDB.Editor
                 return true;
 
             // 数値型の変換
-            var numericTypes = new HashSet<Type>
-            {
-                typeof(byte), typeof(sbyte),
-                typeof(short), typeof(ushort),
-                typeof(int), typeof(uint),
-                typeof(long), typeof(ulong),
-                typeof(float), typeof(double), typeof(decimal)
-            };
-
-            if (numericTypes.Contains(from) && numericTypes.Contains(to))
+            if (NumericTypes.Contains(from) && NumericTypes.Contains(to))
                 return true;
 
             // 文字列への変換は常に可能
