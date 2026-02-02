@@ -309,8 +309,9 @@ namespace Xeon.XScriptableDB
             }
 
             // キー値ごとにレコードインデックスをグループ化
-            var keyGroups = new Dictionary<int, List<int>>();
-            var keyStringGroups = new Dictionary<int, (string compositeString, string[] keyValues)>();
+            // 文字列キーを使用してハッシュ衝突を回避
+            var keyGroups = new Dictionary<string, List<int>>();
+            var keyValueGroups = new Dictionary<string, string[]>();
 
             for (var i = 0; i < records.Length; i++)
             {
@@ -333,24 +334,24 @@ namespace Xeon.XScriptableDB
                         hasNullKey = true;
                 }
 
-                // null キーを含む場合はスキップ（オプション）
+                // null キーを含む場合はスキップ
+                // 注: null を含むキーはインデックスに追加されません
                 if (hasNullKey)
                     continue;
 
-                var compositeHash = CompositeIndexData.ComputeCompositeHash(keyValues);
                 var compositeString = CompositeIndexData.ComputeCompositeString(keyValues);
 
-                if (!keyGroups.TryGetValue(compositeHash, out var indices))
+                if (!keyGroups.TryGetValue(compositeString, out var indices))
                 {
                     indices = new List<int>();
-                    keyGroups[compositeHash] = indices;
-                    keyStringGroups[compositeHash] = (compositeString, keyStrings);
+                    keyGroups[compositeString] = indices;
+                    keyValueGroups[compositeString] = keyStrings;
                 }
 
                 if (!attribute.AllowDuplicates && indices.Count > 0)
                 {
                     Debug.LogWarning(
-                        $"Duplicate CompositeIndex '{attribute.Name}' value '{compositeString}' at index {i}. " +
+                        $"Duplicate CompositeIndex '{attribute.Name}' value '{CompositeIndexData.ComputeReadableString(keyValues)}' at index {i}. " +
                         $"Set AllowDuplicates=true to allow multiple records per key combination.");
                     continue;
                 }
@@ -359,9 +360,14 @@ namespace Xeon.XScriptableDB
             }
 
             // インデックスデータに追加
-            foreach (var (compositeHash, indices) in keyGroups)
+            foreach (var (compositeString, indices) in keyGroups)
             {
-                var (compositeString, keyValues) = keyStringGroups[compositeHash];
+                var keyValues = keyValueGroups[compositeString];
+                // ハッシュは後方互換性のため計算するが、検索には使用しない
+                var keyObjects = new object[keyValues.Length];
+                for (var i = 0; i < keyValues.Length; i++)
+                    keyObjects[i] = keyValues[i];
+                var compositeHash = CompositeIndexData.ComputeCompositeHash(keyObjects);
                 indexData.AddEntry(compositeHash, compositeString, keyValues, indices.ToArray());
             }
 
