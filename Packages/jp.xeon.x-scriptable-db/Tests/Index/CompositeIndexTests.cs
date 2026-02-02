@@ -450,7 +450,8 @@ namespace Xeon.XScriptableDB.Tests
         {
             var str = CompositeIndexData.ComputeCompositeString("A", 100, "B");
             // Unit Separator (ASCII 31) を区切り文字として使用
-            Assert.That(str, Is.EqualTo("A\x1F100\x1FB"));
+            var expected = "A" + (char)0x1F + "100" + (char)0x1F + "B";
+            Assert.That(str, Is.EqualTo(expected));
         }
 
         [Test]
@@ -467,7 +468,9 @@ namespace Xeon.XScriptableDB.Tests
         public void ComputeCompositeString_NullValue_UsesPlaceholder()
         {
             var str = CompositeIndexData.ComputeCompositeString("A", null, "B");
-            Assert.That(str, Does.Contain("\x00NULL\x00"));
+            // Null placeholder: "\x00NULL\x00"
+            var nullPlaceholder = (char)0x00 + "NULL" + (char)0x00;
+            Assert.That(str, Does.Contain(nullPlaceholder));
         }
 
         [Test]
