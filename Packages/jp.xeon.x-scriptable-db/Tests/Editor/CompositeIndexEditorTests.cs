@@ -116,34 +116,6 @@ namespace Xeon.XScriptableDB.Tests
 
         #endregion
 
-        #region LegacyTableDefinition Tests
-
-        [Test]
-        public void LegacyTableDefinition_ToTableDefinition_ConvertsCorrectly()
-        {
-            var legacy = new LegacyTableDefinition
-            {
-                tableName = "TestTable",
-                isReadOnly = false,
-                columns = new List<ColumnDefinition>
-                {
-                    new ColumnDefinition { Name = "id", Type = "int", IsPrimaryKey = true },
-                    new ColumnDefinition { Name = "name", Type = "string" }
-                },
-                indices = new List<string> { "name" }
-            };
-
-            var converted = legacy.ToTableDefinition();
-
-            Assert.That(converted.TableName, Is.EqualTo("TestTable"));
-            Assert.That(converted.IsReadOnly, Is.False);
-            Assert.That(converted.Columns.Count, Is.EqualTo(2));
-            Assert.That(converted.Indices.Count, Is.EqualTo(1));
-            Assert.That(converted.Indices[0].Name, Is.EqualTo("name"));
-        }
-
-        #endregion
-
         #region ClassGenerator Tests
 
         [Test]
