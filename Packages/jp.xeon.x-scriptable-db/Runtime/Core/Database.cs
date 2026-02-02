@@ -5,6 +5,9 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Xeon.XScriptableDB
 {
@@ -271,60 +274,176 @@ namespace Xeon.XScriptableDB
             }
         }
 
-        [UnityEditor.MenuItem("Tools/XScriptableDB/Clear Database")]
+        [MenuItem("Tools/XScriptableDB/Clear Database")]
         private static void ClearDatabase()
         {
             Clear();
             Debug.Log("Database cleared");
         }
 
-        [UnityEditor.MenuItem("Tools/XScriptableDB/Reload Database")]
+        [MenuItem("Tools/XScriptableDB/Reload Database")]
         private static void ReloadDatabase() => Reload();
 
-        [UnityEditor.MenuItem("Tools/XScriptableDB/Export to TSV")]
-        public static void ExportToTsv()
+        private static void ExportToFile(string extension)
         {
-            var folderPath = UnityEditor.EditorUtility.SaveFolderPanel(
+            var folderPath = EditorUtility.SaveFolderPanel(
                 "Select Export Folder",
                 Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                 "Masters");
             if (string.IsNullOrEmpty(folderPath))
                 return;
+
+            var successList = new List<string>();
+            var failedList = new List<string>();
+
             foreach (var table in Instance.tables.Values)
             {
                 if (table is not IExportable exporter)
                     continue;
-                var filePath = Path.Combine(folderPath, table.name + ".tsv");
-                exporter.Export(filePath, Encoding.UTF8);
-                Debug.Log($"Exported: {filePath}");
+
+                var filePath = Path.Combine(folderPath, table.name + extension);
+                try
+                {
+                    exporter.Export(filePath, Encoding.UTF8);
+                    successList.Add(table.name);
+                    Debug.Log($"Exported: {filePath}");
+                }
+                catch (Exception e)
+                {
+                    failedList.Add($"{table.name}: {e.Message}");
+                    Debug.LogError($"Export failed: {table.name} - {e.Message}");
+                }
             }
+
+            ShowResultDialog("エクスポート完了", successList, failedList);
         }
 
-        [UnityEditor.MenuItem("Tools/XScriptableDB/Import from TSV")]
-        public static void ImportFromTsv()
+        private static void ImportFromFile(string extension)
         {
-            var folderPath = UnityEditor.EditorUtility.OpenFolderPanel(
+            var folderPath = EditorUtility.OpenFolderPanel(
                 "Select Import Folder",
                 Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                 "Masters");
             if (string.IsNullOrEmpty(folderPath))
                 return;
+
+            var successList = new List<string>();
+            var failedList = new List<string>();
+            var skippedList = new List<string>();
+
             var directoryInfo = new DirectoryInfo(folderPath);
-            var files = directoryInfo.GetFiles("*.tsv", SearchOption.TopDirectoryOnly);
+            var files = directoryInfo.GetFiles($"*{extension}", SearchOption.TopDirectoryOnly);
+
             foreach (var file in files)
             {
                 var tableName = Path.GetFileNameWithoutExtension(file.Name);
                 var targetTable = Instance.tables.Values.FirstOrDefault(
                     table => tableName == table.GetType().Name || tableName == table.name);
-                if (targetTable is not IImportable importable)
+
+                if (targetTable == null)
+                {
+                    skippedList.Add($"{file.Name} (テーブルが見つかりません)");
                     continue;
-                Debug.Log($"Importing: {file.Name} -> {targetTable.name}");
-                importable.Import(file.FullName);
-                UnityEditor.EditorUtility.SetDirty(targetTable);
+                }
+
+                if (targetTable is not IImportable importable)
+                {
+                    skippedList.Add($"{file.Name} (IImportable未実装)");
+                    continue;
+                }
+
+                try
+                {
+                    Debug.Log($"Importing: {file.Name} -> {targetTable.name}");
+                    importable.Import(file.FullName);
+                    EditorUtility.SetDirty(targetTable);
+                    successList.Add($"{file.Name} -> {targetTable.name}");
+                }
+                catch (Exception e)
+                {
+                    failedList.Add($"{file.Name}: {e.Message}");
+                    Debug.LogError($"Import failed: {file.Name} - {e.Message}");
+                }
             }
-            UnityEditor.AssetDatabase.SaveAssets();
-            UnityEditor.AssetDatabase.Refresh();
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            ShowImportResultDialog(successList, failedList, skippedList);
         }
+
+        private static void ShowResultDialog(string title, List<string> successList, List<string> failedList)
+        {
+            var message = new StringBuilder();
+
+            if (successList.Count > 0)
+            {
+                message.AppendLine($"成功 ({successList.Count}件):");
+                foreach (var item in successList)
+                    message.AppendLine($"  - {item}");
+            }
+
+            if (failedList.Count > 0)
+            {
+                if (message.Length > 0)
+                    message.AppendLine();
+                message.AppendLine($"失敗 ({failedList.Count}件):");
+                foreach (var item in failedList)
+                    message.AppendLine($"  - {item}");
+            }
+
+            if (successList.Count == 0 && failedList.Count == 0)
+                message.AppendLine("対象のテーブルがありませんでした。");
+
+            EditorUtility.DisplayDialog(title, message.ToString(), "OK");
+        }
+
+        private static void ShowImportResultDialog(List<string> successList, List<string> failedList, List<string> skippedList)
+        {
+            var message = new StringBuilder();
+
+            if (successList.Count > 0)
+            {
+                message.AppendLine($"成功 ({successList.Count}件):");
+                foreach (var item in successList)
+                    message.AppendLine($"  - {item}");
+            }
+
+            if (failedList.Count > 0)
+            {
+                if (message.Length > 0)
+                    message.AppendLine();
+                message.AppendLine($"失敗 ({failedList.Count}件):");
+                foreach (var item in failedList)
+                    message.AppendLine($"  - {item}");
+            }
+
+            if (skippedList.Count > 0)
+            {
+                if (message.Length > 0)
+                    message.AppendLine();
+                message.AppendLine($"スキップ ({skippedList.Count}件):");
+                foreach (var item in skippedList)
+                    message.AppendLine($"  - {item}");
+            }
+
+            if (successList.Count == 0 && failedList.Count == 0 && skippedList.Count == 0)
+                message.AppendLine("対象のファイルがありませんでした。");
+
+            EditorUtility.DisplayDialog("インポート完了", message.ToString(), "OK");
+        }
+
+        [MenuItem("Tools/XScriptableDB/Export/CSV")]
+        public static void ExportToCsv() => ExportToFile(".csv");
+
+        [MenuItem("Tools/XScriptableDB/Export/TSV")]
+        public static void ExportToTsv() => ExportToFile(".tsv");
+
+        [MenuItem("Tools/XScriptableDB/Import/CSV")]
+        public static void ImportFromCsv() => ImportFromFile(".csv");
+
+        [MenuItem("Tools/XScriptableDB/Import/TSV")]
+        public static void ImportFromTsv() => ImportFromFile(".tsv");
 #endif
     }
 }

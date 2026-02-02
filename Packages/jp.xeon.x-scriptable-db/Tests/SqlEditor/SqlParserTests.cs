@@ -1,6 +1,4 @@
 using NUnit.Framework;
-using System;
-using System.Linq;
 using Xeon.XScriptableDB.Editor;
 
 namespace Xeon.XScriptableDB.Tests
@@ -59,7 +57,7 @@ namespace Xeon.XScriptableDB.Tests
         [Test]
         public void Lexer_NumberLiteral_TokenizesCorrectly()
         {
-            var lexer = new SqlLexer("123 45.67 -89");
+            var lexer = new SqlLexer("123 45.67");
             var tokens = lexer.Tokenize();
 
             Assert.That(tokens[0].Type, Is.EqualTo(TokenType.NumberLiteral));
@@ -67,9 +65,22 @@ namespace Xeon.XScriptableDB.Tests
 
             Assert.That(tokens[1].Type, Is.EqualTo(TokenType.NumberLiteral));
             Assert.That(tokens[1].Value, Is.EqualTo("45.67"));
+        }
 
+        [Test]
+        public void Lexer_MinusOperator_TokenizesCorrectly()
+        {
+            var lexer = new SqlLexer("-89 1 - 2");
+            var tokens = lexer.Tokenize();
+
+            Assert.That(tokens[0].Type, Is.EqualTo(TokenType.Minus));
+            Assert.That(tokens[1].Type, Is.EqualTo(TokenType.NumberLiteral));
+            Assert.That(tokens[1].Value, Is.EqualTo("89"));
             Assert.That(tokens[2].Type, Is.EqualTo(TokenType.NumberLiteral));
-            Assert.That(tokens[2].Value, Is.EqualTo("-89"));
+            Assert.That(tokens[2].Value, Is.EqualTo("1"));
+            Assert.That(tokens[3].Type, Is.EqualTo(TokenType.Minus));
+            Assert.That(tokens[4].Type, Is.EqualTo(TokenType.NumberLiteral));
+            Assert.That(tokens[4].Value, Is.EqualTo("2"));
         }
 
         [Test]
@@ -382,6 +393,371 @@ namespace Xeon.XScriptableDB.Tests
             var literal = comparison?.Right as LiteralExpression;
             Assert.That(literal, Is.Not.Null);
             Assert.That(literal.Value, Is.Null);
+        }
+
+        #endregion
+
+        #region JOIN Tests
+
+        [Test]
+        public void Parse_InnerJoin_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT * FROM Items i INNER JOIN Categories c ON i.CategoryId = c.Id") as SelectStatement;
+
+            Assert.That(stmt, Is.Not.Null);
+            Assert.That(stmt.Joins.Count, Is.EqualTo(1));
+            Assert.That(stmt.Joins[0].JoinType, Is.EqualTo(JoinType.Inner));
+            Assert.That(stmt.Joins[0].TableName, Is.EqualTo("Categories"));
+            Assert.That(stmt.Joins[0].Alias, Is.EqualTo("c"));
+            Assert.That(stmt.Joins[0].OnCondition, Is.Not.Null);
+        }
+
+        [Test]
+        public void Parse_LeftJoin_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT * FROM Items LEFT JOIN Categories ON Items.CategoryId = Categories.Id") as SelectStatement;
+
+            Assert.That(stmt.Joins[0].JoinType, Is.EqualTo(JoinType.Left));
+        }
+
+        [Test]
+        public void Parse_RightJoin_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT * FROM Items RIGHT JOIN Categories ON Items.CategoryId = Categories.Id") as SelectStatement;
+
+            Assert.That(stmt.Joins[0].JoinType, Is.EqualTo(JoinType.Right));
+        }
+
+        [Test]
+        public void Parse_CrossJoin_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT * FROM Items CROSS JOIN Categories") as SelectStatement;
+
+            Assert.That(stmt.Joins[0].JoinType, Is.EqualTo(JoinType.Cross));
+            Assert.That(stmt.Joins[0].OnCondition, Is.Null);
+        }
+
+        [Test]
+        public void Parse_MultipleJoins_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT * FROM Items i INNER JOIN Categories c ON i.CategoryId = c.Id LEFT JOIN Suppliers s ON i.SupplierId = s.Id") as SelectStatement;
+
+            Assert.That(stmt.Joins.Count, Is.EqualTo(2));
+            Assert.That(stmt.Joins[0].JoinType, Is.EqualTo(JoinType.Inner));
+            Assert.That(stmt.Joins[1].JoinType, Is.EqualTo(JoinType.Left));
+        }
+
+        #endregion
+
+        #region Aggregate Function Tests
+
+        [Test]
+        public void Parse_CountStar_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT COUNT(*) FROM Items") as SelectStatement;
+
+            Assert.That(stmt.Columns.Count, Is.EqualTo(1));
+            var aggExpr = stmt.Columns[0].Expression as AggregateExpression;
+            Assert.That(aggExpr, Is.Not.Null);
+            Assert.That(aggExpr.Function, Is.EqualTo(AggregateFunction.Count));
+            Assert.That(aggExpr.Argument, Is.Null);
+        }
+
+        [Test]
+        public void Parse_CountColumn_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT COUNT(Id) FROM Items") as SelectStatement;
+
+            var aggExpr = stmt.Columns[0].Expression as AggregateExpression;
+            Assert.That(aggExpr.Function, Is.EqualTo(AggregateFunction.Count));
+            Assert.That(aggExpr.Argument, Is.TypeOf<ColumnExpression>());
+        }
+
+        [Test]
+        public void Parse_CountDistinct_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT COUNT(DISTINCT CategoryId) FROM Items") as SelectStatement;
+
+            var aggExpr = stmt.Columns[0].Expression as AggregateExpression;
+            Assert.That(aggExpr.Function, Is.EqualTo(AggregateFunction.Count));
+            Assert.That(aggExpr.IsDistinct, Is.True);
+        }
+
+        [Test]
+        public void Parse_SumFunction_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT SUM(Price) FROM Items") as SelectStatement;
+
+            var aggExpr = stmt.Columns[0].Expression as AggregateExpression;
+            Assert.That(aggExpr.Function, Is.EqualTo(AggregateFunction.Sum));
+        }
+
+        [Test]
+        public void Parse_AvgFunction_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT AVG(Price) FROM Items") as SelectStatement;
+
+            var aggExpr = stmt.Columns[0].Expression as AggregateExpression;
+            Assert.That(aggExpr.Function, Is.EqualTo(AggregateFunction.Avg));
+        }
+
+        [Test]
+        public void Parse_MinMaxFunctions_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT MIN(Price), MAX(Price) FROM Items") as SelectStatement;
+
+            var minExpr = stmt.Columns[0].Expression as AggregateExpression;
+            var maxExpr = stmt.Columns[1].Expression as AggregateExpression;
+            Assert.That(minExpr.Function, Is.EqualTo(AggregateFunction.Min));
+            Assert.That(maxExpr.Function, Is.EqualTo(AggregateFunction.Max));
+        }
+
+        [Test]
+        public void Parse_MultipleAggregates_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT COUNT(*), SUM(Price), AVG(Price) FROM Items") as SelectStatement;
+
+            Assert.That(stmt.Columns.Count, Is.EqualTo(3));
+            Assert.That(stmt.Columns[0].Expression, Is.TypeOf<AggregateExpression>());
+            Assert.That(stmt.Columns[1].Expression, Is.TypeOf<AggregateExpression>());
+            Assert.That(stmt.Columns[2].Expression, Is.TypeOf<AggregateExpression>());
+        }
+
+        #endregion
+
+        #region GROUP BY / HAVING Tests
+
+        [Test]
+        public void Parse_GroupBy_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT CategoryId, COUNT(*) FROM Items GROUP BY CategoryId") as SelectStatement;
+
+            Assert.That(stmt.GroupBy.Count, Is.EqualTo(1));
+            var groupExpr = stmt.GroupBy[0].Expression as ColumnExpression;
+            Assert.That(groupExpr.ColumnName, Is.EqualTo("CategoryId"));
+        }
+
+        [Test]
+        public void Parse_GroupByMultiple_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT CategoryId, Status, COUNT(*) FROM Items GROUP BY CategoryId, Status") as SelectStatement;
+
+            Assert.That(stmt.GroupBy.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Parse_GroupByWithHaving_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT CategoryId, COUNT(*) FROM Items GROUP BY CategoryId HAVING COUNT(*) > 5") as SelectStatement;
+
+            Assert.That(stmt.HavingClause, Is.Not.Null);
+            var comparison = stmt.HavingClause as ComparisonExpression;
+            Assert.That(comparison, Is.Not.Null);
+            Assert.That(comparison.Left, Is.TypeOf<AggregateExpression>());
+        }
+
+        #endregion
+
+        #region DISTINCT Tests
+
+        [Test]
+        public void Parse_SelectDistinct_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT DISTINCT CategoryId FROM Items") as SelectStatement;
+
+            Assert.That(stmt.IsDistinct, Is.True);
+        }
+
+        #endregion
+
+        #region CASE Expression Tests
+
+        [Test]
+        public void Parse_CaseExpression_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT CASE WHEN Price > 1000 THEN 'High' ELSE 'Low' END FROM Items") as SelectStatement;
+
+            var caseExpr = stmt.Columns[0].Expression as CaseExpression;
+            Assert.That(caseExpr, Is.Not.Null);
+            Assert.That(caseExpr.WhenClauses.Count, Is.EqualTo(1));
+            Assert.That(caseExpr.ElseExpression, Is.Not.Null);
+        }
+
+        [Test]
+        public void Parse_CaseExpressionWithAlias_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT CASE WHEN Active = 1 THEN 'Yes' ELSE 'No' END AS Status FROM Items") as SelectStatement;
+
+            Assert.That(stmt.Columns[0].Alias, Is.EqualTo("Status"));
+        }
+
+        [Test]
+        public void Parse_CaseExpressionMultipleWhen_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT CASE WHEN Price < 100 THEN 'Low' WHEN Price < 1000 THEN 'Medium' ELSE 'High' END FROM Items") as SelectStatement;
+
+            var caseExpr = stmt.Columns[0].Expression as CaseExpression;
+            Assert.That(caseExpr.WhenClauses.Count, Is.EqualTo(2));
+        }
+
+        #endregion
+
+        #region String Function Tests
+
+        [Test]
+        public void Parse_UpperFunction_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT UPPER(Name) FROM Items") as SelectStatement;
+
+            var funcExpr = stmt.Columns[0].Expression as FunctionCallExpression;
+            Assert.That(funcExpr, Is.Not.Null);
+            Assert.That(funcExpr.FunctionName, Is.EqualTo("UPPER"));
+            Assert.That(funcExpr.Arguments.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Parse_LowerFunction_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT LOWER(Name) FROM Items") as SelectStatement;
+
+            var funcExpr = stmt.Columns[0].Expression as FunctionCallExpression;
+            Assert.That(funcExpr.FunctionName, Is.EqualTo("LOWER"));
+        }
+
+        [Test]
+        public void Parse_ConcatFunction_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT CONCAT(FirstName, ' ', LastName) FROM Users") as SelectStatement;
+
+            var funcExpr = stmt.Columns[0].Expression as FunctionCallExpression;
+            Assert.That(funcExpr.FunctionName, Is.EqualTo("CONCAT"));
+            Assert.That(funcExpr.Arguments.Count, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Parse_SubstringFunction_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT SUBSTRING(Name, 1, 5) FROM Items") as SelectStatement;
+
+            var funcExpr = stmt.Columns[0].Expression as FunctionCallExpression;
+            Assert.That(funcExpr.FunctionName, Is.EqualTo("SUBSTRING"));
+            Assert.That(funcExpr.Arguments.Count, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Parse_TrimFunction_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT TRIM(Name) FROM Items") as SelectStatement;
+
+            var funcExpr = stmt.Columns[0].Expression as FunctionCallExpression;
+            Assert.That(funcExpr.FunctionName, Is.EqualTo("TRIM"));
+        }
+
+        [Test]
+        public void Parse_LengthFunction_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT LENGTH(Name) FROM Items") as SelectStatement;
+
+            var funcExpr = stmt.Columns[0].Expression as FunctionCallExpression;
+            Assert.That(funcExpr.FunctionName, Is.EqualTo("LENGTH"));
+        }
+
+        #endregion
+
+        #region Arithmetic Expression Tests
+
+        [Test]
+        public void Parse_AddExpression_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT Price + Tax FROM Items") as SelectStatement;
+
+            var arithExpr = stmt.Columns[0].Expression as ArithmeticExpression;
+            Assert.That(arithExpr, Is.Not.Null);
+            Assert.That(arithExpr.Operator, Is.EqualTo(ArithmeticOperator.Add));
+        }
+
+        [Test]
+        public void Parse_SubtractExpression_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT Price - Discount FROM Items") as SelectStatement;
+
+            var arithExpr = stmt.Columns[0].Expression as ArithmeticExpression;
+            Assert.That(arithExpr.Operator, Is.EqualTo(ArithmeticOperator.Subtract));
+        }
+
+        [Test]
+        public void Parse_MultiplyExpression_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT Price * Quantity FROM Items") as SelectStatement;
+
+            var arithExpr = stmt.Columns[0].Expression as ArithmeticExpression;
+            Assert.That(arithExpr.Operator, Is.EqualTo(ArithmeticOperator.Multiply));
+        }
+
+        [Test]
+        public void Parse_DivideExpression_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT Total / Count FROM Items") as SelectStatement;
+
+            var arithExpr = stmt.Columns[0].Expression as ArithmeticExpression;
+            Assert.That(arithExpr.Operator, Is.EqualTo(ArithmeticOperator.Divide));
+        }
+
+        [Test]
+        public void Parse_ComplexArithmeticExpression_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT Price * Quantity + Tax FROM Items") as SelectStatement;
+
+            // Should parse as (Price * Quantity) + Tax due to operator precedence
+            var arithExpr = stmt.Columns[0].Expression as ArithmeticExpression;
+            Assert.That(arithExpr.Operator, Is.EqualTo(ArithmeticOperator.Add));
+            Assert.That(arithExpr.Left, Is.TypeOf<ArithmeticExpression>());
+        }
+
+        #endregion
+
+        #region Subquery Tests
+
+        [Test]
+        public void Parse_SubqueryInWhere_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT * FROM Items WHERE CategoryId IN (SELECT Id FROM Categories WHERE Active = 1)") as SelectStatement;
+
+            var comparison = stmt.WhereClause as ComparisonExpression;
+            Assert.That(comparison.Operator, Is.EqualTo(ComparisonOperator.In));
+            // Note: IN with subquery is parsed as InListExpression containing a SubqueryExpression
+        }
+
+        #endregion
+
+        #region Table Alias Tests
+
+        [Test]
+        public void Parse_TableWithAlias_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT i.Name FROM Items i") as SelectStatement;
+
+            Assert.That(stmt.FromTable.TableName, Is.EqualTo("Items"));
+            Assert.That(stmt.FromTable.Alias, Is.EqualTo("i"));
+        }
+
+        [Test]
+        public void Parse_TableWithAsAlias_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT i.Name FROM Items AS i") as SelectStatement;
+
+            Assert.That(stmt.FromTable.TableName, Is.EqualTo("Items"));
+            Assert.That(stmt.FromTable.Alias, Is.EqualTo("i"));
+        }
+
+        [Test]
+        public void Parse_ColumnWithTablePrefix_ParsesCorrectly()
+        {
+            var stmt = parser.Parse("SELECT Items.Name FROM Items") as SelectStatement;
+
+            var colExpr = stmt.Columns[0].Expression as ColumnExpression;
+            Assert.That(colExpr.TableAlias, Is.EqualTo("Items"));
+            Assert.That(colExpr.ColumnName, Is.EqualTo("Name"));
         }
 
         #endregion

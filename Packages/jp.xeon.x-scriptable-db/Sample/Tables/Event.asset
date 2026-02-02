@@ -1,0 +1,131 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e72913998c4995f4dac2007ca4efc7e0, type: 3}
+  m_Name: Event
+  m_EditorClassIdentifier: jp.xeon.x-scriptable-db.Sample::Xeon.XScriptableDB.Generated.EventTable
+  records:
+  - id: 1
+    name: "\u65B0\u6625\u30AD\u30E3\u30F3\u30DA\u30FC\u30F3"
+    description: "\u304A\u6B63\u6708\u9650\u5B9A\u306E\u7279\u5225\u30A4\u30D9\u30F3\u30C8"
+    event_type: 1
+    start_date:
+      ticks: 638396640000000000
+    end_date:
+      ticks: 638409599990000000
+    is_active: 0
+  - id: 2
+    name: "\u30D0\u30EC\u30F3\u30BF\u30A4\u30F3\u30A4\u30D9\u30F3\u30C8"
+    description: "\u30C1\u30E7\u30B3\u30EC\u30FC\u30C8\u3092\u96C6\u3081\u3066\u30D7\u30EC\u30BC\u30F3\u30C8\u3092\u30B2\u30C3\u30C8"
+    event_type: 1
+    start_date:
+      ticks: 638431200000000000
+    end_date:
+      ticks: 638435519990000000
+    is_active: 0
+  - id: 3
+    name: "\u6625\u306E\u5927\u611F\u8B1D\u796D"
+    description: "\u30ED\u30B0\u30A4\u30F3\u30DC\u30FC\u30CA\u30B92\u500D"
+    event_type: 2
+    start_date:
+      ticks: 638464896000000000
+    end_date:
+      ticks: 638483903990000000
+    is_active: 0
+  - id: 4
+    name: "GW\u30B9\u30DA\u30B7\u30E3\u30EB"
+    description: "\u30B4\u30FC\u30EB\u30C7\u30F3\u30A6\u30A3\u30FC\u30AF\u9650\u5B9A\u30DF\u30C3\u30B7\u30E7\u30F3"
+    event_type: 1
+    start_date:
+      ticks: 638497728000000000
+    end_date:
+      ticks: 638506367990000000
+    is_active: 0
+  - id: 5
+    name: "\u590F\u796D\u308A\u30A4\u30D9\u30F3\u30C8"
+    description: "\u82B1\u706B\u5927\u4F1A\u3068\u5C4B\u53F0\u3092\u697D\u3057\u3082\u3046"
+    event_type: 1
+    start_date:
+      ticks: 638580672000000000
+    end_date:
+      ticks: 638607455990000000
+    is_active: 0
+  - id: 6
+    name: "\u79CB\u306E\u30EC\u30A4\u30C9\u30D0\u30C8\u30EB"
+    description: "\u5F37\u529B\u306A\u30DC\u30B9\u306B\u6311\u6226"
+    event_type: 3
+    start_date:
+      ticks: 638633376000000000
+    end_date:
+      ticks: 638660159990000000
+    is_active: 0
+  - id: 7
+    name: "\u30CF\u30ED\u30A6\u30A3\u30F3\u30A4\u30D9\u30F3\u30C8"
+    description: "\u4EEE\u88C5\u30B3\u30F3\u30C6\u30B9\u30C8\u958B\u50AC\u4E2D"
+    event_type: 1
+    start_date:
+      ticks: 638654112000000000
+    end_date:
+      ticks: 638661023990000000
+    is_active: 0
+  - id: 8
+    name: "\u30AF\u30EA\u30B9\u30DE\u30B9\u30AD\u30E3\u30F3\u30DA\u30FC\u30F3"
+    description: "\u30B5\u30F3\u30BF\u304B\u3089\u306E\u30D7\u30EC\u30BC\u30F3\u30C8"
+    event_type: 1
+    start_date:
+      ticks: 638702496000000000
+    end_date:
+      ticks: 638708543990000000
+    is_active: 1
+  - id: 9
+    name: "\u5E74\u672B\u30AB\u30A6\u30F3\u30C8\u30C0\u30A6\u30F3"
+    description: "\u5E74\u672B\u7279\u5225\u30ED\u30B0\u30A4\u30F3\u30DC\u30FC\u30CA\u30B9"
+    event_type: 2
+    start_date:
+      ticks: 638709408000000000
+    end_date:
+      ticks: 638713727990000000
+    is_active: 1
+  - id: 10
+    name: "\u5E38\u8A2D\u30C1\u30E5\u30FC\u30C8\u30EA\u30A2\u30EB"
+    description: "\u30B2\u30FC\u30E0\u306E\u57FA\u672C\u3092\u5B66\u307C\u3046"
+    event_type: 4
+    start_date:
+      ticks: 638396640000000000
+    end_date:
+      ticks: 662380415990000000
+    is_active: 1
+  secondaryIndices:
+    indices:
+    - indexName: event_type
+      keyTypeName: System.Int32
+      entries:
+      - keyHash: 1
+        keyString: 1
+        recordIndices: 000000000100000003000000040000000600000007000000
+      - keyHash: 2
+        keyString: 2
+        recordIndices: 0200000008000000
+      - keyHash: 3
+        keyString: 3
+        recordIndices: 05000000
+      - keyHash: 4
+        keyString: 4
+        recordIndices: 09000000
+    - indexName: is_active
+      keyTypeName: System.Boolean
+      entries:
+      - keyHash: 0
+        keyString: False
+        recordIndices: 00000000010000000200000003000000040000000500000006000000
+      - keyHash: 1
+        keyString: True
+        recordIndices: 070000000800000009000000

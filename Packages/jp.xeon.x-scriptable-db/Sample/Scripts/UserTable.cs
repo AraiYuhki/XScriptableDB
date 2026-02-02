@@ -1,10 +1,9 @@
-﻿using UnityEngine;
-
+using UnityEngine;
+using Xeon.XScriptableDB;
 namespace Xeon.XScriptableDB.Sample
 {
-    [CreateAssetMenu(fileName = "UserTable", menuName = "Xeon/XScriptableDB/Sample/UserTable")]
+    [CreateAssetMenu(fileName = "User", menuName = "Xeon/XScriptableDB/User")]
     public class UserTable : TableAsset<UserRecord, int>
     {
-
     }
 }

@@ -95,10 +95,16 @@ namespace Xeon.XScriptableDB.Editor
             encoding ??= Encoding.UTF8;
             var content = File.ReadAllText(filePath, encoding);
 
-            // CsvParser.Parse<T>をリフレクションで呼び出す
-            var parseMethod = typeof(CsvParser).GetMethod("Parse", BindingFlags.Public | BindingFlags.Static);
+            // CsvParser.ParseRecord<T>(string)をリフレクションで呼び出す
+            var parseMethod = typeof(CsvParser).GetMethod(
+                "ParseRecord",
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                new[] { typeof(string) },
+                null);
+
             if (parseMethod == null)
-                throw new InvalidOperationException("CsvParser.Parse method not found");
+                throw new InvalidOperationException("CsvParser.ParseRecord method not found");
 
             var genericMethod = parseMethod.MakeGenericMethod(recordType);
             var result = genericMethod.Invoke(null, new object[] { content });

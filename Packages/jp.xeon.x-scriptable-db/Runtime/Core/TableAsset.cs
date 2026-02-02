@@ -1,7 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using UnityEngine;
+using Xeon.XScriptableDB.IO;
 
 namespace Xeon.XScriptableDB
 {
@@ -11,7 +15,7 @@ namespace Xeon.XScriptableDB
     /// </summary>
     /// <typeparam name="T">レコードの型</typeparam>
     /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
-    public abstract class TableAsset<T, TKey> : ScriptableObject, ITable<T>, ITableAsset
+    public abstract class TableAsset<T, TKey> : ScriptableObject, ITable<T>, ITableAsset, IImportable, IExportable
         where T : class, new()
         where TKey : IComparable<TKey>
     {
@@ -306,6 +310,71 @@ namespace Xeon.XScriptableDB
                     result[i] = records[recordIndex];
             }
             return result;
+        }
+
+        /// <summary>
+        /// CSVファイルからレコードをインポートする。
+        /// </summary>
+        /// <param name="filePath">CSVファイルのパス</param>
+        public void Import(string filePath)
+        {
+#if UNITY_EDITOR
+            if (string.IsNullOrEmpty(filePath))
+            {
+                Debug.LogError("Import failed: filePath is null or empty");
+                return;
+            }
+
+            if (!File.Exists(filePath))
+            {
+                Debug.LogError($"Import failed: file not found at {filePath}");
+                return;
+            }
+
+            try
+            {
+                var importedRecords = CsvParser.ParseRecordFile<T>(filePath);
+                SetRecords(importedRecords.ToArray());
+                Debug.Log($"Imported {importedRecords.Count} records from {filePath}");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Import failed: {e.Message}");
+                Debug.LogException(e);
+            }
+#else
+            Debug.LogWarning("Import is only available in Unity Editor");
+#endif
+        }
+
+        /// <summary>
+        /// レコードをCSVファイルにエクスポートする。
+        /// </summary>
+        /// <param name="filePath">出力先のファイルパス</param>
+        /// <param name="encoding">エンコーディング（省略時はUTF-8）</param>
+        public void Export(string filePath, Encoding encoding = null)
+        {
+            if (string.IsNullOrEmpty(filePath))
+            {
+                Debug.LogError("Export failed: filePath is null or empty");
+                return;
+            }
+
+            try
+            {
+                encoding ??= Encoding.UTF8;
+                var csv = CsvParser.ToCSV(records.ToList(), typeof(T));
+                var directory = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
+                File.WriteAllText(filePath, csv, encoding);
+                Debug.Log($"Exported {records.Length} records to {filePath}");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Export failed: {e.Message}");
+                Debug.LogException(e);
+            }
         }
 
 #if UNITY_EDITOR

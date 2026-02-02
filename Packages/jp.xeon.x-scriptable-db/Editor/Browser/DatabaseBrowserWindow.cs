@@ -8,36 +8,24 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// テーブル情報。
-    /// </summary>
-    public class TableInfo
-    {
-        public string Name { get; set; }
-        public string AssetPath { get; set; }
-        public ScriptableObject Asset { get; set; }
-        public ITableAsset TableAsset { get; set; }
-        public Type RecordType { get; set; }
-        public int RecordCount { get; set; }
-        public List<ColumnInfo> Columns { get; set; } = new();
-    }
-
-    /// <summary>
-    /// カラム情報。
-    /// </summary>
-    public class ColumnInfo
-    {
-        public string Name { get; set; }
-        public Type FieldType { get; set; }
-        public bool IsPrimaryKey { get; set; }
-        public bool IsSecondaryKey { get; set; }
-        public string TypeDisplayName { get; set; }
-    }
-
-    /// <summary>
     /// データベースブラウザウィンドウ。
     /// </summary>
     public class DatabaseBrowserWindow : EditorWindow
     {
+        private const BindingFlags FieldFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+        private static readonly Dictionary<Type, string> TypeNameDictionary = new()
+        {
+            { typeof(int), "int" },
+            { typeof(long), "long" },
+            { typeof(float), "float" },
+            { typeof(double), "double" },
+            { typeof(bool), "bool" },
+            { typeof(string), "string" },
+            { typeof(DateTime), "DateTime" },
+            { typeof(SerializableDateTime), "DateTime" }
+        };
+
         private List<TableInfo> tables = new();
         private TableInfo selectedTable;
         private Vector2 tableListScrollPosition;
@@ -54,7 +42,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private const int PreviewRowCount = 20;
 
-        [MenuItem("Window/XScriptableDB/Database Browser")]
+        [MenuItem("Tools/XScriptableDB/Database Browser")]
         public static void ShowWindow()
         {
             var window = GetWindow<DatabaseBrowserWindow>();
@@ -93,41 +81,26 @@ namespace Xeon.XScriptableDB.Editor
             var recordType = tableAsset.RecordType;
             var columns = new List<ColumnInfo>();
 
-            foreach (var field in recordType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            foreach (var field in recordType.GetFields(FieldFlags))
             {
+                var isSerializable = field.GetCustomAttribute<SerializeField>() != null;
                 var isPrimaryKey = field.GetCustomAttribute<PrimaryKeyAttribute>() != null;
                 var isSecondaryKey = field.GetCustomAttribute<SecondaryKeyAttribute>() != null;
 
-                columns.Add(new ColumnInfo
-                {
-                    Name = field.Name,
-                    FieldType = field.FieldType,
-                    IsPrimaryKey = isPrimaryKey,
-                    IsSecondaryKey = isSecondaryKey,
-                    TypeDisplayName = GetTypeDisplayName(field.FieldType)
-                });
+                // privateの場合は、SerializeFieldが無ければ対象にしない
+                if (field.IsPrivate && !isSerializable)
+                    continue;
+
+                columns.Add(new ColumnInfo(field.Name, field.FieldType, isPrimaryKey, isSecondaryKey, GetTypeDisplayName(field.FieldType)));
             }
 
-            return new TableInfo
-            {
-                Name = asset.name,
-                AssetPath = assetPath,
-                Asset = asset,
-                TableAsset = tableAsset,
-                RecordType = recordType,
-                RecordCount = tableAsset.Count,
-                Columns = columns
-            };
+            return new TableInfo(asset.name, assetPath, asset, tableAsset, recordType, tableAsset.Count, columns);
         }
 
         private string GetTypeDisplayName(Type type)
         {
-            if (type == typeof(int)) return "int";
-            if (type == typeof(long)) return "long";
-            if (type == typeof(float)) return "float";
-            if (type == typeof(double)) return "double";
-            if (type == typeof(bool)) return "bool";
-            if (type == typeof(string)) return "string";
+            if (TypeNameDictionary.TryGetValue(type, out var result))
+                return result;
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             {
                 var itemType = type.GetGenericArguments()[0];
@@ -180,7 +153,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             InitStyles();
 
-            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
 
             // 左パネル: テーブルリスト
             DrawTableList();
@@ -192,6 +165,10 @@ namespace Xeon.XScriptableDB.Editor
             DrawTableInfo();
 
             EditorGUILayout.EndHorizontal();
+
+            // スプリッタードラッグ中は再描画
+            if (isDraggingSplit)
+                Repaint();
         }
 
         private void DrawTableList()
@@ -227,18 +204,27 @@ namespace Xeon.XScriptableDB.Editor
             foreach (var table in filteredTables)
             {
                 var isSelected = selectedTable == table;
-                var style = isSelected ? selectedItemStyle : itemStyle;
+                var bgColor = isSelected ? new Color(0.24f, 0.49f, 0.91f, 0.5f) : Color.clear;
 
-                EditorGUILayout.BeginHorizontal(style);
+                var rect = EditorGUILayout.BeginHorizontal(GUILayout.Height(22));
 
-                // テーブルアイコンと名前
-                var displayName = $"📋 {table.Name} ({table.RecordCount})";
-                if (GUILayout.Button(displayName, style, GUILayout.ExpandWidth(true)))
-                {
-                    selectedTable = table;
-                }
+                // 背景描画
+                if (isSelected)
+                    EditorGUI.DrawRect(rect, bgColor);
+
+                // テーブル名
+                var displayName = $"  {table.Name} ({table.RecordCount})";
+                EditorGUILayout.LabelField(displayName, GUILayout.ExpandWidth(true));
 
                 EditorGUILayout.EndHorizontal();
+
+                // クリック検出
+                if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
+                {
+                    selectedTable = table;
+                    Event.current.Use();
+                    Repaint();
+                }
             }
 
             EditorGUILayout.EndScrollView();
@@ -275,7 +261,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawTableInfo()
         {
-            EditorGUILayout.BeginVertical();
+            EditorGUILayout.BeginVertical(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
 
             if (selectedTable == null)
             {
@@ -284,7 +270,7 @@ namespace Xeon.XScriptableDB.Editor
                 return;
             }
 
-            tableInfoScrollPosition = EditorGUILayout.BeginScrollView(tableInfoScrollPosition);
+            tableInfoScrollPosition = EditorGUILayout.BeginScrollView(tableInfoScrollPosition, GUILayout.ExpandWidth(true));
 
             // テーブル名とアクション
             EditorGUILayout.BeginHorizontal();
@@ -330,11 +316,18 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.LabelField($"Columns ({selectedTable.Columns.Count})", EditorStyles.boldLabel);
 
+            if (selectedTable.Columns.Count == 0)
+            {
+                EditorGUILayout.HelpBox("No columns found", MessageType.Warning);
+                return;
+            }
+
             // テーブルヘッダー
             EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Name", EditorStyles.boldLabel, GUILayout.Width(150));
             EditorGUILayout.LabelField("Type", EditorStyles.boldLabel, GUILayout.Width(120));
             EditorGUILayout.LabelField("Key", EditorStyles.boldLabel, GUILayout.Width(100));
+            GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
             // カラム一覧
@@ -346,10 +339,13 @@ namespace Xeon.XScriptableDB.Editor
                 EditorGUILayout.LabelField(column.TypeDisplayName, GUILayout.Width(120));
 
                 var keyLabel = "";
-                if (column.IsPrimaryKey) keyLabel = "🔑 Primary";
-                else if (column.IsSecondaryKey) keyLabel = "🔗 Secondary";
+                if (column.IsPrimaryKey)
+                    keyLabel = "PK";
+                else if (column.IsSecondaryKey)
+                    keyLabel = "SK";
 
                 EditorGUILayout.LabelField(keyLabel, GUILayout.Width(100));
+                GUILayout.FlexibleSpace();
 
                 EditorGUILayout.EndHorizontal();
             }
@@ -367,7 +363,7 @@ namespace Xeon.XScriptableDB.Editor
 
             dataPreviewScrollPosition = EditorGUILayout.BeginScrollView(
                 dataPreviewScrollPosition,
-                GUILayout.Height(200));
+                GUILayout.Height(220), GUILayout.ExpandWidth(true));
 
             // ヘッダー
             EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
@@ -385,8 +381,10 @@ namespace Xeon.XScriptableDB.Editor
             var rowCount = 0;
             foreach (var record in selectedTable.TableAsset.Records)
             {
-                if (record == null) continue;
-                if (rowCount >= PreviewRowCount) break;
+                if (record == null)
+                    continue;
+                if (rowCount >= PreviewRowCount)
+                    break;
 
                 EditorGUILayout.BeginHorizontal();
 
@@ -413,19 +411,25 @@ namespace Xeon.XScriptableDB.Editor
 
         private object GetFieldValue(object record, string fieldName)
         {
-            var field = selectedTable.RecordType.GetField(fieldName, BindingFlags.Public | BindingFlags.Instance);
+            var field = selectedTable.RecordType.GetField(fieldName, FieldFlags);
             return field?.GetValue(record);
         }
 
         private string FormatPreviewValue(object value)
         {
-            if (value == null) return "(null)";
+            if (value == null)
+                return "(null)";
+
+            if (value is DateTime dt)
+                return DateTimeEditorUtility.FormatDateTime(dt);
+
+            if (value is SerializableDateTime sdt)
+                return DateTimeEditorUtility.FormatDateTime(sdt.DateTime);
 
             var str = value.ToString();
             if (str.Length > 15)
-            {
                 return str.Substring(0, 12) + "...";
-            }
+
             return str;
         }
 

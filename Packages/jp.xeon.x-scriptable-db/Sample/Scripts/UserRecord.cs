@@ -1,48 +1,66 @@
 using System;
 using UnityEngine;
+using Xeon.XScriptableDB;
+using Xeon.XScriptableDB.IO;
 
 namespace Xeon.XScriptableDB.Sample
 {
     [Serializable]
-    public class UserRecord
+    public partial class UserRecord
     {
-        [SerializeField, PrimaryKey]
+        [SerializeField, CsvColumn("id"), PrimaryKey]
         private int id;
-        [SerializeField]
+
+        [SerializeField, CsvColumn("name")]
         private string name;
-        [SerializeField]
+
+        [SerializeField, CsvColumn("age")]
         private int age;
-        [SerializeField, SecondaryKey]
-        private bool isMale = true;
-        [SerializeField]
-        private DateTime createdAt;
+
+        [SerializeField, CsvColumn("is_male"), SecondaryKey]
+        private bool isMale;
+
+        [SerializeField, CsvColumn("created_at")]
+        private SerializableDateTime createdAt;
 
         public int Id
         {
             get => id;
+#if UNITY_EDITOR
             set => id = value;
+#endif
         }
 
         public string Name
         {
             get => name;
+#if UNITY_EDITOR
             set => name = value;
+#endif
         }
 
         public int Age
         {
             get => age;
+#if UNITY_EDITOR
             set => age = value;
+#endif
         }
+
         public bool IsMale
         {
             get => isMale;
+#if UNITY_EDITOR
             set => isMale = value;
+#endif
         }
-        public DateTime CreatedAt
+
+        public SerializableDateTime CreatedAt
         {
             get => createdAt;
+#if UNITY_EDITOR
             set => createdAt = value;
+#endif
         }
     }
 }

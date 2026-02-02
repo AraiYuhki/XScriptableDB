@@ -1,6 +1,6 @@
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
 using Xeon.XScriptableDB.Cache;
 
 namespace Xeon.XScriptableDB.Tests.Cache

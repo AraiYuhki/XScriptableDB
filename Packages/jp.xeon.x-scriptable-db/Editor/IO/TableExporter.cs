@@ -1,11 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
+using Xeon.XScriptableDB;
 using Xeon.XScriptableDB.IO;
 
 namespace Xeon.XScriptableDB.Editor
@@ -148,8 +148,8 @@ namespace Xeon.XScriptableDB.Editor
             }
             else
             {
-                // 全てのpublicフィールドを使用
-                foreach (var field in recordType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                // 全てのシリアライズ可能なフィールドを使用
+                foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
                 {
                     if (excludeSet.Contains(field.Name))
                         continue;
@@ -291,7 +291,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (columns.Count == 0)
             {
-                foreach (var field in recordType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
                 {
                     columns.Add(field.Name);
                 }

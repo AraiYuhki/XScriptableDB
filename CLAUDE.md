@@ -88,6 +88,41 @@ foreach (var element in array)
 * Prevents future bugs caused by forgetting to add braces when extending logic.
 * Produces cleaner diffs and improves code review clarity.
 
+### Data Class Field Design
+
+* Data class fields **must be `private`** by default.
+* Provide **read-only accessors (getters)** for external access.
+* Use `[SerializeField]` attribute to allow Unity serialization of private fields.
+* For Editor-only mutability, use `[ReadOnly]` attribute — TableEditor generates code that allows editing only in Editor.
+
+#### Example
+
+```csharp
+[Serializable]
+public class ItemInfo : CsvData
+{
+    [SerializeField, CsvColumn("id")]
+    private int id;
+
+    [SerializeField, CsvColumn("name")]
+    private string name;
+
+    [SerializeField, CsvColumn("price")]
+    private int price;
+
+    public int Id => id;
+    public string Name => name;
+    public int Price => price;
+}
+```
+
+**Reason**
+
+* Master data must be **immutable at runtime** to ensure data integrity.
+* Prevents accidental modification of shared data across the application.
+* TableEditor uses `[ReadOnly]` to enable Editor-only editing while maintaining runtime immutability.
+* Follows MasterMemory's philosophy of immutable, indexed, fast lookup.
+
 ---
 
 ## Project Overview
@@ -190,14 +225,18 @@ using Xeon.XScriptableDB.IO;
 [Serializable]
 public class ItemInfo : CsvData
 {
-    [CsvColumn("id")]
-    public int id;
+    [SerializeField, CsvColumn("id")]
+    private int id;
 
-    [CsvColumn("name")]
-    public string name;
+    [SerializeField, CsvColumn("name")]
+    private string name;
 
-    [CsvColumn("price")]
-    public int price;
+    [SerializeField, CsvColumn("price")]
+    private int price;
+
+    public int Id => id;
+    public string Name => name;
+    public int Price => price;
 }
 
 public class ItemTable : TableBase<ItemInfo>
@@ -206,7 +245,7 @@ public class ItemTable : TableBase<ItemInfo>
 
     protected override void Initialize()
     {
-        idIndex = data.ToDictionary(x => x.id);
+        idIndex = data.ToDictionary(x => x.Id);
     }
 
     public ItemInfo FindById(int id) => idIndex.GetValueOrDefault(id);
@@ -259,17 +298,17 @@ public interface IImportable
 ### Attributes
 
 ```csharp
-// Mark field as CSV column
-[CsvColumn("column_name")]
-public int fieldName;
+// Mark private field as CSV column (with SerializeField for Unity serialization)
+[SerializeField, CsvColumn("column_name")]
+private int fieldName;
 
-// Mark field as read-only in Inspector
-[ReadOnly]
-public int readOnlyField;
+// Mark field as read-only in Inspector (Editor-only editing via TableEditor)
+[SerializeField, ReadOnly]
+private int readOnlyField;
 
 // Mark field for Addressable asset reference
-[AddressableObject]
-public GameObject prefab;
+[SerializeField, AddressableObject]
+private GameObject prefab;
 ```
 
 ---

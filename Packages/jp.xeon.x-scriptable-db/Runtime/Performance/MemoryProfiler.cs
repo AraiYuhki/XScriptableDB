@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using UnityEngine;
 
 namespace Xeon.XScriptableDB.Performance
 {

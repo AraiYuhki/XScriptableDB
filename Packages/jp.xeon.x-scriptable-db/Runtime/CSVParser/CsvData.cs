@@ -1,5 +1,3 @@
-using UnityEngine.AddressableAssets;
-
 namespace Xeon.XScriptableDB.IO
 {
     public abstract class CsvData

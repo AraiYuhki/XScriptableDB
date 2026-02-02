@@ -28,7 +28,7 @@ namespace Xeon.XScriptableDB.Editor
         private GUIStyle valueStyle;
         private bool stylesInitialized;
 
-        [MenuItem("Window/XScriptableDB/Performance")]
+        [MenuItem("Tools/XScriptableDB/Performance")]
         public static void ShowWindow()
         {
             var window = GetWindow<PerformanceWindow>();

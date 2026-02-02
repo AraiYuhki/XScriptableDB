@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -11,6 +12,8 @@ namespace Xeon.XScriptableDB.Editor
     /// </summary>
     public class SqlEditorWindow : EditorWindow
     {
+        private const BindingFlags FieldBindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
         private string sqlText = "SELECT * FROM ";
         private Vector2 sqlScrollPosition;
         private Vector2 resultScrollPosition;
@@ -34,7 +37,7 @@ namespace Xeon.XScriptableDB.Editor
         private int historyIndex = -1;
         private const int MaxHistoryCount = 50;
 
-        [MenuItem("Window/XScriptableDB/SQL Editor")]
+        [MenuItem("Tools/XScriptableDB/SQL Editor")]
         public static void ShowWindow()
         {
             var window = GetWindow<SqlEditorWindow>();
@@ -321,10 +324,7 @@ namespace Xeon.XScriptableDB.Editor
             if (columnNames.Count == 0 && records.Count > 0)
             {
                 // カラム名がない場合はレコードから取得
-                var recordType = records[0].GetType();
-                columnNames = recordType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-                    .Select(f => f.Name)
-                    .ToList();
+                columnNames = SqlResultFormatter.GetColumnNamesFromRecord(records[0]);
             }
 
             // カラム幅の計算
@@ -342,7 +342,7 @@ namespace Xeon.XScriptableDB.Editor
 
             // データ行
             var displayCount = Math.Min(records.Count, MaxDisplayRows);
-            var recordType2 = records.Count > 0 ? records[0].GetType() : null;
+            var recordType = records.Count > 0 ? records[0].GetType() : null;
 
             for (var row = 0; row < displayCount; row++)
             {
@@ -351,8 +351,8 @@ namespace Xeon.XScriptableDB.Editor
 
                 for (var col = 0; col < columnNames.Count; col++)
                 {
-                    var value = GetFieldValue(record, recordType2, columnNames[col]);
-                    var displayValue = FormatValue(value);
+                    var value = SqlResultFormatter.GetFieldValue(record, recordType, columnNames[col]);
+                    var displayValue = SqlResultFormatter.FormatValue(value);
                     EditorGUILayout.LabelField(displayValue, resultCellStyle, GUILayout.Width(columnWidths[col]));
                 }
 
@@ -386,8 +386,8 @@ namespace Xeon.XScriptableDB.Editor
                 var record = records[row];
                 for (var col = 0; col < columnNames.Count; col++)
                 {
-                    var value = GetFieldValue(record, recordType, columnNames[col]);
-                    var displayValue = FormatValue(value);
+                    var value = SqlResultFormatter.GetFieldValue(record, recordType, columnNames[col]);
+                    var displayValue = SqlResultFormatter.FormatValue(value);
                     var width = GUI.skin.label.CalcSize(new GUIContent(displayValue)).x + 20;
                     widths[col] = Mathf.Max(widths[col], width);
                 }
@@ -400,37 +400,6 @@ namespace Xeon.XScriptableDB.Editor
             }
 
             return widths;
-        }
-
-        private object GetFieldValue(object record, Type recordType, string fieldName)
-        {
-            if (record == null || recordType == null) return null;
-
-            var field = recordType.GetField(fieldName,
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            if (field != null)
-                return field.GetValue(record);
-
-            var property = recordType.GetProperty(fieldName,
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            if (property?.CanRead == true)
-                return property.GetValue(record);
-
-            return null;
-        }
-
-        private string FormatValue(object value)
-        {
-            if (value == null) return "(null)";
-
-            return value switch
-            {
-                string s => s,
-                bool b => b ? "true" : "false",
-                float f => f.ToString("F2"),
-                double d => d.ToString("F2"),
-                _ => value.ToString()
-            };
         }
 
         private void ExecuteQuery()

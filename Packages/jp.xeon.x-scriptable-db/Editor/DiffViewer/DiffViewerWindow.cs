@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -11,22 +10,22 @@ namespace Xeon.XScriptableDB.Editor
     /// </summary>
     public class DiffViewerWindow : EditorWindow
     {
-        [MenuItem("Tools/XScriptableDB/Diff Viewer")]
-        public static void Open()
-        {
-            var window = GetWindow<DiffViewerWindow>();
-            window.titleContent = new GUIContent("Diff Viewer");
-            window.Show();
-        }
-
         /// <summary>
         /// 差分結果を指定してウィンドウを開く。
         /// </summary>
         public static DiffViewerWindow Open(TableDiffResult diffResult, ScriptableObject targetTable, object[] importedRecords)
         {
+            return Open(diffResult, targetTable, importedRecords, null);
+        }
+
+        /// <summary>
+        /// 差分結果を指定してウィンドウを開く（適用時コールバック付き）。
+        /// </summary>
+        public static DiffViewerWindow Open(TableDiffResult diffResult, ScriptableObject targetTable, object[] importedRecords, Action onApplied)
+        {
             var window = GetWindow<DiffViewerWindow>();
             window.titleContent = new GUIContent("Diff Viewer");
-            window.SetDiffResult(diffResult, targetTable, importedRecords);
+            window.SetDiffResult(diffResult, targetTable, importedRecords, onApplied);
             window.Show();
             return window;
         }
@@ -34,6 +33,7 @@ namespace Xeon.XScriptableDB.Editor
         private TableDiffResult diffResult;
         private ScriptableObject targetTable;
         private object[] importedRecords;
+        private Action onAppliedCallback;
 
         private Vector2 scrollPosition;
         private HashSet<object> selectedKeys = new();
@@ -48,11 +48,12 @@ namespace Xeon.XScriptableDB.Editor
 
         private bool stylesInitialized = false;
 
-        public void SetDiffResult(TableDiffResult result, ScriptableObject table, object[] records)
+        public void SetDiffResult(TableDiffResult result, ScriptableObject table, object[] records, Action onApplied = null)
         {
             diffResult = result;
             targetTable = table;
             importedRecords = records;
+            onAppliedCallback = onApplied;
             selectedKeys.Clear();
 
             // デフォルトで全ての変更を選択
@@ -297,7 +298,7 @@ namespace Xeon.XScriptableDB.Editor
                 return;
 
             var type = record.GetType();
-            var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            var fields = ReflectionUtility.GetSerializableFields(type);
             var count = 0;
 
             using (new EditorGUILayout.HorizontalScope())
@@ -322,6 +323,12 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (value == null)
                 return "(null)";
+
+            if (value is DateTime dt)
+                return DateTimeEditorUtility.FormatDateTime(dt);
+
+            if (value is SerializableDateTime sdt)
+                return DateTimeEditorUtility.FormatDateTime(sdt.DateTime);
 
             var str = value.ToString();
             if (str.Length > 20)
@@ -404,6 +411,9 @@ namespace Xeon.XScriptableDB.Editor
                 EditorUtility.SetDirty(targetTable);
                 EditorUtility.DisplayDialog("完了", "変更を適用しました", "OK");
 
+                // コールバック呼び出し
+                onAppliedCallback?.Invoke();
+
                 // 差分を再計算
                 RefreshDiff();
             }
@@ -440,8 +450,15 @@ namespace Xeon.XScriptableDB.Editor
                 }
 
                 EditorUtility.SetDirty(targetTable);
-                AssetDatabase.SaveAssetIfDirty(targetTable);
+
+                // コールバックがない場合のみ自動保存
+                if (onAppliedCallback == null)
+                    AssetDatabase.SaveAssetIfDirty(targetTable);
+
                 EditorUtility.DisplayDialog("完了", "全ての変更を適用しました", "OK");
+
+                // コールバック呼び出し
+                onAppliedCallback?.Invoke();
 
                 // ウィンドウを閉じる
                 Close();
