@@ -15,9 +15,25 @@ namespace Xeon.XScriptableDB.Editor
         [SerializeField]
         private List<ColumnDefinition> columns = new();
 
-        // TODO: 複合キーに対応する
         [SerializeField]
-        private List<string> indices = new();
+        private List<IndexDefinition> indices = new();
+
+        /// <summary>
+        /// 旧形式（List<string>）のインデックスを新形式に変換する。
+        /// </summary>
+        public void MigrateFromLegacyIndices(List<string> legacyIndices)
+        {
+            if (legacyIndices == null)
+                return;
+
+            indices.Clear();
+            foreach (var columnName in legacyIndices)
+            {
+                if (string.IsNullOrEmpty(columnName))
+                    continue;
+                indices.Add(new IndexDefinition(columnName, columnName));
+            }
+        }
 
         public string TableName
         {
@@ -37,7 +53,7 @@ namespace Xeon.XScriptableDB.Editor
             set => columns = value;
         }
 
-        public List<string> Indices
+        public List<IndexDefinition> Indices
         {
             get => indices;
             set => indices = value;

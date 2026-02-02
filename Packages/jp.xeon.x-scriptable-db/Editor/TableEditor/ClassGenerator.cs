@@ -80,8 +80,35 @@ namespace {namespaceName}
 
             if (column.IsPrimaryKey)
                 attributes.Add("PrimaryKey");
-            if (tableDefinition.Indices.Contains(column.Name))
-                attributes.Add("SecondaryKey");
+
+            foreach (var indexDef in tableDefinition.Indices)
+            {
+                var columnIndex = indexDef.Columns.IndexOf(column.Name);
+                if (columnIndex < 0)
+                    continue;
+
+                if (indexDef.IsComposite)
+                {
+                    var attrParts = new List<string> { $"\"{indexDef.Name}\"", columnIndex.ToString() };
+                    if (!indexDef.AllowDuplicates)
+                        attrParts.Add("AllowDuplicates = false");
+                    attributes.Add($"SecondaryKey({string.Join(", ", attrParts)})");
+                }
+                else
+                {
+                    if (indexDef.Name == column.Name)
+                    {
+                        attributes.Add(indexDef.AllowDuplicates ? "SecondaryKey" : "SecondaryKey(AllowDuplicates = false)");
+                    }
+                    else
+                    {
+                        var attrParts = new List<string> { $"\"{indexDef.Name}\"" };
+                        if (!indexDef.AllowDuplicates)
+                            attrParts.Add("AllowDuplicates = false");
+                        attributes.Add($"SecondaryKey({string.Join(", ", attrParts)})");
+                    }
+                }
+            }
 
             sb.Append($"        [{string.Join(", ", attributes)}]\n");
             sb.Append($"        private {type} {fieldName};");

@@ -245,6 +245,35 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
+        /// 複合SecondaryKeyでレコードを検索する（O(1)）。
+        /// </summary>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="keyParts">複合キーの各パート</param>
+        /// <returns>見つかったレコード、見つからない場合はnull</returns>
+        public T FindBySecondaryKey(string indexName, params object[] keyParts)
+        {
+            if (keyParts == null || keyParts.Length == 0)
+                return null;
+
+            if (keyParts.Length == 1)
+                return FindBySecondaryKey(indexName, keyParts[0]);
+
+            var compositeKey = new CompositeKeyValue(keyParts);
+            var index = secondaryIndices.GetIndex(indexName);
+            if (index == null)
+            {
+                Debug.LogWarning($"Index '{indexName}' not found");
+                return null;
+            }
+
+            var recordIndices = index.FindByHash(compositeKey.GetHashCode());
+            if (recordIndices.Length == 0)
+                return null;
+
+            return records[recordIndices[0]];
+        }
+
+        /// <summary>
         /// SecondaryKeyでレコードを検索する（O(1)）。
         /// </summary>
         /// <typeparam name="TSecondaryKey">SecondaryKeyの型</typeparam>
@@ -283,6 +312,48 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
+        /// 複合SecondaryKeyで複数のレコードを検索する（O(1)）。
+        /// </summary>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="keyParts">複合キーの各パート</param>
+        /// <returns>見つかったレコードの列挙</returns>
+        public IEnumerable<T> FindAllBySecondaryKey(string indexName, params object[] keyParts)
+        {
+            if (keyParts == null || keyParts.Length == 0)
+                yield break;
+
+            int[] recordIndices;
+
+            if (keyParts.Length == 1)
+            {
+                var index = secondaryIndices.GetIndex(indexName);
+                if (index == null)
+                {
+                    Debug.LogWarning($"Index '{indexName}' not found");
+                    yield break;
+                }
+                recordIndices = index.FindByKey(keyParts[0]);
+            }
+            else
+            {
+                var compositeKey = new CompositeKeyValue(keyParts);
+                var index = secondaryIndices.GetIndex(indexName);
+                if (index == null)
+                {
+                    Debug.LogWarning($"Index '{indexName}' not found");
+                    yield break;
+                }
+                recordIndices = index.FindByHash(compositeKey.GetHashCode());
+            }
+
+            foreach (var i in recordIndices)
+            {
+                if (i >= 0 && i < records.Length)
+                    yield return records[i];
+            }
+        }
+
+        /// <summary>
         /// SecondaryKeyで複数のレコードを検索し、配列として返す（O(1)）。
         /// </summary>
         /// <typeparam name="TSecondaryKey">SecondaryKeyの型</typeparam>
@@ -310,6 +381,17 @@ namespace Xeon.XScriptableDB
                     result[i] = records[recordIndex];
             }
             return result;
+        }
+
+        /// <summary>
+        /// 複合SecondaryKeyで複数のレコードを検索し、配列として返す（O(1)）。
+        /// </summary>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="keyParts">複合キーの各パート</param>
+        /// <returns>見つかったレコードの配列</returns>
+        public T[] FindAllBySecondaryKeyAsArray(string indexName, params object[] keyParts)
+        {
+            return FindAllBySecondaryKey(indexName, keyParts).ToArray();
         }
 
         /// <summary>

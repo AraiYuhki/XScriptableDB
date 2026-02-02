@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 using UnityEngine;
 
 namespace Xeon.XScriptableDB
@@ -22,13 +23,24 @@ namespace Xeon.XScriptableDB
         {
             var container = new IndexContainer();
             var type = typeof(T);
-            var secondaryKeys = FindSecondaryKeyMembers(type);
+            var groups = GroupSecondaryKeyMembers(type);
 
-            foreach (var (member, attribute) in secondaryKeys)
+            foreach (var (indexName, members) in groups)
             {
-                var indexName = attribute.Name ?? member.Name;
-                var keyType = GetMemberType(member);
-                var indexData = BuildIndex(records, member, indexName, keyType, attribute.AllowDuplicates);
+                var allowDuplicates = members[0].attribute.AllowDuplicates;
+                IndexData indexData;
+
+                if (members.Count == 1)
+                {
+                    var (member, _) = members[0];
+                    var keyType = GetMemberType(member);
+                    indexData = BuildSingleFieldIndex(records, member, indexName, keyType, allowDuplicates);
+                }
+                else
+                {
+                    indexData = BuildCompositeIndex(records, indexName, members, allowDuplicates);
+                }
+
                 container.SetIndex(indexData);
             }
 
@@ -45,20 +57,23 @@ namespace Xeon.XScriptableDB
         public static IndexData BuildIndex<T>(T[] records, string indexName)
         {
             var type = typeof(T);
-            var secondaryKeys = FindSecondaryKeyMembers(type);
+            var groups = GroupSecondaryKeyMembers(type);
 
-            foreach (var (member, attribute) in secondaryKeys)
+            if (!groups.TryGetValue(indexName, out var members))
             {
-                var name = attribute.Name ?? member.Name;
-                if (name != indexName)
-                    continue;
-
-                var keyType = GetMemberType(member);
-                return BuildIndex(records, member, name, keyType, attribute.AllowDuplicates);
+                Debug.LogWarning($"SecondaryKey '{indexName}' not found in type {type.Name}");
+                return null;
             }
 
-            Debug.LogWarning($"SecondaryKey '{indexName}' not found in type {type.Name}");
-            return null;
+            var allowDuplicates = members[0].attribute.AllowDuplicates;
+            if (members.Count == 1)
+            {
+                var (member, _) = members[0];
+                var keyType = GetMemberType(member);
+                return BuildSingleFieldIndex(records, member, indexName, keyType, allowDuplicates);
+            }
+
+            return BuildCompositeIndex(records, indexName, members, allowDuplicates);
         }
 
         /// <summary>
@@ -88,6 +103,41 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
+        /// SecondaryKeyメンバーをインデックス名でグループ化して取得する。
+        /// 同じインデックス名を持つメンバーは複合インデックスとして扱われる。
+        /// </summary>
+        public static Dictionary<string, List<(MemberInfo member, SecondaryKeyAttribute attribute)>> GroupSecondaryKeyMembers(Type type)
+        {
+            var result = new Dictionary<string, List<(MemberInfo member, SecondaryKeyAttribute attribute)>>();
+            var allMembers = FindSecondaryKeyMembers(type);
+
+            foreach (var (member, attr) in allMembers)
+            {
+                var indexName = attr.Name ?? member.Name;
+                if (!result.TryGetValue(indexName, out var list))
+                {
+                    list = new List<(MemberInfo member, SecondaryKeyAttribute attribute)>();
+                    result[indexName] = list;
+                }
+                list.Add((member, attr));
+            }
+
+            foreach (var key in result.Keys.ToList())
+                result[key] = result[key].OrderBy(item => item.attribute.Order).ToList();
+
+            return result;
+        }
+
+        /// <summary>
+        /// インデックスが複合キーかどうかを判定する。
+        /// </summary>
+        public static bool IsCompositeIndex(string indexName, Type type)
+        {
+            var groups = GroupSecondaryKeyMembers(type);
+            return groups.TryGetValue(indexName, out var members) && members.Count > 1;
+        }
+
+        /// <summary>
         /// 型がSecondaryKeyを持つかどうかを確認する。
         /// </summary>
         /// <param name="type">確認する型</param>
@@ -109,7 +159,7 @@ namespace Xeon.XScriptableDB
             return false;
         }
 
-        private static IndexData BuildIndex<T>(
+        private static IndexData BuildSingleFieldIndex<T>(
             T[] records,
             MemberInfo member,
             string indexName,
@@ -166,6 +216,68 @@ namespace Xeon.XScriptableDB
                 var keyString = keyStrings[keyHash];
                 indexData.AddEntry(keyHash, keyString, indices.ToArray());
             }
+
+            return indexData;
+        }
+
+        private static IndexData BuildCompositeIndex<T>(
+            T[] records,
+            string indexName,
+            List<(MemberInfo member, SecondaryKeyAttribute attribute)> members,
+            bool allowDuplicates)
+        {
+            var indexData = new IndexData(indexName, typeof(CompositeKeyValue));
+            var keyGroups = new Dictionary<int, List<int>>();
+            var keyStrings = new Dictionary<int, string>();
+            var getters = members.Select(m => CreateGetter<T>(m.member)).ToArray();
+            if (getters.Any(getter => getter == null))
+            {
+                Debug.LogError($"Failed to create getter for composite index '{indexName}'.");
+                return indexData;
+            }
+
+            for (var i = 0; i < records.Length; i++)
+            {
+                var record = records[i];
+                if (record == null)
+                    continue;
+
+                var keyParts = new object[members.Count];
+                var hasNull = false;
+                for (var j = 0; j < members.Count; j++)
+                {
+                    keyParts[j] = getters[j](record);
+                    if (keyParts[j] == null)
+                        hasNull = true;
+                }
+
+                if (hasNull)
+                    continue;
+
+                var compositeKey = new CompositeKeyValue(keyParts);
+                var keyHash = compositeKey.GetHashCode();
+                var keyString = compositeKey.ToString();
+
+                if (!keyGroups.TryGetValue(keyHash, out var indices))
+                {
+                    indices = new List<int>();
+                    keyGroups[keyHash] = indices;
+                    keyStrings[keyHash] = keyString;
+                }
+
+                if (!allowDuplicates && indices.Count > 0)
+                {
+                    Debug.LogWarning(
+                        $"Duplicate CompositeSecondaryKey '{indexName}' value '{keyString}' at index {i}. " +
+                        $"Set AllowDuplicates=true to allow multiple records per key.");
+                    continue;
+                }
+
+                indices.Add(i);
+            }
+
+            foreach (var (keyHash, indices) in keyGroups)
+                indexData.AddEntry(keyHash, keyStrings[keyHash], indices.ToArray());
 
             return indexData;
         }

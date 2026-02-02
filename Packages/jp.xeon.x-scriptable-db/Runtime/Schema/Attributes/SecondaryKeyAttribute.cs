@@ -15,8 +15,15 @@ namespace Xeon.XScriptableDB
     {
         /// <summary>
         /// インデックスの名前。指定しない場合はメンバー名が使用される。
+        /// 同じ名前を持つ複数のフィールドは複合インデックスとしてグループ化される。
         /// </summary>
         public string Name { get; }
+
+        /// <summary>
+        /// 複合インデックス内でのフィールド順序。
+        /// 単一フィールドインデックスの場合は無視される。
+        /// </summary>
+        public int Order { get; set; } = 0;
 
         /// <summary>
         /// 同じキー値を持つ複数のレコードを許可するかどうか。
@@ -39,6 +46,17 @@ namespace Xeon.XScriptableDB
         public SecondaryKeyAttribute(string name)
         {
             Name = name;
+        }
+
+        /// <summary>
+        /// 名前と順序を指定して SecondaryKeyAttribute を作成する。
+        /// </summary>
+        /// <param name="name">インデックスの名前</param>
+        /// <param name="order">複合インデックス内の順序</param>
+        public SecondaryKeyAttribute(string name, int order)
+        {
+            Name = name;
+            Order = order;
         }
     }
 }

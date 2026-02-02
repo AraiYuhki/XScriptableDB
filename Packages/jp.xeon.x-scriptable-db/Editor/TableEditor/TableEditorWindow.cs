@@ -73,12 +73,20 @@ namespace Xeon.XScriptableDB.Editor
 
         private void Validate()
         {
-            if (tableDefinition.Columns.Count(column => column.IsPrimaryKey) > 1)
+            if (tableDefinition.Columns.Count(column => column.IsPrimaryKey) != 1)
                 EditorGUILayout.HelpBox("プライマリーキーは必ず一つ設定してください", MessageType.Error);
             if (columnsCache != null && columnsCache.Length != columnsCache.Distinct().Count())
                 EditorGUILayout.HelpBox("同名のカラムは作成できません", MessageType.Error);
-            if (tableDefinition.Indices.Count != tableDefinition.Indices.Distinct().Count())
-                EditorGUILayout.HelpBox("同じカラムを複数のインデックスに指定できません", MessageType.Error);
+
+            var indexNames = tableDefinition.Indices.Select(index => index.Name).ToList();
+            if (indexNames.Count != indexNames.Distinct().Count())
+                EditorGUILayout.HelpBox("同名のインデックスは作成できません", MessageType.Error);
+
+            foreach (var index in tableDefinition.Indices)
+            {
+                if (index.Columns.Count != index.Columns.Distinct().Count())
+                    EditorGUILayout.HelpBox($"インデックス '{index.Name}' に同じカラムが複数含まれています", MessageType.Error);
+            }
         }
 
         private void LoadYaml()
@@ -143,10 +151,12 @@ namespace Xeon.XScriptableDB.Editor
 
         private void CreateIndicesView()
         {
-            indicesView = new ReorderableList(tableDefinition.Indices, typeof(string));
-            indicesView.drawElementCallback = DrawIndex;
+            indicesView = new ReorderableList(tableDefinition.Indices, typeof(IndexDefinition));
+            indicesView.drawElementCallback = DrawIndexElement;
             indicesView.drawHeaderCallback = rect => EditorGUI.LabelField(rect, $"Indices({tableDefinition.Indices.Count})");
-            UpdateColumnsCache();
+            indicesView.onAddCallback = OnAddIndex;
+            indicesView.onRemoveCallback = OnRemoveIndex;
+            indicesView.elementHeightCallback = GetIndexElementHeight;
         }
 
         private void OnAddColumn(ReorderableList list)
@@ -172,23 +182,89 @@ namespace Xeon.XScriptableDB.Editor
             columnsCache = tableDefinition.Columns.Select(c => c.Name ?? string.Empty).ToArray();
         }
 
-        private void DrawIndex(Rect rect, int index, bool isActive, bool isFocused)
+        private float GetIndexElementHeight(int index)
         {
+            if (index < 0 || index >= tableDefinition.Indices.Count)
+                return EditorGUIUtility.singleLineHeight;
+
+            var indexDef = tableDefinition.Indices[index];
+            var lineCount = 2 + indexDef.Columns.Count;
+            return EditorGUIUtility.singleLineHeight * lineCount + 8f;
+        }
+
+        private void DrawIndexElement(Rect rect, int index, bool isActive, bool isFocused)
+        {
+            if (index < 0 || index >= tableDefinition.Indices.Count)
+                return;
+
+            var indexDef = tableDefinition.Indices[index];
+            var lineHeight = EditorGUIUtility.singleLineHeight;
+            var y = rect.y + 2f;
+            var padding = 4f;
+
+            var nameRect = new Rect(rect.x, y, rect.width * 0.5f - padding, lineHeight);
+            indexDef.Name = EditorGUI.TextField(nameRect, "名前", indexDef.Name);
+
+            var duplicateRect = new Rect(rect.x + rect.width * 0.5f, y, rect.width * 0.5f, lineHeight);
+            indexDef.AllowDuplicates = EditorGUI.Toggle(duplicateRect, "重複許可", indexDef.AllowDuplicates);
+            y += lineHeight + padding;
+
+            EditorGUI.LabelField(new Rect(rect.x, y, 100f, lineHeight), "カラム:");
+            y += lineHeight;
+
             if (columnsCache == null || columnsCache.Length == 0)
             {
-                EditorGUI.LabelField(rect, "No columns");
-                if (tableDefinition.Indices[index] != string.Empty)
-                    tableDefinition.Indices[index] = string.Empty;
+                EditorGUI.LabelField(new Rect(rect.x + 20f, y, rect.width, lineHeight), "No columns");
                 return;
             }
 
-            var selectedIndex = System.Array.IndexOf(columnsCache, tableDefinition.Indices[index]);
-            if (selectedIndex < 0)
-                selectedIndex = 0;
-            EditorGUI.BeginChangeCheck();
-            selectedIndex = EditorGUI.Popup(rect, selectedIndex, columnsCache);
-            if (EditorGUI.EndChangeCheck())
-                tableDefinition.Indices[index] = columnsCache[selectedIndex];
+            for (var i = 0; i < indexDef.Columns.Count; i++)
+            {
+                var columnRect = new Rect(rect.x + 20f, y, rect.width - 80f, lineHeight);
+                var removeRect = new Rect(rect.x + rect.width - 55f, y, 50f, lineHeight);
+
+                var currentColumn = indexDef.Columns[i];
+                var selectedIdx = System.Array.IndexOf(columnsCache, currentColumn);
+                if (selectedIdx < 0)
+                    selectedIdx = 0;
+
+                EditorGUI.BeginChangeCheck();
+                selectedIdx = EditorGUI.Popup(columnRect, $"[{i}]", selectedIdx, columnsCache);
+                if (EditorGUI.EndChangeCheck() && columnsCache.Length > 0)
+                    indexDef.Columns[i] = columnsCache[selectedIdx];
+
+                if (GUI.Button(removeRect, "-"))
+                {
+                    indexDef.Columns.RemoveAt(i);
+                    break;
+                }
+
+                y += lineHeight;
+            }
+
+            var addRect = new Rect(rect.x + 20f, y, 100f, lineHeight);
+            if (GUI.Button(addRect, "+ カラム追加"))
+            {
+                if (columnsCache.Length > 0)
+                    indexDef.Columns.Add(columnsCache[0]);
+            }
+        }
+
+        private void OnAddIndex(ReorderableList list)
+        {
+            var newIndex = new IndexDefinition
+            {
+                Name = "NewIndex"
+            };
+            if (columnsCache.Length > 0)
+                newIndex.Columns.Add(columnsCache[0]);
+            tableDefinition.Indices.Add(newIndex);
+        }
+
+        private void OnRemoveIndex(ReorderableList list)
+        {
+            if (list.index >= 0 && list.index < tableDefinition.Indices.Count)
+                tableDefinition.Indices.RemoveAt(list.index);
         }
 
         private void DrawColumn(Rect rect, int index, bool isActive, bool isFocused)
