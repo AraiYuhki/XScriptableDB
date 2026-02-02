@@ -133,15 +133,15 @@ namespace Xeon.XScriptableDB.Tests
         {
             var table = CompositeTable.Create(new[]
             {
-                new CompositeRecord { Id = 1, Rarity = Rarity.Common, Element = Element.Fire, Category = "Weapon" },
-                new CompositeRecord { Id = 2, Rarity = Rarity.Common, Element = Element.Fire, Category = "Armor" },
-                new CompositeRecord { Id = 3, Rarity = Rarity.Rare, Element = Element.Ice, Category = "Weapon" }
+                new CompositeRecord { Id = 1, Tag = "A", ElementName = "Fire" },
+                new CompositeRecord { Id = 2, Tag = "A", ElementName = "Fire" },
+                new CompositeRecord { Id = 3, Tag = "B", ElementName = "Ice" }
             });
 
-            var results = table.FindAllBySecondaryKey("RarityElement", Rarity.Common, Element.Fire).ToList();
+            var results = table.FindAllBySecondaryKey("TagElement", "A", "Fire").ToList();
 
             Assert.That(results.Count, Is.EqualTo(2));
-            Assert.That(results.All(record => record.Rarity == Rarity.Common && record.Element == Element.Fire), Is.True);
+            Assert.That(results.All(record => record.Tag == "A" && record.ElementName == "Fire"), Is.True);
         }
 
         [Test]
