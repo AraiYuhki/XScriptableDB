@@ -312,6 +312,132 @@ namespace Xeon.XScriptableDB
             return result;
         }
 
+        // ========================================
+        // 複合SecondaryKey検索メソッド
+        // ========================================
+
+        /// <summary>
+        /// 複合SecondaryKeyでレコードを検索する（O(1)）。
+        /// </summary>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="keyParts">検索するキー値の配列</param>
+        /// <returns>見つかったレコード、見つからない場合はnull</returns>
+        public T FindBySecondaryKey(string indexName, params object[] keyParts)
+        {
+            var index = secondaryIndices.GetIndex(indexName);
+            if (index == null)
+            {
+                Debug.LogWarning($"Index '{indexName}' not found");
+                return null;
+            }
+
+            var compositeString = CompositeKeyHelper.ComputeCompositeString(keyParts);
+            var recordIndices = index.FindByString(compositeString);
+            if (recordIndices.Length == 0)
+                return null;
+
+            return records[recordIndices[0]];
+        }
+
+        /// <summary>
+        /// 複合SecondaryKeyでレコードを検索する（O(1)）。
+        /// </summary>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="record">見つかったレコード</param>
+        /// <param name="keyParts">検索するキー値の配列</param>
+        /// <returns>見つかった場合はtrue</returns>
+        public bool TryFindBySecondaryKey(string indexName, out T record, params object[] keyParts)
+        {
+            record = FindBySecondaryKey(indexName, keyParts);
+            return record != null;
+        }
+
+        /// <summary>
+        /// 複合SecondaryKeyで複数のレコードを検索する（O(1)）。
+        /// </summary>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="keyParts">検索するキー値の配列</param>
+        /// <returns>見つかったレコードの列挙</returns>
+        public IEnumerable<T> FindAllBySecondaryKey(string indexName, params object[] keyParts)
+        {
+            var index = secondaryIndices.GetIndex(indexName);
+            if (index == null)
+            {
+                Debug.LogWarning($"Index '{indexName}' not found");
+                yield break;
+            }
+
+            var compositeString = CompositeKeyHelper.ComputeCompositeString(keyParts);
+            var recordIndices = index.FindByString(compositeString);
+            foreach (var i in recordIndices)
+            {
+                if (i >= 0 && i < records.Length)
+                    yield return records[i];
+            }
+        }
+
+        /// <summary>
+        /// 複合SecondaryKeyで複数のレコードを検索し、配列として返す（O(1)）。
+        /// </summary>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="keyParts">検索するキー値の配列</param>
+        /// <returns>見つかったレコードの配列</returns>
+        public T[] FindAllBySecondaryKeyAsArray(string indexName, params object[] keyParts)
+        {
+            var index = secondaryIndices.GetIndex(indexName);
+            if (index == null)
+            {
+                Debug.LogWarning($"Index '{indexName}' not found");
+                return Array.Empty<T>();
+            }
+
+            var compositeString = CompositeKeyHelper.ComputeCompositeString(keyParts);
+            var recordIndices = index.FindByString(compositeString);
+            if (recordIndices.Length == 0)
+                return Array.Empty<T>();
+
+            var result = new T[recordIndices.Length];
+            for (var i = 0; i < recordIndices.Length; i++)
+            {
+                var recordIndex = recordIndices[i];
+                if (recordIndex >= 0 && recordIndex < records.Length)
+                    result[i] = records[recordIndex];
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 2つのキーを使った複合SecondaryKey検索（型安全版）。
+        /// </summary>
+        public T FindBySecondaryKey<TKey1, TKey2>(string indexName, TKey1 key1, TKey2 key2)
+        {
+            return FindBySecondaryKey(indexName, (object)key1, (object)key2);
+        }
+
+        /// <summary>
+        /// 3つのキーを使った複合SecondaryKey検索（型安全版）。
+        /// </summary>
+        public T FindBySecondaryKey<TKey1, TKey2, TKey3>(string indexName, TKey1 key1, TKey2 key2, TKey3 key3)
+        {
+            return FindBySecondaryKey(indexName, (object)key1, (object)key2, (object)key3);
+        }
+
+        /// <summary>
+        /// 2つのキーを使った複合SecondaryKey検索で複数レコードを取得（型安全版）。
+        /// </summary>
+        public T[] FindAllBySecondaryKeyAsArray<TKey1, TKey2>(string indexName, TKey1 key1, TKey2 key2)
+        {
+            return FindAllBySecondaryKeyAsArray(indexName, (object)key1, (object)key2);
+        }
+
+        /// <summary>
+        /// 3つのキーを使った複合SecondaryKey検索で複数レコードを取得（型安全版）。
+        /// </summary>
+        public T[] FindAllBySecondaryKeyAsArray<TKey1, TKey2, TKey3>(string indexName, TKey1 key1, TKey2 key2, TKey3 key3)
+        {
+            return FindAllBySecondaryKeyAsArray(indexName, (object)key1, (object)key2, (object)key3);
+        }
+
         /// <summary>
         /// CSVファイルからレコードをインポートする。
         /// </summary>

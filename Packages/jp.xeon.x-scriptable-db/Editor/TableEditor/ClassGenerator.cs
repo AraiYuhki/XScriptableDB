@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Xeon.XScriptableDB;
 
 namespace Xeon.XScriptableDB.Editor
 {
@@ -80,13 +81,50 @@ namespace {namespaceName}
 
             if (column.IsPrimaryKey)
                 attributes.Add("PrimaryKey");
-            if (tableDefinition.Indices.Contains(column.Name))
-                attributes.Add("SecondaryKey");
+
+            attributes.AddRange(BuildSecondaryKeyAttributes(tableDefinition, column));
 
             sb.Append($"        [{string.Join(", ", attributes)}]\n");
             sb.Append($"        private {type} {fieldName};");
 
             return sb.ToString();
+        }
+
+        private static IEnumerable<string> BuildSecondaryKeyAttributes(TableDefinition tableDefinition, ColumnDefinition column)
+        {
+            foreach (var indexDef in tableDefinition.Indices)
+            {
+                var columnIndex = indexDef.Columns.IndexOf(column.Name);
+                if (columnIndex < 0)
+                    continue;
+
+                if (indexDef.IsComposite)
+                {
+                    yield return BuildCompositeSecondaryKeyAttribute(indexDef, columnIndex);
+                    continue;
+                }
+
+                yield return BuildSingleSecondaryKeyAttribute(indexDef, column.Name);
+            }
+        }
+
+        private static string BuildCompositeSecondaryKeyAttribute(IndexDefinition indexDef, int columnIndex)
+        {
+            var attrParts = new List<string> { $"\"{indexDef.Name}\"", columnIndex.ToString() };
+            if (!indexDef.AllowDuplicates)
+                attrParts.Add("AllowDuplicates = false");
+            return $"SecondaryKey({string.Join(", ", attrParts)})";
+        }
+
+        private static string BuildSingleSecondaryKeyAttribute(IndexDefinition indexDef, string columnName)
+        {
+            if (indexDef.Name == columnName)
+                return indexDef.AllowDuplicates ? "SecondaryKey" : "SecondaryKey(AllowDuplicates = false)";
+
+            var attrParts = new List<string> { $"\"{indexDef.Name}\"" };
+            if (!indexDef.AllowDuplicates)
+                attrParts.Add("AllowDuplicates = false");
+            return $"SecondaryKey({string.Join(", ", attrParts)})";
         }
 
         private static string GenerateProperties(List<ColumnDefinition> columns, bool isReadOnly)

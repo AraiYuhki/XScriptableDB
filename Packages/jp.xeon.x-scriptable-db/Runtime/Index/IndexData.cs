@@ -105,6 +105,7 @@ namespace Xeon.XScriptableDB
 
         /// <summary>
         /// キーでレコードインデックスを検索する（型安全版）。
+        /// 文字列キーベースで検索し、ハッシュ衝突を回避する。
         /// </summary>
         /// <typeparam name="TKey">キーの型</typeparam>
         /// <param name="key">検索するキー</param>
@@ -116,12 +117,26 @@ namespace Xeon.XScriptableDB
 
             EnsureInitialized();
 
-            // 文字列の場合は文字列検索を優先
-            if (key is string strKey)
-                return FindByString(strKey);
+            // 文字列キーで検索（ハッシュ衝突回避）
+            var keyString = key.ToString();
+            return FindByString(keyString);
+        }
 
-            // それ以外はハッシュ検索
-            return FindByHash(key.GetHashCode());
+        /// <summary>
+        /// キーでレコードインデックスを検索する（object版）。
+        /// 文字列キーベースで検索し、ハッシュ衝突を回避する。
+        /// </summary>
+        /// <param name="key">検索するキー</param>
+        /// <returns>レコードインデックスの配列、見つからない場合は空の配列</returns>
+        public int[] FindByKey(object key)
+        {
+            if (key == null)
+                return Array.Empty<int>();
+
+            EnsureInitialized();
+
+            var keyString = key.ToString();
+            return FindByString(keyString);
         }
 
         /// <summary>
