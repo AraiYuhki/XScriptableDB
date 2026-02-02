@@ -82,6 +82,28 @@ namespace Xeon.XScriptableDB.Tests
             Assert.That(str, Does.Contain("unique"));
         }
 
+        [Test]
+        public void IndexDefinition_ColumnsCanBeSetExplicitly()
+        {
+            var indexDef = new IndexDefinition("TestIndex")
+            {
+                Columns = new List<string> { "column1", "column2" }
+            };
+            Assert.That(indexDef.Columns.Count, Is.EqualTo(2));
+            Assert.That(indexDef.Columns[0], Is.EqualTo("column1"));
+            Assert.That(indexDef.Columns[1], Is.EqualTo("column2"));
+            Assert.That(indexDef.IsComposite, Is.True);
+        }
+
+        [Test]
+        public void IndexDefinition_ColumnsSetToNull_ReturnsEmptyList()
+        {
+            var indexDef = new IndexDefinition("TestIndex");
+            indexDef.Columns = null;
+            Assert.That(indexDef.Columns, Is.Not.Null);
+            Assert.That(indexDef.Columns, Is.Empty);
+        }
+
         #endregion
 
         #region TableDefinition Tests

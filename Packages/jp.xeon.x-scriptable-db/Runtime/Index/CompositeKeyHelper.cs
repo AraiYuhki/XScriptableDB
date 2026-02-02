@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Text;
 
 namespace Xeon.XScriptableDB
@@ -10,11 +11,13 @@ namespace Xeon.XScriptableDB
     public static class CompositeKeyHelper
     {
         private const char KeyDelimiter = '\x1F';
+        private const char EscapeChar = '\x1E';
         private const string NullPlaceholder = "\x00NULL\x00";
 
         /// <summary>
         /// 複合キーの文字列表現を生成する。
         /// Unit Separator (ASCII 31) を区切り文字として使用し、衝突を回避する。
+        /// 特殊文字はエスケープ処理される。
         /// </summary>
         /// <param name="keys">キー値の配列</param>
         /// <returns>文字列表現</returns>
@@ -32,13 +35,52 @@ namespace Xeon.XScriptableDB
                 if (keys[i] == null)
                     sb.Append(NullPlaceholder);
                 else
-                    sb.Append(keys[i].ToString());
+                    sb.Append(EscapeValue(keys[i]));
             }
             return sb.ToString();
         }
 
         /// <summary>
+        /// 値を文字列に変換し、特殊文字をエスケープする。
+        /// カルチャ非依存の変換を行う。
+        /// </summary>
+        private static string EscapeValue(object value)
+        {
+            var str = ConvertToInvariantString(value);
+            if (string.IsNullOrEmpty(str))
+                return str;
+
+            if (str.IndexOf(EscapeChar) < 0 && str.IndexOf(KeyDelimiter) < 0)
+                return str;
+
+            var sb = new StringBuilder(str.Length + 4);
+            foreach (var c in str)
+            {
+                if (c == EscapeChar)
+                    sb.Append(EscapeChar).Append(EscapeChar);
+                else if (c == KeyDelimiter)
+                    sb.Append(EscapeChar).Append('D');
+                else
+                    sb.Append(c);
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// カルチャ非依存の文字列変換を行う。
+        /// </summary>
+        private static string ConvertToInvariantString(object value)
+        {
+            return value switch
+            {
+                IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+                _ => value.ToString()
+            };
+        }
+
+        /// <summary>
         /// デバッグ用の可読性のある文字列表現を生成する。
+        /// カルチャ非依存の変換を行う。
         /// </summary>
         /// <param name="keys">キー値の配列</param>
         /// <returns>可読性のある文字列表現</returns>
@@ -49,7 +91,7 @@ namespace Xeon.XScriptableDB
 
             var parts = new string[keys.Length];
             for (var i = 0; i < keys.Length; i++)
-                parts[i] = keys[i]?.ToString() ?? "null";
+                parts[i] = keys[i] == null ? "null" : ConvertToInvariantString(keys[i]);
             return string.Join("|", parts);
         }
 

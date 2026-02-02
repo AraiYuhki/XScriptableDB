@@ -430,6 +430,50 @@ namespace Xeon.XScriptableDB.Tests
             Assert.That(key1, Is.Not.EqualTo(key2));
         }
 
+        [Test]
+        public void CompositeKeyHelper_EscapesDelimiterCharacter()
+        {
+            var delimiter = '\x1F';
+            var key1 = CompositeKeyHelper.ComputeCompositeString($"A{delimiter}B", 100);
+            var key2 = CompositeKeyHelper.ComputeCompositeString("A", $"B{delimiter}100");
+
+            Assert.That(key1, Is.Not.EqualTo(key2));
+        }
+
+        [Test]
+        public void CompositeKeyHelper_EscapesEscapeCharacter()
+        {
+            var escapeChar = '\x1E';
+            var key1 = CompositeKeyHelper.ComputeCompositeString($"A{escapeChar}B", 100);
+            var key2 = CompositeKeyHelper.ComputeCompositeString("A", $"B{escapeChar}100");
+
+            Assert.That(key1, Is.Not.EqualTo(key2));
+        }
+
+        [Test]
+        public void CompositeKeyHelper_InvariantCulture_FloatValues()
+        {
+            var key1 = CompositeKeyHelper.ComputeCompositeString("Test", 1.5f);
+            Assert.That(key1, Does.Contain("1.5"));
+            Assert.That(key1, Does.Not.Contain("1,5"));
+        }
+
+        [Test]
+        public void CompositeKeyHelper_InvariantCulture_DoubleValues()
+        {
+            var key1 = CompositeKeyHelper.ComputeCompositeString("Test", 1.5d);
+            Assert.That(key1, Does.Contain("1.5"));
+            Assert.That(key1, Does.Not.Contain("1,5"));
+        }
+
+        [Test]
+        public void CompositeKeyHelper_InvariantCulture_DecimalValues()
+        {
+            var key1 = CompositeKeyHelper.ComputeCompositeString("Test", 1.5m);
+            Assert.That(key1, Does.Contain("1.5"));
+            Assert.That(key1, Does.Not.Contain("1,5"));
+        }
+
         #endregion
 
         #region Integration Tests

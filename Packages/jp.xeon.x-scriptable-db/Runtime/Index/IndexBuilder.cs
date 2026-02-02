@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -195,7 +196,7 @@ namespace Xeon.XScriptableDB
                 if (keyValue == null)
                     continue;
 
-                var keyString = keyValue.ToString();
+                var keyString = ConvertToInvariantString(keyValue);
 
                 if (!keyGroups.TryGetValue(keyString, out var indices))
                 {
@@ -305,6 +306,18 @@ namespace Xeon.XScriptableDB
                 FieldInfo field => field.FieldType,
                 PropertyInfo property => property.PropertyType,
                 _ => null
+            };
+        }
+
+        /// <summary>
+        /// カルチャ非依存の文字列変換を行う。
+        /// </summary>
+        private static string ConvertToInvariantString(object value)
+        {
+            return value switch
+            {
+                IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+                _ => value.ToString()
             };
         }
     }

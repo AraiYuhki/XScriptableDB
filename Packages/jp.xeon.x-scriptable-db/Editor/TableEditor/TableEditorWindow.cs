@@ -154,7 +154,12 @@ namespace Xeon.XScriptableDB.Editor
 
         private void OnAddIndex(ReorderableList list)
         {
-            tableDefinition.Indices.Add(new IndexDefinition("NewIndex"));
+            var defaultColumn = columnsCache?.Length > 0 ? columnsCache[0] : "";
+            var newIndex = new IndexDefinition("NewIndex")
+            {
+                Columns = new System.Collections.Generic.List<string> { defaultColumn }
+            };
+            tableDefinition.Indices.Add(newIndex);
         }
 
         private float GetIndexElementHeight(int index)
@@ -172,8 +177,15 @@ namespace Xeon.XScriptableDB.Editor
 
         private void OnRemoveColumn(ReorderableList list)
         {
-            if (list.index >= 0 && list.index < tableDefinition.Columns.Count)
-                tableDefinition.Columns.RemoveAt(list.index);
+            if (list.index < 0 || list.index >= tableDefinition.Columns.Count)
+                return;
+
+            var removedColumnName = tableDefinition.Columns[list.index].Name;
+            tableDefinition.Columns.RemoveAt(list.index);
+
+            foreach (var indexDef in tableDefinition.Indices)
+                indexDef.Columns.Remove(removedColumnName);
+
             UpdateColumnsCache();
         }
 
