@@ -432,6 +432,7 @@ namespace Xeon.XScriptableDB.Editor
                 float f => f.ToString("F2"),
                 double d => d.ToString("F2"),
                 DateTime dt => DateTimeEditorUtility.FormatDateTime(dt),
+                SerializableDateTime sdt => DateTimeEditorUtility.FormatDateTime(sdt.DateTime),
                 _ => value.ToString()
             };
         }

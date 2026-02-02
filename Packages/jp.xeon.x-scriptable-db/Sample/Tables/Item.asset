@@ -1,0 +1,161 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf75bb5ea585f514e97f660d3c0b97d3, type: 3}
+  m_Name: Item (Editing)
+  m_EditorClassIdentifier: jp.xeon.x-scriptable-db.Sample::Xeon.XScriptableDB.Generated.ItemTable
+  records:
+  - id: 1
+    name: "\u9244\u306E\u5263"
+    description: "\u521D\u5FC3\u8005\u5411\u3051\u306E\u57FA\u672C\u7684\u306A\u5263"
+    categoryId: 1
+    price: 100
+    rarity: 1
+    isTradable: 1
+    releaseDate:
+      ticks: 638396640000000000
+  - id: 2
+    name: "\u92FC\u306E\u5263"
+    description: "\u935B\u932C\u3055\u308C\u305F\u92FC\u3067\u4F5C\u3089\u308C\u305F\u5263"
+    categoryId: 1
+    price: 600
+    rarity: 2
+    isTradable: 0
+    releaseDate:
+      ticks: 638396640000000000
+  - id: 3
+    name: "\u708E\u306E\u5263"
+    description: "\u708E\u306E\u529B\u3092\u5BBF\u3057\u305F\u9B54\u6CD5\u306E\u5263"
+    categoryId: 1
+    price: 2000
+    rarity: 4
+    isTradable: 1
+    releaseDate:
+      ticks: 638460576000000000
+  - id: 4
+    name: "\u9769\u306E\u93A7"
+    description: "\u8EFD\u91CF\u3067\u52D5\u304D\u3084\u3059\u3044\u9632\u5177"
+    categoryId: 2
+    price: 150
+    rarity: 1
+    isTradable: 1
+    releaseDate:
+      ticks: 638396640000000000
+  - id: 5
+    name: "\u9244\u306E\u93A7"
+    description: "\u6A19\u6E96\u7684\u306A\u9632\u5FA1\u529B\u3092\u6301\u3064\u9632\u5177"
+    categoryId: 2
+    price: 800
+    rarity: 2
+    isTradable: 1
+    releaseDate:
+      ticks: 638396640000000000
+  - id: 6
+    name: "\u56DE\u5FA9\u85AC"
+    description: "HP\u309250\u56DE\u5FA9\u3059\u308B"
+    categoryId: 3
+    price: 30
+    rarity: 1
+    isTradable: 1
+    releaseDate:
+      ticks: 638396640000000000
+  - id: 7
+    name: "\u9AD8\u7D1A\u56DE\u5FA9\u85AC"
+    description: "HP\u3092200\u56DE\u5FA9\u3059\u308B"
+    categoryId: 3
+    price: 150
+    rarity: 2
+    isTradable: 1
+    releaseDate:
+      ticks: 638431200000000000
+  - id: 8
+    name: "\u4E07\u80FD\u85AC"
+    description: "\u5168\u3066\u306E\u72B6\u614B\u7570\u5E38\u3092\u6CBB\u7642\u3059\u308B"
+    categoryId: 3
+    price: 500
+    rarity: 3
+    isTradable: 0
+    releaseDate:
+      ticks: 638491680000000000
+  - id: 9
+    name: "\u9B54\u6CD5\u306E\u6307\u8F2A"
+    description: "\u9B54\u529B\u309210%\u4E0A\u6607\u3055\u305B\u308B"
+    categoryId: 4
+    price: 1200
+    rarity: 3
+    isTradable: 1
+    releaseDate:
+      ticks: 638501184000000000
+  - id: 10
+    name: "\u4F1D\u8AAC\u306E\u9996\u98FE\u308A"
+    description: "\u5168\u80FD\u529B\u30925%\u4E0A\u6607\u3055\u305B\u308B"
+    categoryId: 4
+    price: 10000
+    rarity: 5
+    isTradable: 0
+    releaseDate:
+      ticks: 638540064000000000
+  - id: 11
+    name: "\u30C6\u30EC\u30DD\u30FC\u30C8\u306E\u5DFB\u7269"
+    description: "\u6307\u5B9A\u3057\u305F\u8857\u3078\u77AC\u9593\u79FB\u52D5\u3059\u308B"
+    categoryId: 5
+    price: 200
+    rarity: 2
+    isTradable: 1
+    releaseDate:
+      ticks: 638396640000000000
+  - id: 12
+    name: "\u5B9D\u306E\u5730\u56F3"
+    description: "\u96A0\u3055\u308C\u305F\u30C0\u30F3\u30B8\u30E7\u30F3\u306E\u5834\u6240\u3092\u793A\u3059"
+    categoryId: 5
+    price: 5000
+    rarity: 4
+    isTradable: 0
+    releaseDate:
+      ticks: 638553888000000000
+  secondaryIndices:
+    indices:
+    - indexName: categoryId
+      keyTypeName: System.Int32
+      entries:
+      - keyHash: 1
+        keyString: 1
+        recordIndices: 000000000100000002000000
+      - keyHash: 2
+        keyString: 2
+        recordIndices: 0300000004000000
+      - keyHash: 3
+        keyString: 3
+        recordIndices: 050000000600000007000000
+      - keyHash: 4
+        keyString: 4
+        recordIndices: 0800000009000000
+      - keyHash: 5
+        keyString: 5
+        recordIndices: 0a0000000b000000
+    - indexName: rarity
+      keyTypeName: System.Int32
+      entries:
+      - keyHash: 1
+        keyString: 1
+        recordIndices: 000000000300000005000000
+      - keyHash: 2
+        keyString: 2
+        recordIndices: 0100000004000000060000000a000000
+      - keyHash: 4
+        keyString: 4
+        recordIndices: 020000000b000000
+      - keyHash: 3
+        keyString: 3
+        recordIndices: 0700000008000000
+      - keyHash: 5
+        keyString: 5
+        recordIndices: 09000000

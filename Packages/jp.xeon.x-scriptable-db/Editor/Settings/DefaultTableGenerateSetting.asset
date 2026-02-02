@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: DefaultTableGenerateSetting
   m_EditorClassIdentifier: jp.xeon.x-scriptable-db.Editor::Xeon.XScriptableDB.Editor.TableGenerateSetting
   namespaceName: Xeon.XScriptableDB
-  savePath: Assets/Generated
+  savePath: Generated

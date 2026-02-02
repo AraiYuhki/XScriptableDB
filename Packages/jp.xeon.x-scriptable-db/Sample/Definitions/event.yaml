@@ -1,0 +1,34 @@
+tableName: event
+isReadOnly: true
+columns:
+- name: id
+  type: int
+  isNullable: false
+  isPrimaryKey: true
+- name: name
+  type: string
+  isNullable: false
+  isPrimaryKey: false
+- name: description
+  type: string
+  isNullable: true
+  isPrimaryKey: false
+- name: event_type
+  type: int
+  isNullable: false
+  isPrimaryKey: false
+- name: start_date
+  type: datetime
+  isNullable: false
+  isPrimaryKey: false
+- name: end_date
+  type: datetime
+  isNullable: false
+  isPrimaryKey: false
+- name: is_active
+  type: bool
+  isNullable: false
+  isPrimaryKey: false
+indices:
+- event_type
+- is_active

@@ -292,14 +292,30 @@ namespace Xeon.XScriptableDB
                 "Masters");
             if (string.IsNullOrEmpty(folderPath))
                 return;
+
+            var successList = new List<string>();
+            var failedList = new List<string>();
+
             foreach (var table in Instance.tables.Values)
             {
                 if (table is not IExportable exporter)
                     continue;
+
                 var filePath = Path.Combine(folderPath, table.name + extension);
-                exporter.Export(filePath, Encoding.UTF8);
-                Debug.Log($"Exported: {filePath}");
+                try
+                {
+                    exporter.Export(filePath, Encoding.UTF8);
+                    successList.Add(table.name);
+                    Debug.Log($"Exported: {filePath}");
+                }
+                catch (Exception e)
+                {
+                    failedList.Add($"{table.name}: {e.Message}");
+                    Debug.LogError($"Export failed: {table.name} - {e.Message}");
+                }
             }
+
+            ShowResultDialog("エクスポート完了", successList, failedList);
         }
 
         private static void ImportFromFile(string extension)
@@ -310,21 +326,111 @@ namespace Xeon.XScriptableDB
                 "Masters");
             if (string.IsNullOrEmpty(folderPath))
                 return;
+
+            var successList = new List<string>();
+            var failedList = new List<string>();
+            var skippedList = new List<string>();
+
             var directoryInfo = new DirectoryInfo(folderPath);
             var files = directoryInfo.GetFiles($"*{extension}", SearchOption.TopDirectoryOnly);
+
             foreach (var file in files)
             {
                 var tableName = Path.GetFileNameWithoutExtension(file.Name);
                 var targetTable = Instance.tables.Values.FirstOrDefault(
                     table => tableName == table.GetType().Name || tableName == table.name);
-                if (targetTable is not IImportable importable)
+
+                if (targetTable == null)
+                {
+                    skippedList.Add($"{file.Name} (テーブルが見つかりません)");
                     continue;
-                Debug.Log($"Importing: {file.Name} -> {targetTable.name}");
-                importable.Import(file.FullName);
-                EditorUtility.SetDirty(targetTable);
+                }
+
+                if (targetTable is not IImportable importable)
+                {
+                    skippedList.Add($"{file.Name} (IImportable未実装)");
+                    continue;
+                }
+
+                try
+                {
+                    Debug.Log($"Importing: {file.Name} -> {targetTable.name}");
+                    importable.Import(file.FullName);
+                    EditorUtility.SetDirty(targetTable);
+                    successList.Add($"{file.Name} -> {targetTable.name}");
+                }
+                catch (Exception e)
+                {
+                    failedList.Add($"{file.Name}: {e.Message}");
+                    Debug.LogError($"Import failed: {file.Name} - {e.Message}");
+                }
             }
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+
+            ShowImportResultDialog(successList, failedList, skippedList);
+        }
+
+        private static void ShowResultDialog(string title, List<string> successList, List<string> failedList)
+        {
+            var message = new StringBuilder();
+
+            if (successList.Count > 0)
+            {
+                message.AppendLine($"成功 ({successList.Count}件):");
+                foreach (var item in successList)
+                    message.AppendLine($"  - {item}");
+            }
+
+            if (failedList.Count > 0)
+            {
+                if (message.Length > 0)
+                    message.AppendLine();
+                message.AppendLine($"失敗 ({failedList.Count}件):");
+                foreach (var item in failedList)
+                    message.AppendLine($"  - {item}");
+            }
+
+            if (successList.Count == 0 && failedList.Count == 0)
+                message.AppendLine("対象のテーブルがありませんでした。");
+
+            EditorUtility.DisplayDialog(title, message.ToString(), "OK");
+        }
+
+        private static void ShowImportResultDialog(List<string> successList, List<string> failedList, List<string> skippedList)
+        {
+            var message = new StringBuilder();
+
+            if (successList.Count > 0)
+            {
+                message.AppendLine($"成功 ({successList.Count}件):");
+                foreach (var item in successList)
+                    message.AppendLine($"  - {item}");
+            }
+
+            if (failedList.Count > 0)
+            {
+                if (message.Length > 0)
+                    message.AppendLine();
+                message.AppendLine($"失敗 ({failedList.Count}件):");
+                foreach (var item in failedList)
+                    message.AppendLine($"  - {item}");
+            }
+
+            if (skippedList.Count > 0)
+            {
+                if (message.Length > 0)
+                    message.AppendLine();
+                message.AppendLine($"スキップ ({skippedList.Count}件):");
+                foreach (var item in skippedList)
+                    message.AppendLine($"  - {item}");
+            }
+
+            if (successList.Count == 0 && failedList.Count == 0 && skippedList.Count == 0)
+                message.AppendLine("対象のファイルがありませんでした。");
+
+            EditorUtility.DisplayDialog("インポート完了", message.ToString(), "OK");
         }
 
         [MenuItem("Tools/XScriptableDB/Export/CSV")]

@@ -6,16 +6,16 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// DateTime型のカスタムPropertyDrawer。
-    /// Inspector上でDateTime型のフィールドを編集可能にする。
+    /// SerializableDateTime型のカスタムPropertyDrawer。
+    /// Inspector上でSerializableDateTime型のフィールドを編集可能にする。
     /// </summary>
-    [CustomPropertyDrawer(typeof(DateTime))]
-    public class DateTimePropertyDrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(SerializableDateTime))]
+    public class SerializableDateTimePropertyDrawer : PropertyDrawer
     {
-        private const float DateFieldWidth = 80f;
-        private const float TimeFieldWidth = 60f;
-        private const float LabelWidth = 30f;
-        private const float Spacing = 4f;
+        private const float DateFieldWidth = 50f;
+        private const float TimeFieldWidth = 30f;
+        private const float LabelWidth = 15f;
+        private const float Spacing = 2f;
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -27,49 +27,64 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUI.indentLevel = 0;
 
             var ticksProperty = property.FindPropertyRelative("ticks");
-            var dateKindProperty = property.FindPropertyRelative("dateData");
-
-            if (ticksProperty == null && dateKindProperty == null)
+            if (ticksProperty == null)
             {
-                DrawFallbackField(position, property);
+                EditorGUI.LabelField(position, "SerializableDateTime (ticks not found)");
                 EditorGUI.indentLevel = indent;
                 EditorGUI.EndProperty();
                 return;
             }
 
-            var currentDateTime = GetDateTime(property);
+            var currentTicks = ticksProperty.longValue;
+            DateTime currentDateTime;
+            try
+            {
+                currentDateTime = currentTicks > 0 ? new DateTime(currentTicks) : DateTime.MinValue;
+            }
+            catch
+            {
+                currentDateTime = DateTime.MinValue;
+            }
 
             EditorGUI.BeginChangeCheck();
 
             var x = position.x;
+            var y = position.y;
+            var height = position.height;
 
-            var yearRect = new Rect(x, position.y, DateFieldWidth, position.height);
+            var yearRect = new Rect(x, y, DateFieldWidth, height);
             x += DateFieldWidth + Spacing;
 
-            var monthLabelRect = new Rect(x, position.y, LabelWidth, position.height);
+            var slashRect1 = new Rect(x, y, LabelWidth, height);
             x += LabelWidth;
-            var monthRect = new Rect(x, position.y, 30f, position.height);
-            x += 30f + Spacing;
 
-            var dayLabelRect = new Rect(x, position.y, LabelWidth, position.height);
+            var monthRect = new Rect(x, y, TimeFieldWidth, height);
+            x += TimeFieldWidth + Spacing;
+
+            var slashRect2 = new Rect(x, y, LabelWidth, height);
             x += LabelWidth;
-            var dayRect = new Rect(x, position.y, 30f, position.height);
-            x += 30f + Spacing;
 
-            var hourRect = new Rect(x, position.y, 30f, position.height);
-            x += 30f;
-            var colonRect1 = new Rect(x, position.y, 10f, position.height);
+            var dayRect = new Rect(x, y, TimeFieldWidth, height);
+            x += TimeFieldWidth + Spacing * 2;
+
+            var hourRect = new Rect(x, y, TimeFieldWidth, height);
+            x += TimeFieldWidth;
+
+            var colonRect1 = new Rect(x, y, 10f, height);
             x += 10f;
-            var minuteRect = new Rect(x, position.y, 30f, position.height);
-            x += 30f;
-            var colonRect2 = new Rect(x, position.y, 10f, position.height);
+
+            var minuteRect = new Rect(x, y, TimeFieldWidth, height);
+            x += TimeFieldWidth;
+
+            var colonRect2 = new Rect(x, y, 10f, height);
             x += 10f;
-            var secondRect = new Rect(x, position.y, 30f, position.height);
+
+            var secondRect = new Rect(x, y, TimeFieldWidth, height);
 
             var year = EditorGUI.IntField(yearRect, currentDateTime.Year);
-            EditorGUI.LabelField(monthLabelRect, "/");
+            EditorGUI.LabelField(slashRect1, "/");
             var month = EditorGUI.IntField(monthRect, currentDateTime.Month);
-            EditorGUI.LabelField(dayLabelRect, "/");
+            EditorGUI.LabelField(slashRect2, "/");
             var day = EditorGUI.IntField(dayRect, currentDateTime.Day);
 
             var hour = EditorGUI.IntField(hourRect, currentDateTime.Hour);
@@ -90,8 +105,8 @@ namespace Xeon.XScriptableDB.Editor
 
                 try
                 {
-                    var newDateTime = new DateTime(year, month, day, hour, minute, second, currentDateTime.Kind);
-                    SetDateTime(property, newDateTime);
+                    var newDateTime = new DateTime(year, month, day, hour, minute, second);
+                    ticksProperty.longValue = newDateTime.Ticks;
                 }
                 catch (ArgumentOutOfRangeException)
                 {
@@ -107,48 +122,10 @@ namespace Xeon.XScriptableDB.Editor
         {
             return EditorGUIUtility.singleLineHeight;
         }
-
-        private DateTime GetDateTime(SerializedProperty property)
-        {
-            var dateDataProperty = property.FindPropertyRelative("dateData");
-            if (dateDataProperty != null)
-            {
-                var dateData = (ulong)dateDataProperty.longValue;
-                var ticks = (long)(dateData & 0x3FFFFFFFFFFFFFFF);
-                return new DateTime(ticks);
-            }
-
-            var ticksProperty = property.FindPropertyRelative("ticks");
-            if (ticksProperty != null)
-                return new DateTime(ticksProperty.longValue);
-
-            return DateTime.MinValue;
-        }
-
-        private void SetDateTime(SerializedProperty property, DateTime dateTime)
-        {
-            var dateDataProperty = property.FindPropertyRelative("dateData");
-            if (dateDataProperty != null)
-            {
-                var ticks = dateTime.Ticks;
-                var kind = (ulong)dateTime.Kind << 62;
-                dateDataProperty.longValue = (long)(((ulong)ticks) | kind);
-                return;
-            }
-
-            var ticksProperty = property.FindPropertyRelative("ticks");
-            if (ticksProperty != null)
-                ticksProperty.longValue = dateTime.Ticks;
-        }
-
-        private void DrawFallbackField(Rect position, SerializedProperty property)
-        {
-            EditorGUI.LabelField(position, "DateTime (unsupported serialization)");
-        }
     }
 
     /// <summary>
-    /// DateTime型に関するユーティリティ。
+    /// SerializableDateTime型に関するユーティリティ。
     /// </summary>
     public static class DateTimeEditorUtility
     {
@@ -160,20 +137,20 @@ namespace Xeon.XScriptableDB.Editor
             if (property == null)
                 return DateTime.MinValue;
 
-            var dateDataProperty = property.FindPropertyRelative("dateData");
-            if (dateDataProperty != null)
+            var ticksProperty = property.FindPropertyRelative("ticks");
+            if (ticksProperty != null)
             {
-                var dateData = (ulong)dateDataProperty.longValue;
-                var ticks = (long)(dateData & 0x3FFFFFFFFFFFFFFF);
+                var ticks = ticksProperty.longValue;
                 if (ticks < DateTime.MinValue.Ticks || ticks > DateTime.MaxValue.Ticks)
                     return DateTime.MinValue;
                 return new DateTime(ticks);
             }
 
-            var ticksProperty = property.FindPropertyRelative("ticks");
-            if (ticksProperty != null)
+            var dateDataProperty = property.FindPropertyRelative("dateData");
+            if (dateDataProperty != null)
             {
-                var ticks = ticksProperty.longValue;
+                var dateData = (ulong)dateDataProperty.longValue;
+                var ticks = (long)(dateData & 0x3FFFFFFFFFFFFFFF);
                 if (ticks < DateTime.MinValue.Ticks || ticks > DateTime.MaxValue.Ticks)
                     return DateTime.MinValue;
                 return new DateTime(ticks);
@@ -190,30 +167,32 @@ namespace Xeon.XScriptableDB.Editor
             if (property == null)
                 return;
 
+            var ticksProperty = property.FindPropertyRelative("ticks");
+            if (ticksProperty != null)
+            {
+                ticksProperty.longValue = dateTime.Ticks;
+                return;
+            }
+
             var dateDataProperty = property.FindPropertyRelative("dateData");
             if (dateDataProperty != null)
             {
                 var ticks = dateTime.Ticks;
                 var kind = (ulong)dateTime.Kind << 62;
                 dateDataProperty.longValue = (long)(((ulong)ticks) | kind);
-                return;
             }
-
-            var ticksProperty = property.FindPropertyRelative("ticks");
-            if (ticksProperty != null)
-                ticksProperty.longValue = dateTime.Ticks;
         }
 
         /// <summary>
-        /// DateTimeがサポートされているかどうかを判定する。
+        /// SerializableDateTimeがサポートされているかどうかを判定する。
         /// </summary>
         public static bool IsDateTimeProperty(SerializedProperty property)
         {
             if (property == null)
                 return false;
 
-            return property.FindPropertyRelative("dateData") != null ||
-                   property.FindPropertyRelative("ticks") != null;
+            return property.FindPropertyRelative("ticks") != null ||
+                   property.FindPropertyRelative("dateData") != null;
         }
 
         /// <summary>

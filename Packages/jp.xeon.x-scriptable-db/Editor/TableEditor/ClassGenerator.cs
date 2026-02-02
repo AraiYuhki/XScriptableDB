@@ -10,15 +10,15 @@ namespace Xeon.XScriptableDB.Editor
             "byte", "sbyte", "short", "ushort",
             "int", "uint", "long", "ulong",
             "float", "double", "decimal",
-            "bool", "char", "DateTime"
+            "bool", "char", "SerializableDateTime"
         };
 
         public static string GenerateTable(TableDefinition definition)
         {
             var namespaceName = "Xeon.XScriptableDB.Generated";
-            var className = definition.TableName.ToPascalCase();
+            var className = definition.TableName.SnakeToPascalCase();
             var primaryKey = definition.Columns.FirstOrDefault(column => column.IsPrimaryKey) ?? definition.Columns[0];
-            var primaryKeyType = primaryKey.Type;
+            var primaryKeyType = ConvertType(primaryKey.Type, false);
             return $@"using UnityEngine;
 using Xeon.XScriptableDB;
 namespace {namespaceName}
@@ -34,12 +34,13 @@ namespace {namespaceName}
         public static string GenerateRecord(TableDefinition definition)
         {
             var namespaceName = "Xeon.XScriptableDB.Generated";
-            var className = definition.TableName.ToPascalCase();
+            var className = definition.TableName.SnakeToPascalCase();
             var fields = GenerateFields(definition);
             var properties = GenerateProperties(definition.Columns, definition.IsReadOnly);
             return $@"using System;
 using UnityEngine;
 using Xeon.XScriptableDB;
+using Xeon.XScriptableDB.IO;
 
 namespace {namespaceName}
 {{
@@ -67,10 +68,15 @@ namespace {namespaceName}
         private static string GenerateField(TableDefinition tableDefinition, ColumnDefinition column)
         {
             var type = ConvertType(column.Type, column.IsNullable);
-            var fieldName = column.Name.ToCamelCase();
+            var csvColumnName = column.Name;
+            var fieldName = column.Name.SnakeToCamelCase();
             var sb = new StringBuilder();
 
-            var attributes = new List<string>() { "SerializeField" };
+            var attributes = new List<string>()
+            {
+                "SerializeField",
+                $"CsvColumn(\"{csvColumnName}\")"
+            };
 
             if (column.IsPrimaryKey)
                 attributes.Add("PrimaryKey");
@@ -96,8 +102,8 @@ namespace {namespaceName}
         private static string GenerateProperty(ColumnDefinition column, bool isReadOnly)
         {
             var type = ConvertType(column.Type, column.IsNullable);
-            var fieldName = column.Name.ToCamelCase();
-            var propertyName = column.Name.ToPascalCase();
+            var fieldName = column.Name.SnakeToCamelCase();
+            var propertyName = column.Name.SnakeToPascalCase();
             if (!isReadOnly)
             {
                 return $@"        public {type} {propertyName}
@@ -164,7 +170,7 @@ namespace {namespaceName}
                 case "datetime":
                 case "timestamp":
                 case "date":
-                    result = "DateTime";
+                    result = "SerializableDateTime";
                     break;
                 default:
                     result = typeName;

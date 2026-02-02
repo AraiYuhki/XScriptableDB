@@ -22,7 +22,8 @@ namespace Xeon.XScriptableDB.Editor
             { typeof(double), "double" },
             { typeof(bool), "bool" },
             { typeof(string), "string" },
-            { typeof(DateTime), "DateTime" }
+            { typeof(DateTime), "DateTime" },
+            { typeof(SerializableDateTime), "DateTime" }
         };
 
         private List<TableInfo> tables = new();
@@ -421,6 +422,9 @@ namespace Xeon.XScriptableDB.Editor
 
             if (value is DateTime dt)
                 return DateTimeEditorUtility.FormatDateTime(dt);
+
+            if (value is SerializableDateTime sdt)
+                return DateTimeEditorUtility.FormatDateTime(sdt.DateTime);
 
             var str = value.ToString();
             if (str.Length > 15)

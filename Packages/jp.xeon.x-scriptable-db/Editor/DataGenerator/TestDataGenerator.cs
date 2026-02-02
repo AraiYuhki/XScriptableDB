@@ -194,6 +194,15 @@ namespace Xeon.XScriptableDB.Editor
                 return Random.value > 0.3f;
             }
 
+            if (nameLower.Contains("date") || nameLower.Contains("time") || nameLower.Contains("created") || nameLower.Contains("updated"))
+            {
+                if (fieldType == typeof(SerializableDateTime))
+                {
+                    var randomDays = Random.Range(-365, 365);
+                    return new SerializableDateTime(DateTime.Today.AddDays(randomDays));
+                }
+            }
+
             if (nameLower.Contains("category") || nameLower.Contains("type") || nameLower.Contains("group"))
             {
                 if (fieldType == typeof(int))
@@ -228,6 +237,12 @@ namespace Xeon.XScriptableDB.Editor
             {
                 var values = Enum.GetValues(fieldType);
                 return values.GetValue(Random.Range(0, values.Length));
+            }
+
+            if (fieldType == typeof(SerializableDateTime))
+            {
+                var randomDays = Random.Range(-365, 365);
+                return new SerializableDateTime(DateTime.Today.AddDays(randomDays));
             }
 
             return GetDefaultValue(fieldType);

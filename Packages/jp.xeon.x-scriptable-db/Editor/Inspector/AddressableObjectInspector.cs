@@ -23,7 +23,11 @@ namespace Xeon.XScriptableDB.Editor
             }
             var labelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 50;
+#if UNITY_6000_0_OR_NEWER
+            var assetPath = AssetDatabase.GetAssetPath(property.objectReferenceValue);
+#else
             var assetPath = AssetDatabase.GetAssetPath(property.objectReferenceInstanceIDValue);
+#endif
             var guid = AssetDatabase.AssetPathToGUID(assetPath);
             var entry = AddressableAssetSettingsDefaultObject.Settings.FindAssetEntry(guid);
             if (!TryGetAddressProperty(property, out var addressProperty))

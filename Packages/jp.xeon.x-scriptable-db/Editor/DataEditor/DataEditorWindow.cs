@@ -29,6 +29,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         private ScriptableObject selectedTable;
+        private ScriptableObject editingClone;
         private SerializedObject serializedTable;
         private SerializedProperty recordsProperty;
 
@@ -40,6 +41,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private GUIStyle headerStyle;
         private GUIStyle warningStyle;
+        private GUIStyle unsavedStyle;
 
         // 仮想スクロール
         private VirtualizedPropertyListView virtualizedList;
@@ -49,6 +51,10 @@ namespace Xeon.XScriptableDB.Editor
         // インポート/エクスポート設定
         private FileFormat exportFormat = FileFormat.CSV;
         private bool useExcelEncoding = false;
+
+        // 変更追跡
+        private bool idDirty;
+        private int lastRecordHash;
 
         private void OnEnable()
         {
@@ -101,6 +107,11 @@ namespace Xeon.XScriptableDB.Editor
             warningStyle ??= new GUIStyle(EditorStyles.label)
             {
                 normal = { textColor = Color.yellow }
+            };
+
+            unsavedStyle ??= new GUIStyle(EditorStyles.boldLabel)
+            {
+                normal = { textColor = new Color(1f, 0.5f, 0f) }
             };
         }
 
@@ -273,7 +284,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             using (new EditorGUILayout.VerticalScope())
             {
-                if (selectedTable == null)
+                if (selectedTable == null || editingClone == null)
                 {
                     EditorGUILayout.HelpBox("左のリストからテーブルを選択してください", MessageType.Info);
                     return;
@@ -284,7 +295,7 @@ namespace Xeon.XScriptableDB.Editor
                 DrawRecordToolbar();
 
                 // 仮想スクロール使用判定
-                var tableAsset = selectedTable as ITableAsset;
+                var tableAsset = editingClone as ITableAsset;
                 var recordCount = tableAsset?.Count ?? recordsProperty?.arraySize ?? 0;
                 var shouldUseVirtualScroll = useVirtualScroll && recordCount >= VirtualScrollThreshold;
 
@@ -299,16 +310,23 @@ namespace Xeon.XScriptableDB.Editor
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField($"{selectedTable.name}", headerStyle);
+                var title = idDirty ? $"{selectedTable.name} *" : selectedTable.name;
+                EditorGUILayout.LabelField(title, idDirty ? unsavedStyle : headerStyle);
 
-                var tableAsset = selectedTable as ITableAsset;
-                if (tableAsset != null)
+                if (idDirty)
+                    EditorGUILayout.LabelField("(未保存)", unsavedStyle, GUILayout.Width(60));
+
+                var editingTableAsset = editingClone as ITableAsset;
+                if (editingTableAsset != null)
                 {
-                    EditorGUILayout.LabelField($"レコード数: {tableAsset.Count}", GUILayout.Width(100));
-                    EditorGUILayout.LabelField($"Key: {tableAsset.KeyType.Name}", GUILayout.Width(100));
+                    EditorGUILayout.LabelField($"レコード数: {editingTableAsset.Count}", GUILayout.Width(100));
+
+                    var originalTableAsset = selectedTable as ITableAsset;
+                    if (originalTableAsset != null)
+                        EditorGUILayout.LabelField($"Key: {originalTableAsset.KeyType.Name}", GUILayout.Width(100));
 
                     // 仮想スクロール切り替え
-                    if (tableAsset.Count >= VirtualScrollThreshold)
+                    if (editingTableAsset.Count >= VirtualScrollThreshold)
                     {
                         var newUseVirtualScroll = GUILayout.Toggle(useVirtualScroll, "仮想スクロール", GUILayout.Width(100));
                         if (newUseVirtualScroll != useVirtualScroll)
@@ -323,7 +341,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawDuplicateKeyWarning()
         {
-            var tableAsset = selectedTable as ITableAsset;
+            var tableAsset = editingClone as ITableAsset;
             if (tableAsset == null)
                 return;
 
@@ -360,8 +378,13 @@ namespace Xeon.XScriptableDB.Editor
                 if (GUILayout.Button("ソート", EditorStyles.toolbarButton, GUILayout.Width(60)))
                     SortRecords();
 
+                EditorGUI.BeginDisabledGroup(!idDirty);
+                if (GUILayout.Button("リセット", EditorStyles.toolbarButton, GUILayout.Width(60)))
+                    ResetChanges();
+
                 if (GUILayout.Button("保存", EditorStyles.toolbarButton, GUILayout.Width(60)))
                     SaveTable();
+                EditorGUI.EndDisabledGroup();
             }
         }
 
@@ -374,7 +397,8 @@ namespace Xeon.XScriptableDB.Editor
                 return;
 
             // フォーマット選択
-            exportFormat = (FileFormat)EditorGUILayout.EnumPopup(exportFormat, EditorStyles.toolbarPopup, GUILayout.Width(50));
+            exportFormat =
+                (FileFormat)EditorGUILayout.EnumPopup(exportFormat, EditorStyles.toolbarPopup, GUILayout.Width(50));
 
             EditorGUI.BeginDisabledGroup(!isImportable);
             if (GUILayout.Button("インポート", EditorStyles.toolbarButton, GUILayout.Width(80)))
@@ -386,14 +410,17 @@ namespace Xeon.XScriptableDB.Editor
                 ExportToFile();
 
             // Excel対応エンコーディングオプション
-            useExcelEncoding = GUILayout.Toggle(useExcelEncoding, "Excel", EditorStyles.toolbarButton, GUILayout.Width(50));
+            useExcelEncoding =
+                GUILayout.Toggle(useExcelEncoding, "Excel", EditorStyles.toolbarButton, GUILayout.Width(50));
             EditorGUI.EndDisabledGroup();
         }
 
         private void ImportFromFile()
         {
-            var tableAsset = selectedTable as ITableAsset;
-            if (tableAsset == null && selectedTable is not IImportable)
+            var editingTableAsset = editingClone as ITableAsset;
+            var originalTableAsset = selectedTable as ITableAsset;
+
+            if (editingTableAsset == null && editingClone is not IImportable)
                 return;
 
             var extension = exportFormat == FileFormat.CSV ? "csv" : "tsv";
@@ -410,10 +437,10 @@ namespace Xeon.XScriptableDB.Editor
             try
             {
                 // ITableAssetの場合はプレビュー付きインポート
-                if (tableAsset != null)
+                if (editingTableAsset != null && originalTableAsset != null)
                 {
                     var encoding = useExcelEncoding ? Encoding.GetEncoding(932) : Encoding.UTF8;
-                    var importedRecords = TableImporter.ParseFile(filePath, tableAsset.RecordType, encoding);
+                    var importedRecords = TableImporter.ParseFile(filePath, originalTableAsset.RecordType, encoding);
 
                     if (importedRecords.Length == 0)
                     {
@@ -421,18 +448,24 @@ namespace Xeon.XScriptableDB.Editor
                         return;
                     }
 
-                    // 差分を計算してDiffViewerを開く
-                    var diffResult = DiffCalculator.Calculate(tableAsset, importedRecords);
-                    DiffViewerWindow.Open(diffResult, selectedTable, importedRecords);
+                    // 差分を計算してDiffViewerを開く（クローンに対して）
+                    var diffResult = DiffCalculator.Calculate(editingTableAsset, importedRecords);
+                    DiffViewerWindow.Open(diffResult, editingClone, importedRecords, () =>
+                    {
+                        serializedTable.Update();
+                        virtualizedList?.ClearCache();
+                        idDirty = true;
+                        Repaint();
+                    });
                 }
-                else if (selectedTable is IImportable importer)
+                else if (editingClone is IImportable importer)
                 {
                     // 従来の直接インポート
                     importer.Import(filePath);
                     serializedTable.Update();
                     virtualizedList?.ClearCache();
-                    EditorUtility.SetDirty(selectedTable);
-                    EditorUtility.DisplayDialog("インポート完了", $"{selectedTable.name}をインポートしました", "OK");
+                    idDirty = true;
+                    EditorUtility.DisplayDialog("インポート完了", $"{selectedTable.name}をインポートしました（未保存）", "OK");
                     Repaint();
                 }
             }
@@ -495,7 +528,10 @@ namespace Xeon.XScriptableDB.Editor
             }
 
             if (serializedTable.ApplyModifiedProperties())
+            {
                 virtualizedList.ClearCache();
+                CheckForChanges();
+            }
         }
 
         /// <summary>
@@ -508,7 +544,8 @@ namespace Xeon.XScriptableDB.Editor
 
             serializedTable.Update();
 
-            using (var scroll = new EditorGUILayout.ScrollViewScope(virtualizedList?.GetScrollPosition() ?? Vector2.zero))
+            using (var scroll =
+                   new EditorGUILayout.ScrollViewScope(virtualizedList?.GetScrollPosition() ?? Vector2.zero))
             {
                 virtualizedList?.SetScrollPosition(scroll.scrollPosition);
 
@@ -534,7 +571,8 @@ namespace Xeon.XScriptableDB.Editor
                 }
             }
 
-            serializedTable.ApplyModifiedProperties();
+            if (serializedTable.ApplyModifiedProperties())
+                CheckForChanges();
         }
 
         private void DrawRecordSummaryVirtualized(int index, SerializedProperty element, Rect rect)
@@ -594,7 +632,8 @@ namespace Xeon.XScriptableDB.Editor
                     ? property.stringValue.Substring(0, 15) + "..."
                     : property.stringValue,
                 SerializedPropertyType.Boolean => property.boolValue.ToString(),
-                SerializedPropertyType.Enum => property.enumDisplayNames.Length > property.enumValueIndex && property.enumValueIndex >= 0
+                SerializedPropertyType.Enum => property.enumDisplayNames.Length > property.enumValueIndex &&
+                                               property.enumValueIndex >= 0
                     ? property.enumDisplayNames[property.enumValueIndex]
                     : property.enumValueIndex.ToString(),
                 _ => "..."
@@ -603,14 +642,33 @@ namespace Xeon.XScriptableDB.Editor
 
         private void SelectTable(ScriptableObject table)
         {
+            // 未保存の変更がある場合は確認
+            if (idDirty && selectedTable != null)
+            {
+                var result = EditorUtility.DisplayDialogComplex(
+                    "未保存の変更",
+                    $"{selectedTable.name}に未保存の変更があります。保存しますか？",
+                    "保存", "破棄", "キャンセル");
+
+                switch (result)
+                {
+                    case 0:
+                        ApplyChangesToOriginal();
+                        break;
+                    case 1:
+                        break;
+                    case 2:
+                        return;
+                }
+            }
+
             selectedTable = table;
             selectedRecordIndex = -1;
+            idDirty = false;
 
             if (table != null)
             {
-                serializedTable = new SerializedObject(table);
-                recordsProperty = serializedTable.FindProperty("records")
-                    ?? serializedTable.FindProperty("data");
+                CreateEditingClone(table);
 
                 virtualizedList?.ClearCache();
                 virtualizedList?.ResetScroll();
@@ -622,8 +680,65 @@ namespace Xeon.XScriptableDB.Editor
             }
             else
             {
+                CleanupClone();
                 serializedTable = null;
                 recordsProperty = null;
+            }
+        }
+
+        private void CreateEditingClone(ScriptableObject original)
+        {
+            CleanupClone();
+
+            // クローンを作成
+            editingClone = Instantiate(original);
+            editingClone.name = original.name + " (Editing)";
+            editingClone.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave;
+
+            serializedTable = new SerializedObject(editingClone);
+            recordsProperty = serializedTable.FindProperty("records")
+                              ?? serializedTable.FindProperty("data");
+
+            lastRecordHash = CalculateRecordHash();
+        }
+
+        private void CleanupClone()
+        {
+            if (editingClone != null)
+            {
+                DestroyImmediate(editingClone);
+                editingClone = null;
+            }
+        }
+
+        private int CalculateRecordHash()
+        {
+            if (recordsProperty == null)
+                return 0;
+
+            unchecked
+            {
+                var hash = recordsProperty.arraySize;
+                for (var i = 0; i < Mathf.Min(recordsProperty.arraySize, 100); i++)
+                {
+                    var element = recordsProperty.GetArrayElementAtIndex(i);
+                    hash = hash * 31 + (int)element.contentHash;
+                }
+
+                return hash;
+            }
+        }
+
+        private void CheckForChanges()
+        {
+            if (recordsProperty == null)
+                return;
+
+            var currentHash = CalculateRecordHash();
+            if (currentHash != lastRecordHash)
+            {
+                idDirty = true;
+                lastRecordHash = currentHash;
             }
         }
 
@@ -645,7 +760,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private void AddNewRecord()
         {
-            var tableAsset = selectedTable as ITableAsset;
+            var tableAsset = editingClone as ITableAsset;
             if (tableAsset == null)
                 return;
 
@@ -655,6 +770,7 @@ namespace Xeon.XScriptableDB.Editor
             serializedTable.Update();
             selectedRecordIndex = tableAsset.Count - 1;
             virtualizedList?.ClearCache();
+            idDirty = true;
 
             // 新しいレコードにスクロール
             virtualizedList?.ScrollToIndex(selectedRecordIndex);
@@ -667,7 +783,7 @@ namespace Xeon.XScriptableDB.Editor
             if (selectedRecordIndex < 0)
                 return;
 
-            var tableAsset = selectedTable as ITableAsset;
+            var tableAsset = editingClone as ITableAsset;
             if (tableAsset == null)
                 return;
 
@@ -677,6 +793,7 @@ namespace Xeon.XScriptableDB.Editor
             tableAsset.RemoveRecordAt(selectedRecordIndex);
             serializedTable.Update();
             virtualizedList?.ClearCache();
+            idDirty = true;
 
             if (selectedRecordIndex >= tableAsset.Count)
                 selectedRecordIndex = tableAsset.Count - 1;
@@ -689,49 +806,90 @@ namespace Xeon.XScriptableDB.Editor
 
         private void SortRecords()
         {
-            if (selectedTable == null)
+            if (editingClone == null)
                 return;
 
-            var method = selectedTable.GetType().GetMethod("EnsureSorted");
+            var method = editingClone.GetType().GetMethod("EnsureSorted");
             if (method != null)
             {
-                method.Invoke(selectedTable, null);
-                EditorUtility.SetDirty(selectedTable);
+                method.Invoke(editingClone, null);
                 serializedTable.Update();
                 virtualizedList?.ClearCache();
+                idDirty = true;
                 Repaint();
             }
         }
 
-        private void SaveTable()
+        private void ResetChanges()
         {
-            if (selectedTable == null)
+            if (!idDirty)
                 return;
 
-            var tableAsset = selectedTable as ITableAsset;
-            if (tableAsset != null)
+            if (!EditorUtility.DisplayDialog("確認", "変更を破棄して元に戻しますか？", "破棄", "キャンセル"))
+                return;
+
+            CreateEditingClone(selectedTable);
+            virtualizedList?.ClearCache();
+            idDirty = false;
+            Repaint();
+        }
+
+        private void SaveTable()
+        {
+            if (selectedTable == null || editingClone == null)
+                return;
+
+            var editingTableAsset = editingClone as ITableAsset;
+            if (editingTableAsset != null)
             {
-                var duplicates = tableAsset.FindDuplicateKeysAsObjects();
+                var duplicates = editingTableAsset.FindDuplicateKeysAsObjects();
                 if (duplicates != null && duplicates.Count > 0)
                 {
                     var keysString = string.Join(", ", duplicates.Cast<object>().Take(5));
                     if (!EditorUtility.DisplayDialog("警告",
-                        $"重複したPrimaryKeyがあります: {keysString}\n保存しますか？",
-                        "保存", "キャンセル"))
+                            $"重複したPrimaryKeyがあります: {keysString}\n保存しますか？",
+                            "保存", "キャンセル"))
                         return;
                 }
             }
 
+            // クローンの変更を適用
             serializedTable.ApplyModifiedProperties();
+
+            // 元のアセットにコピー
+            ApplyChangesToOriginal();
+
+            EditorUtility.DisplayDialog("保存完了", $"{selectedTable.name}を保存しました", "OK");
+        }
+
+        private void ApplyChangesToOriginal()
+        {
+            if (selectedTable == null || editingClone == null)
+                return;
+
+            // EditorUtility.CopySerializedでクローンから元にコピー
+            EditorUtility.CopySerialized(editingClone, selectedTable);
             EditorUtility.SetDirty(selectedTable);
             AssetDatabase.SaveAssetIfDirty(selectedTable);
-            EditorUtility.DisplayDialog("保存完了", $"{selectedTable.name}を保存しました", "OK");
+
+            idDirty = false;
+            lastRecordHash = CalculateRecordHash();
         }
 
         private void OnDestroy()
         {
-            if (selectedTable != null)
-                AssetDatabase.SaveAssetIfDirty(selectedTable);
+            if (idDirty && selectedTable != null)
+            {
+                var result = EditorUtility.DisplayDialogComplex(
+                    "未保存の変更",
+                    $"{selectedTable.name}に未保存の変更があります。保存しますか？",
+                    "保存", "破棄", "キャンセル");
+
+                if (result == 0)
+                    ApplyChangesToOriginal();
+            }
+
+            CleanupClone();
         }
     }
 }

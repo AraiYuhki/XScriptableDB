@@ -114,8 +114,8 @@ namespace Xeon.XScriptableDB.Editor
         private void GenerateFiles()
         {
             var savePath = TableGenerateSetting.Instance.SavePath;
-            var tableFilePath = Path.Join(Application.dataPath, savePath, tableDefinition.TableName.ToPascalCase() + "Table.cs");
-            var recordFilePath = Path.Join(Application.dataPath, savePath, tableDefinition.TableName.ToPascalCase() + "Record.cs");
+            var tableFilePath = Path.Join(Application.dataPath, savePath, tableDefinition.TableName.SnakeToPascalCase() + "Table.cs");
+            var recordFilePath = Path.Join(Application.dataPath, savePath, tableDefinition.TableName.SnakeToPascalCase() + "Record.cs");
 
             var directoryInfo = new DirectoryInfo(Path.Join(Application.dataPath, savePath));
             if (!directoryInfo.Exists)

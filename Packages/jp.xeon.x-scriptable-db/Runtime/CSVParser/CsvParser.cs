@@ -46,6 +46,22 @@ namespace Xeon.XScriptableDB.IO
             return new CsvParser(reader.ReadToEnd(), separator).Parse<T>();
         }
 
+        public static List<T> ParseRecord<T>(string csv) where T : class, new()
+            => new CsvParser(csv).ParseRecord<T>();
+
+        public static List<T> ParseRecord<T>(string csv, string separator) where T : class, new()
+            => new CsvParser(csv, separator).ParseRecord<T>();
+
+        public static List<T> ParseRecordFile<T>(string path) where T : class, new()
+            => ParseRecordFile<T>(path, defaultSeparator);
+
+        public static List<T> ParseRecordFile<T>(string path, string separator) where T : class, new()
+        {
+            var encoding = EncodeHelper.GetJpEncoding(path) ?? Encoding.UTF8;
+            using var reader = new StreamReader(path, encoding);
+            return new CsvParser(reader.ReadToEnd(), separator).ParseRecord<T>();
+        }
+
         public List<T> Parse<T>() where T : CsvData, new()
         {
             var type = typeof(T);
@@ -75,6 +91,40 @@ namespace Xeon.XScriptableDB.IO
                 }
 
                 var instance = CreateInstance<T>(attributes, members, type, parsed);
+                result.Add(instance);
+            }
+            return result;
+        }
+
+        public List<T> ParseRecord<T>() where T : class, new()
+        {
+            var type = typeof(T);
+            var (attributes, members) = GetMembers<T>();
+            var result = new List<T>();
+            var headers = new List<string>();
+            var isFirst = true;
+
+            foreach (var line in csv.Split("\n").Select(line => line.Trim()))
+            {
+                if (string.IsNullOrEmpty(line))
+                    continue;
+
+                var columns = line.Split(separator);
+                if (isFirst)
+                {
+                    headers = columns.ToList();
+                    isFirst = false;
+                    continue;
+                }
+
+                var parsed = new Dictionary<string, string>();
+                foreach (var (key, index) in headers.Select((key, index) => (key, index)))
+                {
+                    var rawValue = index >= columns.Length ? string.Empty : columns[index];
+                    parsed[key] = RestoreEscapedStrings(rawValue);
+                }
+
+                var instance = CreateRecordInstance<T>(attributes, members, type, parsed);
                 result.Add(instance);
             }
             return result;
@@ -123,6 +173,31 @@ namespace Xeon.XScriptableDB.IO
                 }
             }
             instance.Initialize();
+            return instance;
+        }
+
+        private T CreateRecordInstance<T>(
+            Dictionary<string, CsvColumn> attributes,
+            Dictionary<string, MemberInfo> members,
+            Type type,
+            Dictionary<string, string> row) where T : class, new()
+        {
+            var instance = new T();
+            foreach (var (key, value) in row)
+            {
+                if (!attributes.ContainsKey(key) || !members.ContainsKey(key))
+                    continue;
+
+                var member = members[key];
+                try
+                {
+                    SetMemberValue(type, member, instance, value);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+            }
             return instance;
         }
 
@@ -222,6 +297,13 @@ namespace Xeon.XScriptableDB.IO
                 Debug.LogWarning($"Failed to parse '{value}' as DateTime for member '{memberName}'");
                 return DateTime.MinValue;
             }
+            if (targetType == typeof(SerializableDateTime))
+            {
+                if (TryParseDateTime(value, out var dateTimeValue))
+                    return new SerializableDateTime(dateTimeValue);
+                Debug.LogWarning($"Failed to parse '{value}' as SerializableDateTime for member '{memberName}'");
+                return SerializableDateTime.MinValue;
+            }
 
             Debug.LogWarning($"Type '{targetType}' is not supported for member '{memberName}'");
             return null;
@@ -268,6 +350,8 @@ namespace Xeon.XScriptableDB.IO
                 return s.ToCsv();
             if (value is DateTime dt)
                 return dt.ToString("yyyy-MM-dd HH:mm:ss");
+            if (value is SerializableDateTime sdt)
+                return sdt.DateTime.ToString("yyyy-MM-dd HH:mm:ss");
             return value.ToString();
         }
 

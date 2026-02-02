@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Xeon.XScriptableDB
 {
     public static class StringUtility
@@ -30,6 +32,75 @@ namespace Xeon.XScriptableDB
                 return origin.ToLower();
 
             return char.ToLower(origin[0]) + origin.Substring(1);
+        }
+
+        /// <summary>
+        /// snake_caseをPascalCaseに変換します。
+        /// 例: "created_at" → "CreatedAt"
+        /// </summary>
+        public static string SnakeToPascalCase(this string origin)
+        {
+            if (string.IsNullOrEmpty(origin))
+                return origin;
+
+            var sb = new StringBuilder();
+            var capitalizeNext = true;
+
+            foreach (var c in origin)
+            {
+                if (c == '_')
+                {
+                    capitalizeNext = true;
+                    continue;
+                }
+
+                sb.Append(capitalizeNext ? char.ToUpper(c) : c);
+                capitalizeNext = false;
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// snake_caseをcamelCaseに変換します。
+        /// 例: "created_at" → "createdAt"
+        /// </summary>
+        public static string SnakeToCamelCase(this string origin)
+        {
+            if (string.IsNullOrEmpty(origin))
+                return origin;
+
+            var pascalCase = origin.SnakeToPascalCase();
+            return pascalCase.ToCamelCase();
+        }
+
+        /// <summary>
+        /// camelCaseまたはPascalCaseをsnake_caseに変換します。
+        /// 例: "createdAt" → "created_at", "CreatedAt" → "created_at"
+        /// </summary>
+        public static string ToSnakeCase(this string origin)
+        {
+            if (string.IsNullOrEmpty(origin))
+                return origin;
+
+            var sb = new StringBuilder();
+
+            for (var i = 0; i < origin.Length; i++)
+            {
+                var c = origin[i];
+                if (char.IsUpper(c))
+                {
+                    if (i > 0)
+                        sb.Append('_');
+                    sb.Append(char.ToLower(c));
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return sb.ToString();
         }
     }
 }
