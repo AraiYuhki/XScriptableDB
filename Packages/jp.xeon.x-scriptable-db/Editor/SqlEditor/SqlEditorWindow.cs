@@ -324,10 +324,7 @@ namespace Xeon.XScriptableDB.Editor
             if (columnNames.Count == 0 && records.Count > 0)
             {
                 // カラム名がない場合はレコードから取得
-                var recordType = records[0].GetType();
-                columnNames = recordType.GetFields(FieldBindingFlags)
-                    .Select(f => f.Name)
-                    .ToList();
+                columnNames = GetColumnNamesFromRecord(records[0]);
             }
 
             // カラム幅の計算
@@ -345,7 +342,7 @@ namespace Xeon.XScriptableDB.Editor
 
             // データ行
             var displayCount = Math.Min(records.Count, MaxDisplayRows);
-            var recordType2 = records.Count > 0 ? records[0].GetType() : null;
+            var recordType = records.Count > 0 ? records[0].GetType() : null;
 
             for (var row = 0; row < displayCount; row++)
             {
@@ -354,7 +351,7 @@ namespace Xeon.XScriptableDB.Editor
 
                 for (var col = 0; col < columnNames.Count; col++)
                 {
-                    var value = GetFieldValue(record, recordType2, columnNames[col]);
+                    var value = GetFieldValue(record, recordType, columnNames[col]);
                     var displayValue = FormatValue(value);
                     EditorGUILayout.LabelField(displayValue, resultCellStyle, GUILayout.Width(columnWidths[col]));
                 }
@@ -368,6 +365,42 @@ namespace Xeon.XScriptableDB.Editor
             }
 
             EditorGUILayout.EndScrollView();
+        }
+
+        private List<string> GetColumnNamesFromRecord(object record)
+        {
+            // ResultRowの場合はValuesのキーを使用
+            if (record is ResultRow resultRow)
+                return resultRow.Values.Keys.ToList();
+
+            // JoinedRecordの場合は全テーブルのフィールドを取得
+            if (record is JoinedRecord joinedRecord)
+            {
+                var names = new List<string>();
+                foreach (var kvp in joinedRecord.TableRecords)
+                {
+                    var tableAlias = kvp.Key;
+                    var tableRecord = kvp.Value;
+                    if (tableRecord == null)
+                        continue;
+
+                    var recordType = joinedRecord.GetRecordType(tableAlias);
+                    if (recordType == null)
+                        continue;
+
+                    foreach (var field in recordType.GetFields(FieldBindingFlags))
+                    {
+                        names.Add($"{tableAlias}.{field.Name}");
+                    }
+                }
+                return names;
+            }
+
+            // 通常のレコードの場合
+            var type = record.GetType();
+            return type.GetFields(FieldBindingFlags)
+                .Select(f => f.Name)
+                .ToList();
         }
 
         private float[] CalculateColumnWidths(List<string> columnNames, List<object> records)
@@ -407,9 +440,75 @@ namespace Xeon.XScriptableDB.Editor
 
         private object GetFieldValue(object record, Type recordType, string fieldName)
         {
+            if (record == null) return null;
+
+            // ResultRowの場合はValuesディクショナリから取得
+            if (record is ResultRow resultRow)
+            {
+                if (resultRow.Values.TryGetValue(fieldName, out var value))
+                    return value;
+                return null;
+            }
+
+            // JoinedRecordの場合
+            if (record is JoinedRecord joinedRecord)
+                return GetJoinedFieldValue(joinedRecord, fieldName);
+
+            if (recordType == null) return null;
+
+            var field = recordType.GetField(fieldName, FieldBindingFlags);
+            if (field != null)
+                return field.GetValue(record);
+
+            var property = recordType.GetProperty(fieldName, BindingFlags.Public | BindingFlags.Instance);
+            if (property?.CanRead == true)
+                return property.GetValue(record);
+
+            return null;
+        }
+
+        private object GetJoinedFieldValue(JoinedRecord joinedRecord, string fieldName)
+        {
+            // テーブルエイリアス付きの場合（例: "t.Id"）
+            if (fieldName.Contains('.'))
+            {
+                var parts = fieldName.Split('.');
+                var tableAlias = parts[0];
+                var column = parts[1];
+
+                var tableRecord = joinedRecord.GetRecord(tableAlias);
+                var tableType = joinedRecord.GetRecordType(tableAlias);
+                if (tableRecord != null && tableType != null)
+                    return GetFieldValueFromRecord(tableRecord, tableType, column);
+                return null;
+            }
+
+            // テーブルエイリアスがない場合は全テーブルから検索
+            foreach (var kvp in joinedRecord.TableRecords)
+            {
+                var tableRecord = kvp.Value;
+                if (tableRecord == null)
+                    continue;
+
+                var tableType = joinedRecord.GetRecordType(kvp.Key);
+                var value = GetFieldValueFromRecord(tableRecord, tableType, fieldName);
+                if (value != null)
+                    return value;
+            }
+            return null;
+        }
+
+        private object GetFieldValueFromRecord(object record, Type recordType, string fieldName)
+        {
             if (record == null || recordType == null) return null;
 
             var field = recordType.GetField(fieldName, FieldBindingFlags);
+            if (field != null)
+                return field.GetValue(record);
+
+            // 大文字小文字を無視して検索
+            field = recordType.GetFields(FieldBindingFlags)
+                .FirstOrDefault(f => f.Name.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
             if (field != null)
                 return field.GetValue(record);
 

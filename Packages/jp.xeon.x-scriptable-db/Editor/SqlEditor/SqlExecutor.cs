@@ -70,7 +70,8 @@ namespace Xeon.XScriptableDB.Editor
     /// </summary>
     public class AggregateGroup
     {
-        public List<object> GroupKeyValues { get; set; } = new();
+        /// <summary>グループキーのカラム名→値のマップ</summary>
+        public Dictionary<string, object> GroupKeyValues { get; set; } = new(StringComparer.OrdinalIgnoreCase);
         public List<object> Records { get; set; } = new();
     }
 
@@ -433,28 +434,125 @@ namespace Xeon.XScriptableDB.Editor
                 return;
             }
 
-            // 結果の構築
-            var resultRecords = new List<object>();
-            var columnNames = new List<string>();
+            // ORDER BY
+            if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
+                joinedRecords = SortJoinedRecords(joinedRecords, stmt.OrderBy);
 
-            // カラム名の決定
-            foreach (var col in stmt.Columns)
+            // OFFSET
+            if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
+                joinedRecords = joinedRecords.Skip(stmt.Offset.Value).ToList();
+
+            // LIMIT
+            if (stmt.Limit.HasValue)
+                joinedRecords = joinedRecords.Take(stmt.Limit.Value).ToList();
+
+            // 結果の構築
+            var columnNames = new List<string>();
+            var hasWildcard = stmt.Columns.Any(c => c.IsWildcard);
+
+            // カラム名の決定とResultRowへの変換
+            if (hasWildcard)
             {
-                if (col.IsWildcard)
+                // ワイルドカードの場合は全テーブルの全フィールドを展開
+                foreach (var field in ReflectionUtility.GetSerializableFields(mainTable.RecordType))
                 {
-                    columnNames.Add(mainAlias + ".*");
-                    foreach (var (_, alias, _) in joinTables)
-                        columnNames.Add(alias + ".*");
+                    columnNames.Add($"{mainAlias}.{field.Name}");
                 }
-                else
+                foreach (var (table, alias, _) in joinTables)
                 {
-                    var colName = GetJoinedColumnName(col);
-                    columnNames.Add(col.Alias ?? colName);
+                    foreach (var field in ReflectionUtility.GetSerializableFields(table.RecordType))
+                    {
+                        columnNames.Add($"{alias}.{field.Name}");
+                    }
                 }
             }
 
+            foreach (var col in stmt.Columns)
+            {
+                if (col.IsWildcard)
+                    continue;
+
+                var colName = GetJoinedColumnName(col);
+                columnNames.Add(col.Alias ?? colName);
+            }
+
+            // JoinedRecordをResultRowに変換
+            var resultRows = new List<ResultRow>();
+            foreach (var jr in joinedRecords)
+            {
+                var row = new ResultRow();
+
+                foreach (var colName in columnNames)
+                {
+                    object value = null;
+
+                    // テーブルエイリアス付きのカラム名（例: "t.Id"）
+                    if (colName.Contains('.'))
+                    {
+                        var parts = colName.Split('.');
+                        var tableAlias = parts[0];
+                        var fieldName = parts[1];
+
+                        var record = jr.GetRecord(tableAlias);
+                        var recordType = jr.GetRecordType(tableAlias);
+                        if (record != null && recordType != null)
+                            value = GetFieldValue(record, recordType, fieldName);
+                    }
+                    else
+                    {
+                        // テーブルエイリアスがない場合は全テーブルから検索
+                        foreach (var kvp in jr.TableRecords)
+                        {
+                            var record = kvp.Value;
+                            if (record == null)
+                                continue;
+
+                            var recordType = jr.GetRecordType(kvp.Key);
+                            if (HasField(recordType, colName))
+                            {
+                                value = GetFieldValue(record, recordType, colName);
+                                break;
+                            }
+                        }
+                    }
+
+                    row.Values[colName] = value;
+                }
+
+                resultRows.Add(row);
+            }
+
             result.ColumnNames = columnNames;
-            result.Records = joinedRecords.Cast<object>().ToList();
+            result.Records = resultRows.Cast<object>().ToList();
+        }
+
+        /// <summary>
+        /// JOIN結果をソートする。
+        /// </summary>
+        private List<JoinedRecord> SortJoinedRecords(List<JoinedRecord> records, List<OrderByItem> orderBy)
+        {
+            IOrderedEnumerable<JoinedRecord> ordered = null;
+
+            for (var i = 0; i < orderBy.Count; i++)
+            {
+                var item = orderBy[i];
+                Func<JoinedRecord, object> keySelector = r => ResolveJoinedValue(item.Expression, r);
+
+                if (i == 0)
+                {
+                    ordered = item.Order == SortOrder.Descending
+                        ? records.OrderByDescending(keySelector, new ObjectComparer())
+                        : records.OrderBy(keySelector, new ObjectComparer());
+                }
+                else
+                {
+                    ordered = item.Order == SortOrder.Descending
+                        ? ordered.ThenByDescending(keySelector, new ObjectComparer())
+                        : ordered.ThenBy(keySelector, new ObjectComparer());
+                }
+            }
+
+            return ordered?.ToList() ?? records;
         }
 
         /// <summary>
@@ -480,14 +578,18 @@ namespace Xeon.XScriptableDB.Editor
 
             foreach (var record in records)
             {
-                var keyValues = new List<object>();
+                var keyValues = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                var keyParts = new List<string>();
+
                 foreach (var groupItem in stmt.GroupBy)
                 {
                     var value = ResolveValue(groupItem.Expression, record, recordType);
-                    keyValues.Add(value);
+                    var columnName = GetExpressionName(groupItem.Expression);
+                    keyValues[columnName] = value;
+                    keyParts.Add(value?.ToString() ?? "NULL");
                 }
 
-                var key = string.Join("|", keyValues.Select(v => v?.ToString() ?? "NULL"));
+                var key = string.Join("|", keyParts);
 
                 if (!groups.TryGetValue(key, out var group))
                 {
@@ -512,16 +614,28 @@ namespace Xeon.XScriptableDB.Editor
 
             // 結果の構築
             var resultRows = new List<ResultRow>();
+            var hasWildcard = stmt.Columns.Any(c => c.IsWildcard);
+            var wildcardFields = hasWildcard ? ReflectionUtility.GetSerializableFields(recordType).ToList() : null;
 
             foreach (var group in filteredGroups)
             {
                 var row = new ResultRow();
-                var keyIndex = 0;
 
                 foreach (var col in stmt.Columns)
                 {
                     if (col.IsWildcard)
+                    {
+                        // ワイルドカードの場合は全フィールドを追加（最初のレコードから）
+                        if (group.Records.Count > 0)
+                        {
+                            var firstRecord = group.Records[0];
+                            foreach (var field in wildcardFields)
+                            {
+                                row.Values[field.Name] = field.GetValue(firstRecord);
+                            }
+                        }
                         continue;
+                    }
 
                     var colName = col.Alias ?? GetExpressionName(col.Expression);
                     object value;
@@ -530,15 +644,21 @@ namespace Xeon.XScriptableDB.Editor
                     {
                         value = EvaluateAggregate(aggExpr, group.Records, recordType);
                     }
-                    else if (col.Expression is ColumnExpression && keyIndex < group.GroupKeyValues.Count)
-                    {
-                        value = group.GroupKeyValues[keyIndex++];
-                    }
                     else
                     {
-                        value = group.Records.Count > 0
-                            ? ResolveValue(col.Expression, group.Records[0], recordType)
-                            : null;
+                        // GROUP BY カラムの場合はグループキー値から取得
+                        var exprName = GetExpressionName(col.Expression);
+                        if (group.GroupKeyValues.TryGetValue(exprName, out var keyValue))
+                        {
+                            value = keyValue;
+                        }
+                        else
+                        {
+                            // それ以外は最初のレコードから取得
+                            value = group.Records.Count > 0
+                                ? ResolveValue(col.Expression, group.Records[0], recordType)
+                                : null;
+                        }
                     }
 
                     row.Values[colName] = value;
@@ -558,10 +678,24 @@ namespace Xeon.XScriptableDB.Editor
             if (stmt.Limit.HasValue)
                 resultRows = resultRows.Take(stmt.Limit.Value).ToList();
 
-            result.ColumnNames = stmt.Columns
-                .Where(c => !c.IsWildcard)
-                .Select(c => c.Alias ?? GetExpressionName(c.Expression))
-                .ToList();
+            // カラム名の構築
+            var columnNames = new List<string>();
+            foreach (var col in stmt.Columns)
+            {
+                if (col.IsWildcard)
+                {
+                    foreach (var field in wildcardFields)
+                    {
+                        columnNames.Add(field.Name);
+                    }
+                }
+                else
+                {
+                    columnNames.Add(col.Alias ?? GetExpressionName(col.Expression));
+                }
+            }
+
+            result.ColumnNames = columnNames;
             result.Records = resultRows.Cast<object>().ToList();
         }
 
@@ -570,46 +704,52 @@ namespace Xeon.XScriptableDB.Editor
         /// </summary>
         private void ExecuteJoinedGroupBy(SelectStatement stmt, List<JoinedRecord> joinedRecords, SqlQueryResult result)
         {
-            var groups = new Dictionary<string, List<JoinedRecord>>();
+            // グループキー値を保存するための構造体
+            var groups = new Dictionary<string, (Dictionary<string, object> keyValues, List<JoinedRecord> records)>();
 
             foreach (var jr in joinedRecords)
             {
-                var keyValues = new List<object>();
+                var keyValues = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                var keyParts = new List<string>();
+
                 foreach (var groupItem in stmt.GroupBy)
                 {
                     var value = ResolveJoinedValue(groupItem.Expression, jr);
-                    keyValues.Add(value);
+                    var columnName = GetExpressionName(groupItem.Expression);
+                    keyValues[columnName] = value;
+                    keyParts.Add(value?.ToString() ?? "NULL");
                 }
 
-                var key = string.Join("|", keyValues.Select(v => v?.ToString() ?? "NULL"));
+                var key = string.Join("|", keyParts);
 
-                if (!groups.TryGetValue(key, out var groupList))
+                if (!groups.TryGetValue(key, out var group))
                 {
-                    groupList = new List<JoinedRecord>();
-                    groups[key] = groupList;
+                    group = (keyValues, new List<JoinedRecord>());
+                    groups[key] = group;
                 }
-                groupList.Add(jr);
+                group.records.Add(jr);
             }
 
             // GROUP BY がない場合は全レコードを1グループに
             if (stmt.GroupBy.Count == 0)
-                groups[""] = joinedRecords;
+                groups[""] = (new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), joinedRecords);
 
             // HAVINGフィルタリング
-            var filteredGroups = groups.ToList();
+            var filteredGroups = groups.Values.ToList();
             if (stmt.HavingClause != null)
             {
                 filteredGroups = filteredGroups
-                    .Where(kvp => EvaluateJoinedHavingCondition(stmt.HavingClause, kvp.Value))
+                    .Where(g => EvaluateJoinedHavingCondition(stmt.HavingClause, g.records))
                     .ToList();
             }
 
             // 結果の構築
             var resultRows = new List<ResultRow>();
 
-            foreach (var kvp in filteredGroups)
+            foreach (var group in filteredGroups)
             {
-                var groupRecords = kvp.Value;
+                var groupRecords = group.records;
+                var groupKeyValues = group.keyValues;
                 var row = new ResultRow();
 
                 foreach (var col in stmt.Columns)
@@ -626,9 +766,19 @@ namespace Xeon.XScriptableDB.Editor
                     }
                     else
                     {
-                        value = groupRecords.Count > 0
-                            ? ResolveJoinedValue(col.Expression, groupRecords[0])
-                            : null;
+                        // GROUP BY カラムの場合はグループキー値から取得
+                        var exprName = GetExpressionName(col.Expression);
+                        if (groupKeyValues.TryGetValue(exprName, out var keyValue))
+                        {
+                            value = keyValue;
+                        }
+                        else
+                        {
+                            // それ以外は最初のレコードから取得
+                            value = groupRecords.Count > 0
+                                ? ResolveJoinedValue(col.Expression, groupRecords[0])
+                                : null;
+                        }
                     }
 
                     row.Values[colName] = value;
@@ -636,6 +786,18 @@ namespace Xeon.XScriptableDB.Editor
 
                 resultRows.Add(row);
             }
+
+            // ORDER BY
+            if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
+                resultRows = SortResultRows(resultRows, stmt.OrderBy);
+
+            // OFFSET
+            if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
+                resultRows = resultRows.Skip(stmt.Offset.Value).ToList();
+
+            // LIMIT
+            if (stmt.Limit.HasValue)
+                resultRows = resultRows.Take(stmt.Limit.Value).ToList();
 
             result.ColumnNames = stmt.Columns
                 .Where(c => !c.IsWildcard)
@@ -969,6 +1131,7 @@ namespace Xeon.XScriptableDB.Editor
                     }
 
                     // テーブルエイリアスがない場合は全テーブルから検索
+                    // フィールドが存在するかを確認し、見つかったらnull値でも返す
                     foreach (var kvp in joinedRecord.TableRecords)
                     {
                         var record = kvp.Value;
@@ -976,14 +1139,15 @@ namespace Xeon.XScriptableDB.Editor
                             continue;
 
                         var recordType = joinedRecord.GetRecordType(kvp.Key);
-                        var value = GetFieldValue(record, recordType, column.ColumnName);
-                        if (value != null)
-                            return value;
+                        if (HasField(recordType, column.ColumnName))
+                            return GetFieldValue(record, recordType, column.ColumnName);
                     }
                     return null;
 
+                case ArithmeticExpression arith:
+                    return EvaluateJoinedArithmetic(arith, joinedRecord);
+
                 case AggregateExpression:
-                case ArithmeticExpression:
                 case CaseExpression:
                 case FunctionCallExpression:
                     // これらは別途処理が必要
@@ -992,6 +1156,60 @@ namespace Xeon.XScriptableDB.Editor
                 default:
                     return null;
             }
+        }
+
+        /// <summary>
+        /// 指定した型にフィールドまたはプロパティが存在するかチェックする。
+        /// </summary>
+        private bool HasField(Type recordType, string fieldName)
+        {
+            // フィールドを検索
+            var field = recordType.GetField(fieldName, MemberFlags);
+            if (field != null)
+                return true;
+
+            // 大文字小文字を無視して検索
+            field = recordType.GetFields(MemberFlags)
+                .FirstOrDefault(f => f.Name.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+            if (field != null)
+                return true;
+
+            // プロパティを検索
+            var property = recordType.GetProperty(fieldName, MemberFlags);
+            if (property?.CanRead == true)
+                return true;
+
+            property = recordType.GetProperties(MemberFlags)
+                .FirstOrDefault(p => p.Name.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+            if (property?.CanRead == true)
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// JOIN結果に対して算術式を評価する。
+        /// </summary>
+        private object EvaluateJoinedArithmetic(ArithmeticExpression expr, JoinedRecord joinedRecord)
+        {
+            var left = ResolveJoinedValue(expr.Left, joinedRecord);
+            var right = ResolveJoinedValue(expr.Right, joinedRecord);
+
+            if (!IsNumeric(left) || !IsNumeric(right))
+                return null;
+
+            var leftVal = Convert.ToDouble(left);
+            var rightVal = Convert.ToDouble(right);
+
+            return expr.Operator switch
+            {
+                ArithmeticOperator.Add => leftVal + rightVal,
+                ArithmeticOperator.Subtract => leftVal - rightVal,
+                ArithmeticOperator.Multiply => leftVal * rightVal,
+                ArithmeticOperator.Divide => rightVal != 0 ? leftVal / rightVal : null,
+                ArithmeticOperator.Modulo => rightVal != 0 ? leftVal % rightVal : null,
+                _ => null
+            };
         }
 
         /// <summary>
@@ -1722,9 +1940,11 @@ namespace Xeon.XScriptableDB.Editor
                         names.Add(field.Name);
                     }
                 }
-                else if (column.Expression is ColumnExpression colExpr)
+                else
                 {
-                    names.Add(column.Alias ?? colExpr.ColumnName);
+                    // エイリアスがあればそれを使用、なければ式の名前を取得
+                    var colName = column.Alias ?? GetExpressionName(column.Expression);
+                    names.Add(colName);
                 }
             }
 
