@@ -60,6 +60,13 @@ namespace Xeon.XScriptableDB.Editor
         {
             RefreshTableList();
             InitializeVirtualizedList();
+
+            // ドメインリロード後にクローンが失われた場合は再作成
+            if (selectedTable != null && editingClone == null)
+            {
+                CreateEditingClone(selectedTable);
+                idDirty = false; // リロード後は未保存状態をリセット
+            }
         }
 
         private void InitializeVirtualizedList()
@@ -867,13 +874,26 @@ namespace Xeon.XScriptableDB.Editor
             if (selectedTable == null || editingClone == null)
                 return;
 
+            // 元の名前を保持
+            var originalName = selectedTable.name;
+
             // EditorUtility.CopySerializedでクローンから元にコピー
             EditorUtility.CopySerialized(editingClone, selectedTable);
+
+            // CopySerializedは名前もコピーするため、元の名前を復元
+            selectedTable.name = originalName;
+
             EditorUtility.SetDirty(selectedTable);
             AssetDatabase.SaveAssetIfDirty(selectedTable);
 
             idDirty = false;
             lastRecordHash = CalculateRecordHash();
+        }
+
+        private void OnDisable()
+        {
+            // ドメインリロード前にクローンをクリーンアップ
+            CleanupClone();
         }
 
         private void OnDestroy()
@@ -887,6 +907,7 @@ namespace Xeon.XScriptableDB.Editor
 
                 if (result == 0)
                     ApplyChangesToOriginal();
+                // キャンセルの場合でもクリーンアップは行う（ウィンドウは既に閉じられるため）
             }
 
             CleanupClone();

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bf75bb5ea585f514e97f660d3c0b97d3, type: 3}
-  m_Name: Item (Editing)
+  m_Name: Item
   m_EditorClassIdentifier: jp.xeon.x-scriptable-db.Sample::Xeon.XScriptableDB.Generated.ItemTable
   records:
   - id: 1
@@ -26,9 +26,9 @@ MonoBehaviour:
     name: "\u92FC\u306E\u5263"
     description: "\u935B\u932C\u3055\u308C\u305F\u92FC\u3067\u4F5C\u3089\u308C\u305F\u5263"
     categoryId: 1
-    price: 600
+    price: 500
     rarity: 2
-    isTradable: 0
+    isTradable: 1
     releaseDate:
       ticks: 638396640000000000
   - id: 3
