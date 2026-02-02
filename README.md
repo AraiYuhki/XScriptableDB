@@ -161,7 +161,7 @@ int count = result.Count;
 
 ### Table Editor
 
-`Window > XScriptableDB > Table Editor`
+`Tools > XScriptableDB > Table Editor`
 
 - テーブルデータの編集
 - CSV/TSVインポート・エクスポート
@@ -169,7 +169,7 @@ int count = result.Count;
 
 ### SQL Editor
 
-`Window > XScriptableDB > SQL Editor`
+`Tools > XScriptableDB > SQL Editor`
 
 SQLライクなクエリでデータを検索・更新できます。
 
@@ -223,7 +223,7 @@ DELETE FROM ItemTable WHERE Price = 0
 
 ### Database Browser
 
-`Window > XScriptableDB > Database Browser`
+`Tools > XScriptableDB > Database Browser`
 
 - プロジェクト内のテーブル一覧
 - スキーマ情報（カラム、キー）
@@ -231,7 +231,7 @@ DELETE FROM ItemTable WHERE Price = 0
 
 ### Validation Window
 
-`Window > XScriptableDB > Validation`
+`Tools > XScriptableDB > Validation`
 
 - テーブルデータの検証
 - エラー・警告の一覧表示
@@ -239,7 +239,7 @@ DELETE FROM ItemTable WHERE Price = 0
 
 ### Performance Window
 
-`Window > XScriptableDB > Performance`
+`Tools > XScriptableDB > Performance`
 
 - キャッシュ統計表示
 - メモリ使用量の可視化
@@ -256,7 +256,7 @@ CSVインポート時に変更内容をプレビューし、選択的に適用�
 
 ### Schema Compare
 
-`Window > XScriptableDB > スキーマ比較`
+`Tools > XScriptableDB > Schema Compare`
 
 2つのテーブル型のスキーマを比較し、差分を表示します。
 
@@ -266,7 +266,7 @@ CSVインポート時に変更内容をプレビューし、選択的に適用�
 
 ### Backup Manager
 
-`Tools > XScriptableDB > バックアップ管理`
+`Tools > XScriptableDB > Backup Manager`
 
 テーブルデータのバックアップと復元を管理します。
 
@@ -275,15 +275,36 @@ CSVインポート時に変更内容をプレビューし、選択的に適用�
 - バックアップ世代管理
 - フィルタリングと検索
 
-### Data Generator
+### Test Data Generator
 
-`Window > XScriptableDB > データ生成`
+`Tools > XScriptableDB > Test Data Generator`
 
 テストデータを自動生成します。
 
 - 連番、ランダム、パターン等の生成ルール
 - フィールド名からの自動推測（Name、Price、Level等）
 - カスタム生成設定
+
+### Benchmark
+
+`Tools > XScriptableDB > Benchmark`
+
+パフォーマンステストを実行します。
+
+- 検索ベンチマーク（線形、バイナリ、ハッシュ）
+- CSVベンチマーク（パース、エクスポート）
+- メモリ使用量計測
+- レポート出力
+
+### Data Editor
+
+`Tools > XScriptableDB > Data Editor`
+
+テーブルデータを直接編集するエディタです。
+
+- レコードの追加・編集・削除
+- フィールドごとの編集
+- DateTime型のサポート
 
 ## CLI（コマンドラインインターフェース）
 
@@ -440,6 +461,7 @@ Package Managerからインポートできます:
 - v0.4.0: 大量データ対応（仮想スクロール、ストリーミング、バッチ処理）
 - v0.5.0: 高度なSQL機能（JOIN, 集計関数, GROUP BY, CASE式, サブクエリ）
 - v0.6.0: 追加ツール（スキーマ比較, マイグレーション, バックアップ, CLI, テストデータ生成）
+- v0.6.1: SQL実行エンジンのバグ修正（GROUP BY, JOIN, COUNT, SUM等）、メニュー整理、テストカバレッジ向上
 
 **計画中の機能:**
 - v1.0.0: 安定版リリース（テストカバレッジ向上、ドキュメント整備、サンプル拡充）
