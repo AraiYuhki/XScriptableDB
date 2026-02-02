@@ -247,11 +247,12 @@ namespace Xeon.XScriptableDB
         public static List<CompositeIndexAttribute> FindCompositeIndexAttributes(Type type)
         {
             var result = new List<CompositeIndexAttribute>();
-            var attributes = type.GetCustomAttributes<CompositeIndexAttribute>(true);
+            var attributes = type.GetCustomAttributes(typeof(CompositeIndexAttribute), true);
 
             foreach (var attr in attributes)
             {
-                result.Add(attr);
+                if (attr is CompositeIndexAttribute compositeAttr)
+                    result.Add(compositeAttr);
             }
 
             return result;
@@ -264,7 +265,8 @@ namespace Xeon.XScriptableDB
         /// <returns>複合インデックスを持つ場合はtrue</returns>
         public static bool HasCompositeIndices(Type type)
         {
-            return type.GetCustomAttribute<CompositeIndexAttribute>(true) != null;
+            var attributes = type.GetCustomAttributes(typeof(CompositeIndexAttribute), true);
+            return attributes != null && attributes.Length > 0;
         }
 
         private static CompositeIndexData BuildCompositeIndex<T>(
