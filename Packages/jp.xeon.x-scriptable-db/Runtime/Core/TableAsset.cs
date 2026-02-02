@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using UnityEngine;
 using Xeon.XScriptableDB.IO;
@@ -19,6 +20,8 @@ namespace Xeon.XScriptableDB
         where T : class, new()
         where TKey : IComparable<TKey>
     {
+        private static readonly Dictionary<string, Func<T, object>[]> CompositeKeyGettersCache = new();
+
         [SerializeField]
         protected T[] records = Array.Empty<T>();
 
@@ -258,19 +261,13 @@ namespace Xeon.XScriptableDB
             if (keyParts.Length == 1)
                 return FindBySecondaryKey(indexName, keyParts[0]);
 
-            var compositeKey = new CompositeKeyValue(keyParts);
-            var index = secondaryIndices.GetIndex(indexName);
-            if (index == null)
+            if (!TryGetCompositeKeyGetters(indexName, out var getters))
             {
-                Debug.LogWarning($"Index '{indexName}' not found");
+                Debug.LogWarning($"Composite index '{indexName}' not found");
                 return null;
             }
 
-            var recordIndices = index.FindByHash(compositeKey.GetHashCode());
-            if (recordIndices.Length == 0)
-                return null;
-
-            return records[recordIndices[0]];
+            return FindCompositeRecord(indexName, keyParts, getters);
         }
 
         /// <summary>
@@ -336,14 +333,15 @@ namespace Xeon.XScriptableDB
             }
             else
             {
-                var compositeKey = new CompositeKeyValue(keyParts);
-                var index = secondaryIndices.GetIndex(indexName);
-                if (index == null)
+                if (!TryGetCompositeKeyGetters(indexName, out var getters))
                 {
-                    Debug.LogWarning($"Index '{indexName}' not found");
+                    Debug.LogWarning($"Composite index '{indexName}' not found");
                     yield break;
                 }
-                recordIndices = index.FindByHash(compositeKey.GetHashCode());
+
+                foreach (var record in FindCompositeRecords(indexName, keyParts, getters))
+                    yield return record;
+                yield break;
             }
 
             foreach (var i in recordIndices)
@@ -392,6 +390,118 @@ namespace Xeon.XScriptableDB
         public T[] FindAllBySecondaryKeyAsArray(string indexName, params object[] keyParts)
         {
             return FindAllBySecondaryKey(indexName, keyParts).ToArray();
+        }
+
+        private T FindCompositeRecord(string indexName, object[] keyParts, Func<T, object>[] getters)
+        {
+            var recordIndices = GetCompositeRecordIndices(indexName, keyParts);
+            foreach (var record in EnumerateCompositeMatches(recordIndices, keyParts, getters))
+                return record;
+            return null;
+        }
+
+        private IEnumerable<T> FindCompositeRecords(string indexName, object[] keyParts, Func<T, object>[] getters)
+        {
+            var recordIndices = GetCompositeRecordIndices(indexName, keyParts);
+            foreach (var record in EnumerateCompositeMatches(recordIndices, keyParts, getters))
+                yield return record;
+        }
+
+        private int[] GetCompositeRecordIndices(string indexName, object[] keyParts)
+        {
+            var compositeKey = new CompositeKeyValue(keyParts);
+            var index = secondaryIndices.GetIndex(indexName);
+            if (index == null)
+            {
+                Debug.LogWarning($"Index '{indexName}' not found");
+                return Array.Empty<int>();
+            }
+            return index.FindByHash(compositeKey.GetHashCode());
+        }
+
+        private IEnumerable<T> EnumerateCompositeMatches(int[] recordIndices, object[] keyParts, Func<T, object>[] getters)
+        {
+            if (recordIndices.Length == 0)
+                yield break;
+
+            foreach (var recordIndex in recordIndices)
+            {
+                if (recordIndex < 0 || recordIndex >= records.Length)
+                    continue;
+
+                var record = records[recordIndex];
+                if (record == null)
+                    continue;
+
+                if (!IsCompositeKeyMatch(record, keyParts, getters))
+                    continue;
+
+                yield return record;
+            }
+        }
+
+        private static bool IsCompositeKeyMatch(T record, object[] keyParts, Func<T, object>[] getters)
+        {
+            if (keyParts.Length != getters.Length)
+                return false;
+
+            for (var i = 0; i < getters.Length; i++)
+            {
+                var value = getters[i](record);
+                if (!Equals(value, keyParts[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private static bool TryGetCompositeKeyGetters(string indexName, out Func<T, object>[] getters)
+        {
+            if (CompositeKeyGettersCache.TryGetValue(indexName, out getters))
+            {
+                return getters != null;
+            }
+
+            var groups = IndexBuilder.GroupSecondaryKeyMembers(typeof(T));
+            if (!groups.TryGetValue(indexName, out var members))
+            {
+                getters = null;
+                CompositeKeyGettersCache[indexName] = null;
+                return false;
+            }
+
+            if (members.Count <= 1)
+            {
+                getters = null;
+                CompositeKeyGettersCache[indexName] = null;
+                return false;
+            }
+
+            getters = new Func<T, object>[members.Count];
+            for (var i = 0; i < members.Count; i++)
+            {
+                var getter = CreateGetter(members[i].member);
+                if (getter == null)
+                {
+                    getters = null;
+                    CompositeKeyGettersCache[indexName] = null;
+                    return false;
+                }
+                getters[i] = getter;
+            }
+
+            CompositeKeyGettersCache[indexName] = getters;
+            return true;
+        }
+
+        private static Func<T, object> CreateGetter(MemberInfo member)
+        {
+            return member switch
+            {
+                FieldInfo field => record => field.GetValue(record),
+                PropertyInfo property => record => property.GetValue(record),
+                _ => null
+            };
         }
 
         /// <summary>

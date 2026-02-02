@@ -31,6 +31,15 @@ namespace Xeon.XScriptableDB.Tests
             [SecondaryKey("RarityElement", 1, AllowDuplicates = false)]
             public Element Element { get; set; }
 
+            [SecondaryKey("RarityElementTier", 0)]
+            public Rarity TieredRarity { get; set; }
+
+            [SecondaryKey("RarityElementTier", 1)]
+            public Element TieredElement { get; set; }
+
+            [SecondaryKey("RarityElementTier", 2)]
+            public int Tier { get; set; }
+
             [SecondaryKey("Category")]
             public string Category { get; set; }
 
@@ -39,6 +48,44 @@ namespace Xeon.XScriptableDB.Tests
 
             [SecondaryKey("TagElement", 1)]
             public string ElementName { get; set; }
+        }
+
+        private sealed class CollisionKey
+        {
+            public CollisionKey(int value)
+            {
+                Value = value;
+            }
+
+            public int Value { get; }
+
+            public override int GetHashCode() => 1;
+
+            public override bool Equals(object obj) => obj is CollisionKey other && other.Value == Value;
+        }
+
+        private class CollisionRecord
+        {
+            [PrimaryKey]
+            public int Id { get; set; }
+
+            [SecondaryKey("CollisionIndex", 0)]
+            public CollisionKey Key { get; set; }
+
+            [SecondaryKey("CollisionIndex", 1)]
+            public int Variant { get; set; }
+        }
+
+        private class CollisionTable : TableAsset<CollisionRecord, int>
+        {
+            public static CollisionTable Create(CollisionRecord[] records)
+            {
+                var asset = ScriptableObject.CreateInstance<CollisionTable>();
+                asset.records = records;
+                asset.EnsureSorted();
+                asset.secondaryIndices = IndexBuilder.BuildIndices(records);
+                return asset;
+            }
         }
 
         private class CompositeTable : TableAsset<CompositeRecord, int>
@@ -98,6 +145,21 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         [Test]
+        public void FindByCompositeSecondaryKey_WithThreeParts_ReturnsMatch()
+        {
+            var table = CompositeTable.Create(new[]
+            {
+                new CompositeRecord { Id = 1, TieredRarity = Rarity.Common, TieredElement = Element.Fire, Tier = 1 },
+                new CompositeRecord { Id = 2, TieredRarity = Rarity.Rare, TieredElement = Element.Ice, Tier = 3 }
+            });
+
+            var result = table.FindBySecondaryKey("RarityElementTier", Rarity.Rare, Element.Ice, 3);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Id, Is.EqualTo(2));
+        }
+
+        [Test]
         public void BuildCompositeIndex_RespectsAllowDuplicates()
         {
             var table = CompositeTable.Create(new[]
@@ -114,6 +176,21 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         [Test]
+        public void FindByCompositeSecondaryKey_WithHashCollision_ReturnsExactMatch()
+        {
+            var table = CollisionTable.Create(new[]
+            {
+                new CollisionRecord { Id = 1, Key = new CollisionKey(10), Variant = 1 },
+                new CollisionRecord { Id = 2, Key = new CollisionKey(20), Variant = 2 }
+            });
+
+            var result = table.FindBySecondaryKey("CollisionIndex", new CollisionKey(20), 2);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Id, Is.EqualTo(2));
+        }
+
+        [Test]
         public void BuildCompositeIndex_SkipsNullParts()
         {
             var table = CompositeTable.Create(new[]
@@ -125,6 +202,16 @@ namespace Xeon.XScriptableDB.Tests
             var result = table.FindBySecondaryKey("TagElement", "B", null);
 
             Assert.That(result, Is.Null);
+        }
+
+        [Test]
+        public void FindAllByCompositeSecondaryKey_WithEmptyRecords_ReturnsEmpty()
+        {
+            var table = CompositeTable.Create(System.Array.Empty<CompositeRecord>());
+
+            var results = table.FindAllBySecondaryKey("RarityElement", Rarity.Common, Element.Fire).ToList();
+
+            Assert.That(results, Is.Empty);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.IO;
+using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -19,7 +20,7 @@ namespace Xeon.XScriptableDB.Editor
                 var definition = deserializer.Deserialize<TableDefinition>(yamlText);
                 return definition;
             }
-            catch
+            catch (YamlException)
             {
                 var legacy = deserializer.Deserialize<LegacyTableDefinition>(yamlText);
                 var definition = new TableDefinition

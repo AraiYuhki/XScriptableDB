@@ -22,6 +22,7 @@ namespace Xeon.XScriptableDB.Editor
 
         /// <summary>
         /// インデックス名。
+        /// Editor操作を想定しているため、編集用にsetを公開する。
         /// </summary>
         public string Name
         {
@@ -32,6 +33,7 @@ namespace Xeon.XScriptableDB.Editor
         /// <summary>
         /// インデックスに含まれるカラム名（順序付き）。
         /// 1つの場合は単一インデックス、2つ以上の場合は複合インデックス。
+        /// Editor操作を想定しているため、編集用にsetを公開する。
         /// </summary>
         public List<string> Columns
         {
@@ -41,6 +43,7 @@ namespace Xeon.XScriptableDB.Editor
 
         /// <summary>
         /// 同じキー値の複数レコードを許可するかどうか。
+        /// Editor操作を想定しているため、編集用にsetを公開する。
         /// </summary>
         public bool AllowDuplicates
         {
