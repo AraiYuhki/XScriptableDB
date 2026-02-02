@@ -37,7 +37,7 @@ namespace Xeon.XScriptableDB.Editor
         private int historyIndex = -1;
         private const int MaxHistoryCount = 50;
 
-        [MenuItem("Window/XScriptableDB/SQL Editor")]
+        [MenuItem("Tools/XScriptableDB/SQL Editor")]
         public static void ShowWindow()
         {
             var window = GetWindow<SqlEditorWindow>();

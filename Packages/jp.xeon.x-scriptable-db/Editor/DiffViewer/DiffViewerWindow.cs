@@ -10,14 +10,6 @@ namespace Xeon.XScriptableDB.Editor
     /// </summary>
     public class DiffViewerWindow : EditorWindow
     {
-        [MenuItem("Tools/XScriptableDB/Diff Viewer")]
-        public static void Open()
-        {
-            var window = GetWindow<DiffViewerWindow>();
-            window.titleContent = new GUIContent("Diff Viewer");
-            window.Show();
-        }
-
         /// <summary>
         /// 差分結果を指定してウィンドウを開く。
         /// </summary>

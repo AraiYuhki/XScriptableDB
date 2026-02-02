@@ -21,10 +21,10 @@ namespace Xeon.XScriptableDB.Editor
         private string[] tableNames = Array.Empty<string>();
         private int selectedTableIndex = -1;
 
-        [MenuItem("Tools/XScriptableDB/バックアップ管理")]
+        [MenuItem("Tools/XScriptableDB/Backup Manager")]
         public static void ShowWindow()
         {
-            var window = GetWindow<BackupWindow>("バックアップ管理");
+            var window = GetWindow<BackupWindow>("Backup Manager");
             window.minSize = new Vector2(600, 400);
             window.Show();
         }

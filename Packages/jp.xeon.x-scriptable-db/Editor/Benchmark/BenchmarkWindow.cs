@@ -30,7 +30,7 @@ namespace Xeon.XScriptableDB.Editor
     /// </summary>
     public class BenchmarkWindow : EditorWindow
     {
-        [MenuItem("Tools/XScriptableDB/ベンチマーク")]
+        [MenuItem("Tools/XScriptableDB/Benchmark")]
         public static void Open()
         {
             var window = GetWindow<BenchmarkWindow>("Benchmark");

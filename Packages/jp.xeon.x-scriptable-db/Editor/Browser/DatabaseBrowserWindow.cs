@@ -42,7 +42,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private const int PreviewRowCount = 20;
 
-        [MenuItem("Window/XScriptableDB/Database Browser")]
+        [MenuItem("Tools/XScriptableDB/Database Browser")]
         public static void ShowWindow()
         {
             var window = GetWindow<DatabaseBrowserWindow>();

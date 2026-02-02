@@ -20,7 +20,7 @@ namespace Xeon.XScriptableDB.Editor
             TSV
         }
 
-        [MenuItem("Tools/XScriptableDB/データエディタ")]
+        [MenuItem("Tools/XScriptableDB/Data Editor")]
         public static void Open()
         {
             var window = GetWindow<DataEditorWindow>();

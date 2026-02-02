@@ -24,7 +24,7 @@ namespace Xeon.XScriptableDB.Editor
         private GUIStyle successStyle;
         private bool stylesInitialized;
 
-        [MenuItem("Window/XScriptableDB/Validation")]
+        [MenuItem("Tools/XScriptableDB/Validation")]
         public static void ShowWindow()
         {
             var window = GetWindow<ValidationWindow>();

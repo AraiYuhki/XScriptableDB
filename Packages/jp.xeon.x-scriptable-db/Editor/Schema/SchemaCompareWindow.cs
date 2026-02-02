@@ -28,10 +28,10 @@ namespace Xeon.XScriptableDB.Editor
         private bool showChangedFields = true;
         private bool showKeyChanges = true;
 
-        [MenuItem("Tools/XScriptableDB/スキーマ比較")]
+        [MenuItem("Tools/XScriptableDB/Schema Compare")]
         public static void ShowWindow()
         {
-            var window = GetWindow<SchemaCompareWindow>("スキーマ比較");
+            var window = GetWindow<SchemaCompareWindow>("Schema Compare");
             window.minSize = new Vector2(800, 500);
             window.Show();
         }

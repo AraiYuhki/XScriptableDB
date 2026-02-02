@@ -22,10 +22,10 @@ namespace Xeon.XScriptableDB.Editor
         private Vector2 scrollPosition;
         private bool showAdvancedSettings;
 
-        [MenuItem("Tools/XScriptableDB/テストデータ生成")]
+        [MenuItem("Tools/XScriptableDB/Test Data Generator")]
         public static void ShowWindow()
         {
-            var window = GetWindow<DataGeneratorWindow>("テストデータ生成");
+            var window = GetWindow<DataGeneratorWindow>("Test Data Generator");
             window.minSize = new Vector2(500, 400);
             window.Show();
         }
