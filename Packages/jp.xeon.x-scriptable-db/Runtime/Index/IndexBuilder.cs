@@ -6,11 +6,12 @@ using UnityEngine;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// SecondaryKeyインデックスを構築するビルダークラス。
+    /// SecondaryKeyインデックスおよび複合インデックスを構築するビルダークラス。
     /// </summary>
     public static class IndexBuilder
     {
         private const BindingFlags MemberFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        private const BindingFlags TypeFlags = BindingFlags.Public | BindingFlags.NonPublic;
 
         /// <summary>
         /// レコード配列からSecondaryKeyインデックスを構築する。
@@ -188,6 +189,198 @@ namespace Xeon.XScriptableDB
                 PropertyInfo property => property.PropertyType,
                 _ => null
             };
+        }
+
+        // ========================================
+        // 複合インデックス関連メソッド
+        // ========================================
+
+        /// <summary>
+        /// レコード配列から複合インデックスを構築する。
+        /// </summary>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <param name="records">レコード配列</param>
+        /// <returns>構築された複合インデックスコンテナ</returns>
+        public static CompositeIndexContainer BuildCompositeIndices<T>(T[] records)
+        {
+            var container = new CompositeIndexContainer();
+            var type = typeof(T);
+            var compositeIndexAttributes = FindCompositeIndexAttributes(type);
+
+            foreach (var attribute in compositeIndexAttributes)
+            {
+                var indexData = BuildCompositeIndex(records, type, attribute);
+                if (indexData != null)
+                    container.SetIndex(indexData);
+            }
+
+            return container;
+        }
+
+        /// <summary>
+        /// 特定の複合インデックスを構築する。
+        /// </summary>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <param name="records">レコード配列</param>
+        /// <param name="indexName">インデックス名</param>
+        /// <returns>構築された複合インデックスデータ、見つからない場合はnull</returns>
+        public static CompositeIndexData BuildCompositeIndex<T>(T[] records, string indexName)
+        {
+            var type = typeof(T);
+            var compositeIndexAttributes = FindCompositeIndexAttributes(type);
+
+            foreach (var attribute in compositeIndexAttributes)
+            {
+                if (attribute.Name == indexName)
+                    return BuildCompositeIndex(records, type, attribute);
+            }
+
+            Debug.LogWarning($"CompositeIndex '{indexName}' not found in type {type.Name}");
+            return null;
+        }
+
+        /// <summary>
+        /// 型からCompositeIndex属性を検索する。
+        /// </summary>
+        /// <param name="type">検索する型</param>
+        /// <returns>CompositeIndex属性のリスト</returns>
+        public static List<CompositeIndexAttribute> FindCompositeIndexAttributes(Type type)
+        {
+            var result = new List<CompositeIndexAttribute>();
+            var attributes = type.GetCustomAttributes<CompositeIndexAttribute>(true);
+
+            foreach (var attr in attributes)
+            {
+                result.Add(attr);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 型が複合インデックスを持つかどうかを確認する。
+        /// </summary>
+        /// <param name="type">確認する型</param>
+        /// <returns>複合インデックスを持つ場合はtrue</returns>
+        public static bool HasCompositeIndices(Type type)
+        {
+            return type.GetCustomAttribute<CompositeIndexAttribute>(true) != null;
+        }
+
+        private static CompositeIndexData BuildCompositeIndex<T>(
+            T[] records,
+            Type type,
+            CompositeIndexAttribute attribute)
+        {
+            // メンバー情報を収集
+            var members = new List<(MemberInfo member, string name, Type keyType)>();
+            foreach (var memberName in attribute.MemberNames)
+            {
+                var member = FindMember(type, memberName);
+                if (member == null)
+                {
+                    Debug.LogError($"Member '{memberName}' not found in type {type.Name} for CompositeIndex '{attribute.Name}'");
+                    return null;
+                }
+
+                var keyType = GetMemberType(member);
+                members.Add((member, memberName, keyType));
+            }
+
+            // インデックスデータを作成
+            var memberInfoList = new List<(string memberName, Type keyType)>();
+            foreach (var (_, name, keyType) in members)
+            {
+                memberInfoList.Add((name, keyType));
+            }
+            var indexData = new CompositeIndexData(attribute.Name, memberInfoList);
+
+            // ゲッターを作成
+            var getters = new List<Func<T, object>>();
+            foreach (var (member, _, _) in members)
+            {
+                var getter = CreateGetter<T>(member);
+                if (getter == null)
+                {
+                    Debug.LogError($"Failed to create getter for member {member.Name}");
+                    return null;
+                }
+                getters.Add(getter);
+            }
+
+            // キー値ごとにレコードインデックスをグループ化
+            var keyGroups = new Dictionary<int, List<int>>();
+            var keyStringGroups = new Dictionary<int, (string compositeString, string[] keyValues)>();
+
+            for (var i = 0; i < records.Length; i++)
+            {
+                var record = records[i];
+                if (record == null)
+                    continue;
+
+                // 各キー値を取得
+                var keyValues = new object[getters.Count];
+                var keyStrings = new string[getters.Count];
+                var hasNullKey = false;
+
+                for (var j = 0; j < getters.Count; j++)
+                {
+                    var value = getters[j](record);
+                    keyValues[j] = value;
+                    keyStrings[j] = value?.ToString() ?? "null";
+
+                    if (value == null)
+                        hasNullKey = true;
+                }
+
+                // null キーを含む場合はスキップ（オプション）
+                if (hasNullKey)
+                    continue;
+
+                var compositeHash = CompositeIndexData.ComputeCompositeHash(keyValues);
+                var compositeString = CompositeIndexData.ComputeCompositeString(keyValues);
+
+                if (!keyGroups.TryGetValue(compositeHash, out var indices))
+                {
+                    indices = new List<int>();
+                    keyGroups[compositeHash] = indices;
+                    keyStringGroups[compositeHash] = (compositeString, keyStrings);
+                }
+
+                if (!attribute.AllowDuplicates && indices.Count > 0)
+                {
+                    Debug.LogWarning(
+                        $"Duplicate CompositeIndex '{attribute.Name}' value '{compositeString}' at index {i}. " +
+                        $"Set AllowDuplicates=true to allow multiple records per key combination.");
+                    continue;
+                }
+
+                indices.Add(i);
+            }
+
+            // インデックスデータに追加
+            foreach (var (compositeHash, indices) in keyGroups)
+            {
+                var (compositeString, keyValues) = keyStringGroups[compositeHash];
+                indexData.AddEntry(compositeHash, compositeString, keyValues, indices.ToArray());
+            }
+
+            return indexData;
+        }
+
+        private static MemberInfo FindMember(Type type, string memberName)
+        {
+            // フィールドを検索
+            var field = type.GetField(memberName, MemberFlags);
+            if (field != null)
+                return field;
+
+            // プロパティを検索
+            var property = type.GetProperty(memberName, MemberFlags);
+            if (property != null)
+                return property;
+
+            return null;
         }
     }
 }
