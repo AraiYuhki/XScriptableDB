@@ -422,7 +422,7 @@ namespace Xeon.XScriptableDB
         /// <returns>見つかったレコード、見つからない場合はnull</returns>
         public T FindByCompositeKey<TKey1, TKey2>(string indexName, TKey1 key1, TKey2 key2)
         {
-            return FindByCompositeKey(indexName, key1, key2);
+            return FindByCompositeKey(indexName, (object)key1, (object)key2);
         }
 
         /// <summary>
@@ -438,7 +438,7 @@ namespace Xeon.XScriptableDB
         /// <returns>見つかったレコード、見つからない場合はnull</returns>
         public T FindByCompositeKey<TKey1, TKey2, TKey3>(string indexName, TKey1 key1, TKey2 key2, TKey3 key3)
         {
-            return FindByCompositeKey(indexName, key1, key2, key3);
+            return FindByCompositeKey(indexName, (object)key1, (object)key2, (object)key3);
         }
 
         /// <summary>
@@ -452,7 +452,7 @@ namespace Xeon.XScriptableDB
         /// <returns>見つかったレコードの配列</returns>
         public T[] FindAllByCompositeKeyAsArray<TKey1, TKey2>(string indexName, TKey1 key1, TKey2 key2)
         {
-            return FindAllByCompositeKeyAsArray(indexName, key1, key2);
+            return FindAllByCompositeKeyAsArray(indexName, (object)key1, (object)key2);
         }
 
         /// <summary>
@@ -468,7 +468,7 @@ namespace Xeon.XScriptableDB
         /// <returns>見つかったレコードの配列</returns>
         public T[] FindAllByCompositeKeyAsArray<TKey1, TKey2, TKey3>(string indexName, TKey1 key1, TKey2 key2, TKey3 key3)
         {
-            return FindAllByCompositeKeyAsArray(indexName, key1, key2, key3);
+            return FindAllByCompositeKeyAsArray(indexName, (object)key1, (object)key2, (object)key3);
         }
 
         /// <summary>

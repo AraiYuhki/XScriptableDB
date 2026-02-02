@@ -258,9 +258,10 @@ namespace Xeon.XScriptableDB.Tests
             };
             var indexData = new CompositeIndexData("TestIndex", members);
 
+            var compositeString = CompositeIndexData.ComputeCompositeString("A", 100);
             indexData.AddEntry(
                 CompositeIndexData.ComputeCompositeHash("A", 100),
-                "A|100",
+                compositeString,
                 new[] { "A", "100" },
                 new[] { 0, 1 });
 
@@ -280,13 +281,13 @@ namespace Xeon.XScriptableDB.Tests
 
             indexData.AddEntry(
                 CompositeIndexData.ComputeCompositeHash("A", 100),
-                "A|100",
+                CompositeIndexData.ComputeCompositeString("A", 100),
                 new[] { "A", "100" },
                 new[] { 0, 2 });
 
             indexData.AddEntry(
                 CompositeIndexData.ComputeCompositeHash("B", 200),
-                "B|200",
+                CompositeIndexData.ComputeCompositeString("B", 200),
                 new[] { "B", "200" },
                 new[] { 1 });
 
@@ -312,7 +313,7 @@ namespace Xeon.XScriptableDB.Tests
 
             indexData.AddEntry(
                 CompositeIndexData.ComputeCompositeHash("A", 100),
-                "A|100",
+                CompositeIndexData.ComputeCompositeString("A", 100),
                 new[] { "A", "100" },
                 new[] { 0 });
 
@@ -333,7 +334,7 @@ namespace Xeon.XScriptableDB.Tests
 
             indexData.AddEntry(
                 CompositeIndexData.ComputeCompositeHash("A", 100),
-                "A|100",
+                CompositeIndexData.ComputeCompositeString("A", 100),
                 new[] { "A", "100" },
                 new[] { 0 });
 
@@ -352,9 +353,10 @@ namespace Xeon.XScriptableDB.Tests
             };
             var indexData = new CompositeIndexData("TestIndex", members);
 
-            indexData.AddEntry(123, "1|2", new[] { "1", "2" }, new[] { 0, 1 });
+            var compositeString = CompositeIndexData.ComputeCompositeString(1, 2);
+            indexData.AddEntry(123, compositeString, new[] { "1", "2" }, new[] { 0, 1 });
 
-            var result = indexData.FindByString("1|2");
+            var result = indexData.FindByString(compositeString);
             Assert.That(result.Length, Is.EqualTo(2));
         }
 
@@ -370,7 +372,7 @@ namespace Xeon.XScriptableDB.Tests
 
             indexData.AddEntry(
                 CompositeIndexData.ComputeCompositeHash(1, 2),
-                "1|2",
+                CompositeIndexData.ComputeCompositeString(1, 2),
                 new[] { "1", "2" },
                 new[] { 0 });
 
@@ -392,13 +394,13 @@ namespace Xeon.XScriptableDB.Tests
 
             indexData.AddEntry(
                 CompositeIndexData.ComputeCompositeHash(1, 1),
-                "1|1",
+                CompositeIndexData.ComputeCompositeString(1, 1),
                 new[] { "1", "1" },
                 new[] { 0 });
 
             indexData.AddEntry(
                 CompositeIndexData.ComputeCompositeHash(1, 2),
-                "1|2",
+                CompositeIndexData.ComputeCompositeString(1, 2),
                 new[] { "1", "2" },
                 new[] { 1, 2 });
 
@@ -432,16 +434,53 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         [Test]
-        public void ComputeCompositeString_FormatsCorrectly()
+        public void ComputeCompositeHash_IsDeterministic()
+        {
+            // 同じ入力に対して常に同じハッシュ値を返すことを確認
+            var hash1 = CompositeIndexData.ComputeCompositeHash("Test", 123, "Value");
+            var hash2 = CompositeIndexData.ComputeCompositeHash("Test", 123, "Value");
+            var hash3 = CompositeIndexData.ComputeCompositeHash("Test", 123, "Value");
+
+            Assert.That(hash1, Is.EqualTo(hash2));
+            Assert.That(hash2, Is.EqualTo(hash3));
+        }
+
+        [Test]
+        public void ComputeCompositeString_UsesUnitSeparator()
         {
             var str = CompositeIndexData.ComputeCompositeString("A", 100, "B");
+            // Unit Separator (ASCII 31) を区切り文字として使用
+            Assert.That(str, Is.EqualTo("A\x1F100\x1FB"));
+        }
+
+        [Test]
+        public void ComputeCompositeString_HandlesSpecialCharacters()
+        {
+            // パイプ文字を含む値でも衝突しない
+            var str1 = CompositeIndexData.ComputeCompositeString("A|B", 100);
+            var str2 = CompositeIndexData.ComputeCompositeString("A", "B|100");
+
+            Assert.That(str1, Is.Not.EqualTo(str2));
+        }
+
+        [Test]
+        public void ComputeCompositeString_NullValue_UsesPlaceholder()
+        {
+            var str = CompositeIndexData.ComputeCompositeString("A", null, "B");
+            Assert.That(str, Does.Contain("\x00NULL\x00"));
+        }
+
+        [Test]
+        public void ComputeReadableString_FormatsCorrectly()
+        {
+            var str = CompositeIndexData.ComputeReadableString("A", 100, "B");
             Assert.That(str, Is.EqualTo("A|100|B"));
         }
 
         [Test]
-        public void ComputeCompositeString_NullValue_ShowsNull()
+        public void ComputeReadableString_NullValue_ShowsNull()
         {
-            var str = CompositeIndexData.ComputeCompositeString("A", null, "B");
+            var str = CompositeIndexData.ComputeReadableString("A", null, "B");
             Assert.That(str, Is.EqualTo("A|null|B"));
         }
 
@@ -565,6 +604,38 @@ namespace Xeon.XScriptableDB.Tests
 
             var indices = container.GetAllIndices();
             Assert.That(indices.Count, Is.EqualTo(2));
+        }
+
+        #endregion
+
+        #region Integration Tests
+
+        [Test]
+        public void CompositeIndex_EndToEnd_SearchWorks()
+        {
+            // 完全な統合テスト：ビルド → 検索
+            var records = new[]
+            {
+                new TestCompositeRecord { Id = 1, category = "Weapon", price = 100, type = "Sword", rarity = 1 },
+                new TestCompositeRecord { Id = 2, category = "Weapon", price = 100, type = "Sword", rarity = 2 },
+                new TestCompositeRecord { Id = 3, category = "Armor", price = 200, type = "Shield", rarity = 1 },
+                new TestCompositeRecord { Id = 4, category = "Weapon", price = 300, type = "Axe", rarity = 3 }
+            };
+
+            var container = IndexBuilder.BuildCompositeIndices(records);
+
+            // CategoryPrice インデックスで検索
+            var categoryPriceIndex = container.GetIndex("CategoryPrice");
+            var weaponPrice100 = categoryPriceIndex.FindByKeys("Weapon", 100);
+            Assert.That(weaponPrice100.Length, Is.EqualTo(2));
+            Assert.That(weaponPrice100, Contains.Item(0));
+            Assert.That(weaponPrice100, Contains.Item(1));
+
+            // TypeRarity インデックスで検索
+            var typeRarityIndex = container.GetIndex("TypeRarity");
+            var swordRarity1 = typeRarityIndex.FindByKeys("Sword", 1);
+            Assert.That(swordRarity1.Length, Is.EqualTo(1));
+            Assert.That(swordRarity1[0], Is.EqualTo(0));
         }
 
         #endregion

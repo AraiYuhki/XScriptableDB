@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 namespace Xeon.XScriptableDB
@@ -8,9 +9,16 @@ namespace Xeon.XScriptableDB
     /// 複合インデックスのシリアライズ可能なデータ構造。
     /// 複数のキー値の組み合わせからレコードインデックスへのマッピングを保持する。
     /// </summary>
+    /// <remarks>
+    /// 文字列キーを主キーとして使用し、ハッシュ衝突の問題を回避。
+    /// 決定的ハッシュを使用して環境間の互換性を保証。
+    /// </remarks>
     [Serializable]
     public class CompositeIndexData
     {
+        private const char KeyDelimiter = '\x1F'; // Unit Separator (ASCII 31)
+        private const string NullPlaceholder = "\x00NULL\x00";
+
         [SerializeField]
         private string indexName;
 
@@ -50,9 +58,6 @@ namespace Xeon.XScriptableDB
 
         // ランタイム用のハッシュマップ（シリアライズされない）
         [NonSerialized]
-        private Dictionary<int, int[]> hashToIndices;
-
-        [NonSerialized]
         private Dictionary<string, int[]> stringToIndices;
 
         [NonSerialized]
@@ -78,7 +83,7 @@ namespace Xeon.XScriptableDB
         /// <summary>
         /// インデックスにエントリを追加する。
         /// </summary>
-        /// <param name="compositeKeyHash">複合キーのハッシュ値</param>
+        /// <param name="compositeKeyHash">複合キーのハッシュ値（後方互換性用、使用されない）</param>
         /// <param name="compositeKeyString">複合キーの文字列表現</param>
         /// <param name="keyValues">各キー値の文字列表現</param>
         /// <param name="recordIndices">レコードインデックスの配列</param>
@@ -100,7 +105,6 @@ namespace Xeon.XScriptableDB
         public void Clear()
         {
             entries.Clear();
-            hashToIndices?.Clear();
             stringToIndices?.Clear();
             isInitialized = false;
         }
@@ -115,19 +119,27 @@ namespace Xeon.XScriptableDB
             if (keys == null || keys.Length != memberNames.Count)
                 return Array.Empty<int>();
 
-            var compositeHash = ComputeCompositeHash(keys);
-            return FindByHash(compositeHash);
+            var compositeString = ComputeCompositeString(keys);
+            return FindByString(compositeString);
         }
 
         /// <summary>
-        /// ハッシュ値でレコードインデックスを検索する。
+        /// ハッシュ値でレコードインデックスを検索する（後方互換性用）。
         /// </summary>
         /// <param name="compositeKeyHash">複合キーのハッシュ値</param>
         /// <returns>レコードインデックスの配列、見つからない場合は空の配列</returns>
+        [Obsolete("ハッシュ衝突の問題があるため、FindByKeys または FindByString を使用してください。")]
         public int[] FindByHash(int compositeKeyHash)
         {
             EnsureInitialized();
-            return hashToIndices.TryGetValue(compositeKeyHash, out var indices) ? indices : Array.Empty<int>();
+
+            // ハッシュ検索は廃止予定。全エントリをスキャンして一致するものを返す
+            foreach (var entry in entries)
+            {
+                if (entry.compositeKeyHash == compositeKeyHash)
+                    return entry.recordIndices;
+            }
+            return Array.Empty<int>();
         }
 
         /// <summary>
@@ -147,8 +159,12 @@ namespace Xeon.XScriptableDB
         public IReadOnlyList<CompositeIndexEntry> GetAllEntries() => entries;
 
         /// <summary>
-        /// 複合キーのハッシュ値を計算する。
+        /// 複合キーの決定的ハッシュ値を計算する。
         /// </summary>
+        /// <remarks>
+        /// 環境に依存しない決定的なハッシュを計算。
+        /// 永続化には適さないため、ランタイムキャッシュ用途のみに使用。
+        /// </remarks>
         /// <param name="keys">キー値の配列</param>
         /// <returns>ハッシュ値</returns>
         public static int ComputeCompositeHash(params object[] keys)
@@ -156,23 +172,45 @@ namespace Xeon.XScriptableDB
             if (keys == null || keys.Length == 0)
                 return 0;
 
-            unchecked
-            {
-                var hash = 17;
-                foreach (var key in keys)
-                {
-                    hash = hash * 31 + (key?.GetHashCode() ?? 0);
-                }
-                return hash;
-            }
+            // 文字列表現を生成してからハッシュを計算（決定的）
+            var compositeString = ComputeCompositeString(keys);
+            return GetDeterministicHashCode(compositeString);
         }
 
         /// <summary>
         /// 複合キーの文字列表現を生成する。
         /// </summary>
+        /// <remarks>
+        /// Unit Separator (ASCII 31) を区切り文字として使用。
+        /// 通常のユーザー入力には含まれないため、衝突を回避。
+        /// </remarks>
         /// <param name="keys">キー値の配列</param>
         /// <returns>文字列表現</returns>
         public static string ComputeCompositeString(params object[] keys)
+        {
+            if (keys == null || keys.Length == 0)
+                return string.Empty;
+
+            var sb = new StringBuilder();
+            for (var i = 0; i < keys.Length; i++)
+            {
+                if (i > 0)
+                    sb.Append(KeyDelimiter);
+
+                if (keys[i] == null)
+                    sb.Append(NullPlaceholder);
+                else
+                    sb.Append(keys[i].ToString());
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// デバッグ用の可読性のある文字列表現を生成する。
+        /// </summary>
+        /// <param name="keys">キー値の配列</param>
+        /// <returns>可読性のある文字列表現</returns>
+        public static string ComputeReadableString(params object[] keys)
         {
             if (keys == null || keys.Length == 0)
                 return string.Empty;
@@ -185,17 +223,43 @@ namespace Xeon.XScriptableDB
             return string.Join("|", parts);
         }
 
+        /// <summary>
+        /// 決定的なハッシュコードを計算する。
+        /// </summary>
+        /// <remarks>
+        /// string.GetHashCode() は .NET 実装によって異なる値を返す可能性があるため、
+        /// 独自の決定的ハッシュ関数を使用。
+        /// </remarks>
+        private static int GetDeterministicHashCode(string str)
+        {
+            if (string.IsNullOrEmpty(str))
+                return 0;
+
+            unchecked
+            {
+                var hash1 = 5381;
+                var hash2 = hash1;
+
+                for (var i = 0; i < str.Length; i += 2)
+                {
+                    hash1 = ((hash1 << 5) + hash1) ^ str[i];
+                    if (i + 1 < str.Length)
+                        hash2 = ((hash2 << 5) + hash2) ^ str[i + 1];
+                }
+
+                return hash1 + (hash2 * 1566083941);
+            }
+        }
+
         private void EnsureInitialized()
         {
             if (isInitialized)
                 return;
 
-            hashToIndices = new Dictionary<int, int[]>(entries.Count);
             stringToIndices = new Dictionary<string, int[]>(entries.Count);
 
             foreach (var entry in entries)
             {
-                hashToIndices[entry.compositeKeyHash] = entry.recordIndices;
                 if (!string.IsNullOrEmpty(entry.compositeKeyString))
                     stringToIndices[entry.compositeKeyString] = entry.recordIndices;
             }
@@ -210,17 +274,17 @@ namespace Xeon.XScriptableDB
         public class CompositeIndexEntry
         {
             /// <summary>
-            /// 複合キーのハッシュ値。
+            /// 複合キーのハッシュ値（後方互換性用）。
             /// </summary>
             public int compositeKeyHash;
 
             /// <summary>
-            /// 複合キーの文字列表現（デバッグ・文字列検索用）。
+            /// 複合キーの文字列表現（主キー）。
             /// </summary>
             public string compositeKeyString;
 
             /// <summary>
-            /// 各キー値の文字列表現。
+            /// 各キー値の文字列表現（デバッグ用）。
             /// </summary>
             public string[] keyValues;
 
