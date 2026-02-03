@@ -52,7 +52,7 @@ namespace Xeon.XScriptableDB
         /// </summary>
         /// <typeparam name="TTable">テーブルの型</typeparam>
         /// <param name="table">登録するテーブル</param>
-        public static void Register<TTable>(TTable table) where TTable : ScriptableObject
+        public static void Register<TTable>(TTable table) where TTable : ScriptableObject, ITableAsset
         {
             if (table == null)
             {
@@ -67,7 +67,7 @@ namespace Xeon.XScriptableDB
         /// </summary>
         /// <typeparam name="TTable">テーブルの型</typeparam>
         /// <returns>テーブル、見つからない場合はnull</returns>
-        public static TTable Get<TTable>() where TTable : ScriptableObject
+        public static TTable Get<TTable>() where TTable : ScriptableObject, ITableAsset
         {
             if (!Instance.tables.TryGetValue(typeof(TTable), out var table))
             {
@@ -83,7 +83,7 @@ namespace Xeon.XScriptableDB
         /// <typeparam name="TTable">テーブルの型</typeparam>
         /// <param name="table">取得したテーブル</param>
         /// <returns>見つかった場合はtrue</returns>
-        public static bool TryGet<TTable>(out TTable table) where TTable : ScriptableObject
+        public static bool TryGet<TTable>(out TTable table) where TTable : ScriptableObject, ITableAsset
         {
             table = null;
             if (!Instance.tables.TryGetValue(typeof(TTable), out var so))
@@ -97,7 +97,7 @@ namespace Xeon.XScriptableDB
         /// </summary>
         /// <typeparam name="TTable">テーブルの型</typeparam>
         /// <param name="addressableKey">Addressableキー</param>
-        public static void RegisterAddressable<TTable>(string addressableKey) where TTable : ScriptableObject
+        public static void RegisterAddressable<TTable>(string addressableKey) where TTable : ScriptableObject, ITableAsset
         {
             Instance.addressableKeys[typeof(TTable).FullName] = addressableKey;
         }
@@ -108,7 +108,7 @@ namespace Xeon.XScriptableDB
         /// <typeparam name="TTable">テーブルの型</typeparam>
         /// <param name="addressableKey">Addressableキー</param>
         /// <returns>ロードしたテーブル</returns>
-        public static TTable LoadAndRegister<TTable>(string addressableKey) where TTable : ScriptableObject
+        public static TTable LoadAndRegister<TTable>(string addressableKey) where TTable : ScriptableObject, ITableAsset
         {
             var table = Addressables.LoadAssetAsync<TTable>(addressableKey).WaitForCompletion();
             if (table == null)
@@ -124,7 +124,7 @@ namespace Xeon.XScriptableDB
         /// テーブルの登録を解除する。
         /// </summary>
         /// <typeparam name="TTable">テーブルの型</typeparam>
-        public static void Unregister<TTable>() where TTable : ScriptableObject
+        public static void Unregister<TTable>() where TTable : ScriptableObject, ITableAsset
         {
             var type = typeof(TTable);
             if (!Instance.tables.TryGetValue(type, out var table))

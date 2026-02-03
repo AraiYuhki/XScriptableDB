@@ -11,21 +11,6 @@ using Debug = UnityEngine.Debug;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// ベンチマーク結果。
-    /// </summary>
-    public class BenchmarkResult
-    {
-        public string Name { get; set; }
-        public int DataSize { get; set; }
-        public double ElapsedMs { get; set; }
-        public double PerOperationUs { get; set; }
-        public long MemoryBytes { get; set; }
-        public int Iterations { get; set; }
-        public bool Success { get; set; } = true;
-        public string Error { get; set; }
-    }
-
-    /// <summary>
     /// ベンチマーク実行ウィンドウ。
     /// </summary>
     public class BenchmarkWindow : EditorWindow
@@ -107,45 +92,40 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.Space();
 
+            if (results.Count <= 0)
+                return;
+
             // 結果表示
-            if (results.Count > 0)
+            EditorGUILayout.LabelField($"結果 ({results.Count}件)", EditorStyles.boldLabel);
+            using var scroll = new EditorGUILayout.ScrollViewScope(scrollPosition);
+            scrollPosition = scroll.scrollPosition;
+
+            // ヘッダー
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
-                EditorGUILayout.LabelField($"結果 ({results.Count}件)", EditorStyles.boldLabel);
+                GUILayout.Label("テスト名", GUILayout.Width(200));
+                GUILayout.Label("データ数", GUILayout.Width(80));
+                GUILayout.Label("反復", GUILayout.Width(60));
+                GUILayout.Label("合計(ms)", GUILayout.Width(80));
+                GUILayout.Label("1回あたり", GUILayout.Width(100));
+                GUILayout.Label("メモリ", GUILayout.Width(80));
+            }
 
-                using (var scroll = new EditorGUILayout.ScrollViewScope(scrollPosition))
-                {
-                    scrollPosition = scroll.scrollPosition;
+            foreach (var result in results)
+            {
+                using var _ = new EditorGUILayout.HorizontalScope();
+                var style = result.Success ? EditorStyles.label : EditorStyles.boldLabel;
+                if (!result.Success)
+                    GUI.color = Color.red;
 
-                    // ヘッダー
-                    using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
-                    {
-                        GUILayout.Label("テスト名", GUILayout.Width(200));
-                        GUILayout.Label("データ数", GUILayout.Width(80));
-                        GUILayout.Label("反復", GUILayout.Width(60));
-                        GUILayout.Label("合計(ms)", GUILayout.Width(80));
-                        GUILayout.Label("1回あたり", GUILayout.Width(100));
-                        GUILayout.Label("メモリ", GUILayout.Width(80));
-                    }
+                GUILayout.Label(result.Name, style, GUILayout.Width(200));
+                GUILayout.Label(result.DataSize.ToString("N0"), GUILayout.Width(80));
+                GUILayout.Label(result.Iterations.ToString("N0"), GUILayout.Width(60));
+                GUILayout.Label(result.ElapsedMs.ToString("F2"), GUILayout.Width(80));
+                GUILayout.Label(FormatMicroseconds(result.PerOperationUs), GUILayout.Width(100));
+                GUILayout.Label(FormatBytes(result.MemoryBytes), GUILayout.Width(80));
 
-                    foreach (var result in results)
-                    {
-                        using (new EditorGUILayout.HorizontalScope())
-                        {
-                            var style = result.Success ? EditorStyles.label : EditorStyles.boldLabel;
-                            if (!result.Success)
-                                GUI.color = Color.red;
-
-                            GUILayout.Label(result.Name, style, GUILayout.Width(200));
-                            GUILayout.Label(result.DataSize.ToString("N0"), GUILayout.Width(80));
-                            GUILayout.Label(result.Iterations.ToString("N0"), GUILayout.Width(60));
-                            GUILayout.Label(result.ElapsedMs.ToString("F2"), GUILayout.Width(80));
-                            GUILayout.Label(FormatMicroseconds(result.PerOperationUs), GUILayout.Width(100));
-                            GUILayout.Label(FormatBytes(result.MemoryBytes), GUILayout.Width(80));
-
-                            GUI.color = Color.white;
-                        }
-                    }
-                }
+                GUI.color = Color.white;
             }
         }
 

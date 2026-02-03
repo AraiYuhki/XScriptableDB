@@ -124,25 +124,23 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawTableListPanel()
         {
-            using (new EditorGUILayout.VerticalScope(GUILayout.Width(250)))
+            using var _ = new EditorGUILayout.VerticalScope(GUILayout.Width(250));
+            EditorGUILayout.LabelField("テーブル一覧", headerStyle);
+
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
-                EditorGUILayout.LabelField("テーブル一覧", headerStyle);
-
-                using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
-                {
-                    searchFilter = EditorGUILayout.TextField(searchFilter, EditorStyles.toolbarSearchField);
-                    if (GUILayout.Button("更新", EditorStyles.toolbarButton, GUILayout.Width(40)))
-                        RefreshTableList();
-                }
-
-                using (var scroll = new EditorGUILayout.ScrollViewScope(tableListScrollPosition))
-                {
-                    tableListScrollPosition = scroll.scrollPosition;
-                    DrawTableList();
-                }
-
-                DrawBulkOperations();
+                searchFilter = EditorGUILayout.TextField(searchFilter, EditorStyles.toolbarSearchField);
+                if (GUILayout.Button("更新", EditorStyles.toolbarButton, GUILayout.Width(40)))
+                    RefreshTableList();
             }
+
+            using (var scroll = new EditorGUILayout.ScrollViewScope(tableListScrollPosition))
+            {
+                tableListScrollPosition = scroll.scrollPosition;
+                DrawTableList();
+            }
+
+            DrawBulkOperations();
         }
 
         private void DrawBulkOperations()
@@ -322,26 +320,25 @@ namespace Xeon.XScriptableDB.Editor
 
                 if (idDirty)
                     EditorGUILayout.LabelField("(未保存)", unsavedStyle, GUILayout.Width(60));
+                
+                if (editingClone is not ITableAsset editingTableAsset)
+                    return;
+                
+                EditorGUILayout.LabelField($"レコード数: {editingTableAsset.Count}", GUILayout.Width(100));
 
-                var editingTableAsset = editingClone as ITableAsset;
-                if (editingTableAsset != null)
+                var originalTableAsset = selectedTable as ITableAsset;
+                if (originalTableAsset != null)
+                    EditorGUILayout.LabelField($"Key: {originalTableAsset.KeyType.Name}", GUILayout.Width(100));
+
+                // 仮想スクロール切り替え
+                if (editingTableAsset.Count < VirtualScrollThreshold)
+                    return;
+                
+                var newUseVirtualScroll = GUILayout.Toggle(useVirtualScroll, "仮想スクロール", GUILayout.Width(100));
+                if (newUseVirtualScroll != useVirtualScroll)
                 {
-                    EditorGUILayout.LabelField($"レコード数: {editingTableAsset.Count}", GUILayout.Width(100));
-
-                    var originalTableAsset = selectedTable as ITableAsset;
-                    if (originalTableAsset != null)
-                        EditorGUILayout.LabelField($"Key: {originalTableAsset.KeyType.Name}", GUILayout.Width(100));
-
-                    // 仮想スクロール切り替え
-                    if (editingTableAsset.Count >= VirtualScrollThreshold)
-                    {
-                        var newUseVirtualScroll = GUILayout.Toggle(useVirtualScroll, "仮想スクロール", GUILayout.Width(100));
-                        if (newUseVirtualScroll != useVirtualScroll)
-                        {
-                            useVirtualScroll = newUseVirtualScroll;
-                            virtualizedList?.ClearCache();
-                        }
-                    }
+                    useVirtualScroll = newUseVirtualScroll;
+                    virtualizedList?.ClearCache();
                 }
             }
         }
@@ -365,34 +362,33 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawRecordToolbar()
         {
-            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
-            {
-                if (GUILayout.Button("追加", EditorStyles.toolbarButton, GUILayout.Width(60)))
-                    AddNewRecord();
+            using var _ = new EditorGUILayout.HorizontalScope(EditorStyles.toolbar);
+            
+            if (GUILayout.Button("追加", EditorStyles.toolbarButton, GUILayout.Width(60)))
+                AddNewRecord();
 
-                EditorGUI.BeginDisabledGroup(selectedRecordIndex < 0);
-                if (GUILayout.Button("削除", EditorStyles.toolbarButton, GUILayout.Width(60)))
-                    DeleteSelectedRecord();
-                EditorGUI.EndDisabledGroup();
+            EditorGUI.BeginDisabledGroup(selectedRecordIndex < 0);
+            if (GUILayout.Button("削除", EditorStyles.toolbarButton, GUILayout.Width(60)))
+                DeleteSelectedRecord();
+            EditorGUI.EndDisabledGroup();
 
-                GUILayout.FlexibleSpace();
+            GUILayout.FlexibleSpace();
 
-                // インポート/エクスポート
-                DrawImportExportButtons();
+            // インポート/エクスポート
+            DrawImportExportButtons();
 
-                GUILayout.Space(10);
+            GUILayout.Space(10);
 
-                if (GUILayout.Button("ソート", EditorStyles.toolbarButton, GUILayout.Width(60)))
-                    SortRecords();
+            if (GUILayout.Button("ソート", EditorStyles.toolbarButton, GUILayout.Width(60)))
+                SortRecords();
 
-                EditorGUI.BeginDisabledGroup(!idDirty);
-                if (GUILayout.Button("リセット", EditorStyles.toolbarButton, GUILayout.Width(60)))
-                    ResetChanges();
+            EditorGUI.BeginDisabledGroup(!idDirty);
+            if (GUILayout.Button("リセット", EditorStyles.toolbarButton, GUILayout.Width(60)))
+                ResetChanges();
 
-                if (GUILayout.Button("保存", EditorStyles.toolbarButton, GUILayout.Width(60)))
-                    SaveTable();
-                EditorGUI.EndDisabledGroup();
-            }
+            if (GUILayout.Button("保存", EditorStyles.toolbarButton, GUILayout.Width(60)))
+                SaveTable();
+            EditorGUI.EndDisabledGroup();
         }
 
         private void DrawImportExportButtons()
@@ -560,21 +556,18 @@ namespace Xeon.XScriptableDB.Editor
                 {
                     var isSelected = i == selectedRecordIndex;
                     var element = recordsProperty.GetArrayElementAtIndex(i);
-
-                    using (new EditorGUILayout.VerticalScope(isSelected ? "SelectionRect" : "Box"))
+                    using var _ = new EditorGUILayout.VerticalScope(isSelected ? "SelectionRect" : "Box");
+                    using (new EditorGUILayout.HorizontalScope())
                     {
-                        using (new EditorGUILayout.HorizontalScope())
-                        {
-                            EditorGUILayout.LabelField($"[{i}]", GUILayout.Width(40));
-                            if (GUILayout.Button(isSelected ? "v" : ">", GUILayout.Width(25)))
-                                selectedRecordIndex = isSelected ? -1 : i;
+                        EditorGUILayout.LabelField($"[{i}]", GUILayout.Width(40));
+                        if (GUILayout.Button(isSelected ? "v" : ">", GUILayout.Width(25)))
+                            selectedRecordIndex = isSelected ? -1 : i;
 
-                            DrawRecordSummary(element);
-                        }
-
-                        if (isSelected)
-                            EditorGUILayout.PropertyField(element, GUIContent.none, true);
+                        DrawRecordSummary(element);
                     }
+
+                    if (isSelected)
+                        EditorGUILayout.PropertyField(element, GUIContent.none, true);
                 }
             }
 

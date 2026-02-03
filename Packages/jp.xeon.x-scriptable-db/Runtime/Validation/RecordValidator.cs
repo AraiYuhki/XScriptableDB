@@ -6,20 +6,6 @@ using System.Reflection;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// カスタムバリデーターのインターフェース。
-    /// </summary>
-    /// <typeparam name="T">レコードの型</typeparam>
-    public interface IRecordValidator<T>
-    {
-        /// <summary>
-        /// レコードを検証する。
-        /// </summary>
-        /// <param name="record">検証するレコード</param>
-        /// <returns>検証結果</returns>
-        ValidationResult Validate(T record);
-    }
-
-    /// <summary>
     /// レコードバリデーター。
     /// </summary>
     public static class RecordValidator
@@ -258,27 +244,32 @@ namespace Xeon.XScriptableDB.Validation
 
             if (left is IComparable comparable)
             {
-                try
-                {
-                    var comparison = comparable.CompareTo(right);
-                    return op switch
-                    {
-                        CompareOperator.Equal => comparison == 0,
-                        CompareOperator.NotEqual => comparison != 0,
-                        CompareOperator.LessThan => comparison < 0,
-                        CompareOperator.LessThanOrEqual => comparison <= 0,
-                        CompareOperator.GreaterThan => comparison > 0,
-                        CompareOperator.GreaterThanOrEqual => comparison >= 0,
-                        _ => false
-                    };
-                }
-                catch
-                {
-                    return false;
-                }
+                return CompareValues(comparable, right, op);
             }
 
             return op == CompareOperator.Equal ? left.Equals(right) : !left.Equals(right);
+        }
+
+        private static bool CompareValues(IComparable left, object right, CompareOperator op)
+        {
+            try
+            {
+                var comparison = left.CompareTo(right);
+                return op switch
+                {
+                    CompareOperator.Equal => comparison == 0,
+                    CompareOperator.NotEqual => comparison != 0,
+                    CompareOperator.LessThan => comparison < 0,
+                    CompareOperator.LessThanOrEqual => comparison <= 0,
+                    CompareOperator.GreaterThan => comparison > 0,
+                    CompareOperator.GreaterThanOrEqual => comparison >= 0,
+                    _ => false
+                };
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>

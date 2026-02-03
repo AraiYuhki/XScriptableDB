@@ -4,77 +4,9 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Xeon.XScriptableDB;
 
 namespace Xeon.XScriptableDB.Editor
 {
-    /// <summary>
-    /// SQLクエリの実行結果。
-    /// </summary>
-    public class SqlQueryResult
-    {
-        /// <summary>実行されたSQL文</summary>
-        public SqlStatement Statement { get; set; }
-
-        /// <summary>結果レコード（SELECT用）</summary>
-        public List<object> Records { get; set; } = new();
-
-        /// <summary>カラム名リスト（SELECT用）</summary>
-        public List<string> ColumnNames { get; set; } = new();
-
-        /// <summary>影響を受けたレコード数（UPDATE/DELETE用）</summary>
-        public int AffectedCount { get; set; }
-
-        /// <summary>エラーメッセージ</summary>
-        public string ErrorMessage { get; set; }
-
-        /// <summary>実行が成功したかどうか</summary>
-        public bool IsSuccess => string.IsNullOrEmpty(ErrorMessage);
-
-        /// <summary>実行時間（ミリ秒）</summary>
-        public double ExecutionTimeMs { get; set; }
-    }
-
-    /// <summary>
-    /// SELECT結果の行データ。
-    /// </summary>
-    public class ResultRow
-    {
-        public object SourceRecord { get; set; }
-        public Dictionary<string, object> Values { get; set; } = new();
-
-        public object this[string columnName] =>
-            Values.TryGetValue(columnName, out var value) ? value : null;
-    }
-
-    /// <summary>
-    /// JOIN結果のレコード。
-    /// </summary>
-    public class JoinedRecord
-    {
-        /// <summary>テーブル名/エイリアス → レコードのマップ</summary>
-        public Dictionary<string, object> TableRecords { get; set; } = new(StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>テーブル名/エイリアス → レコード型のマップ</summary>
-        public Dictionary<string, Type> TableTypes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
-
-        public object GetRecord(string tableAlias) =>
-            TableRecords.TryGetValue(tableAlias, out var record) ? record : null;
-
-        public Type GetRecordType(string tableAlias) =>
-            TableTypes.TryGetValue(tableAlias, out var type) ? type : null;
-    }
-
-    /// <summary>
-    /// 集計結果のグループ。
-    /// </summary>
-    public class AggregateGroup
-    {
-        /// <summary>グループキーのカラム名→値のマップ</summary>
-        public Dictionary<string, object> GroupKeyValues { get; set; } = new(StringComparer.OrdinalIgnoreCase);
-        public List<object> Records { get; set; } = new();
-    }
-
     /// <summary>
     /// SQLを実行するクラス。
     /// </summary>
@@ -102,7 +34,7 @@ namespace Xeon.XScriptableDB.Editor
         /// <returns>テーブルアセット（見つからない場合はnull）</returns>
         public ITableAsset GetTable(string tableName)
         {
-            return tables.TryGetValue(tableName, out var table) ? table : null;
+            return tables.GetValueOrDefault(tableName, null);
         }
 
         /// <summary>
@@ -160,118 +92,185 @@ namespace Xeon.XScriptableDB.Editor
         /// </summary>
         private void ExecuteSelect(SelectStatement stmt, SqlQueryResult result)
         {
-            // メインテーブルの取得
-            var mainTableName = stmt.FromTable?.TableName ?? stmt.TableName;
-            if (!tables.TryGetValue(mainTableName, out var mainTable))
-            {
-                result.ErrorMessage = $"Table not found: {mainTableName}";
+            if (!TryGetMainTable(stmt, result, out var mainTable, out var mainAlias))
                 return;
-            }
 
-            var mainAlias = stmt.FromTable?.Alias ?? mainTableName;
-
-            // JOINがある場合
             if (stmt.Joins.Count > 0)
             {
                 ExecuteSelectWithJoin(stmt, mainTable, mainAlias, result);
                 return;
             }
 
-            // GROUP BY がある場合
             if (stmt.GroupBy.Count > 0 || HasAggregateFunction(stmt.Columns))
             {
                 ExecuteSelectWithGroupBy(stmt, mainTable, result);
                 return;
             }
 
-            // 通常のSELECT
-            var recordType = mainTable.RecordType;
-            var records = new List<object>();
+            ExecuteSimpleSelect(stmt, mainTable, result);
+        }
 
-            // フィルタリング
-            foreach (var record in mainTable.Records)
+        /// <summary>
+        /// メインテーブルを取得する。
+        /// </summary>
+        private bool TryGetMainTable(
+            SelectStatement stmt,
+            SqlQueryResult result,
+            out ITableAsset mainTable,
+            out string mainAlias)
+        {
+            var mainTableName = stmt.FromTable?.TableName ?? stmt.TableName;
+            mainAlias = stmt.FromTable?.Alias ?? mainTableName;
+
+            if (tables.TryGetValue(mainTableName, out mainTable))
+                return true;
+
+            result.ErrorMessage = $"Table not found: {mainTableName}";
+            return false;
+        }
+
+        /// <summary>
+        /// 通常のSELECT（JOIN/GROUP BYなし）を実行する。
+        /// </summary>
+        private void ExecuteSimpleSelect(SelectStatement stmt, ITableAsset mainTable, SqlQueryResult result)
+        {
+            var recordType = mainTable.RecordType;
+            var records = FilterRecords(mainTable.Records.Cast<object>(), stmt.WhereClause, recordType);
+
+            if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
+                records = SortRecords(records, stmt.OrderBy, recordType);
+
+            if (stmt.IsDistinct && TryApplyDistinctWithResultRows(stmt, records, recordType, result))
+                return;
+
+            if (stmt.IsDistinct)
+                records = ApplyDistinct(records, stmt.Columns, recordType);
+
+            records = ApplyOffsetAndLimit(records, stmt.Offset, stmt.Limit);
+
+            result.ColumnNames = GetColumnNames(stmt.Columns, recordType);
+            result.Records = BuildResultRecords(records, stmt.Columns, recordType);
+        }
+
+        /// <summary>
+        /// レコードをWHERE句でフィルタリングする。
+        /// </summary>
+        private List<object> FilterRecords(IEnumerable<object> records, SqlExpression whereClause, Type recordType)
+        {
+            var result = new List<object>();
+
+            foreach (var record in records)
             {
                 if (record == null)
                     continue;
 
-                if (stmt.WhereClause == null || EvaluateExpression(stmt.WhereClause, record, recordType))
-                    records.Add(record);
+                if (whereClause == null || EvaluateExpression(whereClause, record, recordType))
+                    result.Add(record);
             }
 
-            // ソート
+            return result;
+        }
+
+        /// <summary>
+        /// 特定カラムのDISTINCTをResultRowとして適用する。
+        /// </summary>
+        private bool TryApplyDistinctWithResultRows(
+            SelectStatement stmt,
+            List<object> records,
+            Type recordType,
+            SqlQueryResult result)
+        {
+            var hasSpecificColumns = stmt.Columns.Any(c => !c.IsWildcard);
+            if (!hasSpecificColumns)
+                return false;
+
+            var distinctRows = ApplyDistinctAsResultRows(records, stmt.Columns, recordType);
+
             if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
-                records = SortRecords(records, stmt.OrderBy, recordType);
+                distinctRows = SortResultRows(distinctRows, stmt.OrderBy);
 
-            // DISTINCT
-            if (stmt.IsDistinct)
-            {
-                // 特定カラムのみのDISTINCTの場合、ResultRowを返す
-                var hasSpecificColumns = stmt.Columns.Any(c => !c.IsWildcard);
-                if (hasSpecificColumns)
-                {
-                    var distinctRows = ApplyDistinctAsResultRows(records, stmt.Columns, recordType);
+            distinctRows = ApplyOffsetAndLimitToResultRows(distinctRows, stmt.Offset, stmt.Limit);
 
-                    // ソート
-                    if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
-                        distinctRows = SortResultRows(distinctRows, stmt.OrderBy);
-
-                    // OFFSET
-                    if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
-                        distinctRows = distinctRows.Skip(stmt.Offset.Value).ToList();
-
-                    // LIMIT
-                    if (stmt.Limit.HasValue)
-                        distinctRows = distinctRows.Take(stmt.Limit.Value).ToList();
-
-                    result.ColumnNames = GetColumnNames(stmt.Columns, recordType);
-                    result.Records = distinctRows.Cast<object>().ToList();
-                    return;
-                }
-                records = ApplyDistinct(records, stmt.Columns, recordType);
-            }
-
-            // OFFSET
-            if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
-                records = records.Skip(stmt.Offset.Value).ToList();
-
-            // LIMIT
-            if (stmt.Limit.HasValue)
-                records = records.Take(stmt.Limit.Value).ToList();
-
-            // カラム名の決定
             result.ColumnNames = GetColumnNames(stmt.Columns, recordType);
+            result.Records = distinctRows.Cast<object>().ToList();
+            return true;
+        }
 
-            // 算術演算や関数呼び出しがある場合はResultRowを構築する
-            if (NeedsResultRowProjection(stmt.Columns))
+        /// <summary>
+        /// OFFSETとLIMITを適用する。
+        /// </summary>
+        private List<object> ApplyOffsetAndLimit(List<object> records, int? offset, int? limit)
+        {
+            if (offset.HasValue && offset.Value > 0)
+                records = records.Skip(offset.Value).ToList();
+
+            if (limit.HasValue)
+                records = records.Take(limit.Value).ToList();
+
+            return records;
+        }
+
+        /// <summary>
+        /// ResultRowリストにOFFSETとLIMITを適用する。
+        /// </summary>
+        private List<ResultRow> ApplyOffsetAndLimitToResultRows(List<ResultRow> rows, int? offset, int? limit)
+        {
+            if (offset.HasValue && offset.Value > 0)
+                rows = rows.Skip(offset.Value).ToList();
+
+            if (limit.HasValue)
+                rows = rows.Take(limit.Value).ToList();
+
+            return rows;
+        }
+
+        /// <summary>
+        /// 結果レコードを構築する。
+        /// </summary>
+        private List<object> BuildResultRecords(List<object> records, List<SelectColumn> columns, Type recordType)
+        {
+            if (!NeedsResultRowProjection(columns))
+                return records;
+
+            var resultRows = new List<ResultRow>();
+            foreach (var record in records)
             {
-                var resultRows = new List<ResultRow>();
-                foreach (var record in records)
+                var row = BuildResultRow(record, columns, recordType);
+                resultRows.Add(row);
+            }
+            return resultRows.Cast<object>().ToList();
+        }
+
+        /// <summary>
+        /// 単一レコードからResultRowを構築する。
+        /// </summary>
+        private ResultRow BuildResultRow(object record, List<SelectColumn> columns, Type recordType)
+        {
+            var row = new ResultRow { SourceRecord = record };
+
+            foreach (var col in columns)
+            {
+                if (col.IsWildcard)
                 {
-                    var row = new ResultRow { SourceRecord = record };
-                    foreach (var col in stmt.Columns)
-                    {
-                        if (col.IsWildcard)
-                        {
-                            // ワイルドカードの場合は全フィールドを追加
-                            foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
-                            {
-                                row.Values[field.Name] = field.GetValue(record);
-                            }
-                        }
-                        else
-                        {
-                            var colName = col.Alias ?? GetExpressionName(col.Expression);
-                            row.Values[colName] = ResolveValue(col.Expression, record, recordType);
-                        }
-                    }
-                    resultRows.Add(row);
+                    AddWildcardFieldsToRow(row, record, recordType);
                 }
-                result.Records = resultRows.Cast<object>().ToList();
+                else
+                {
+                    var colName = col.Alias ?? GetExpressionName(col.Expression);
+                    row.Values[colName] = ResolveValue(col.Expression, record, recordType);
+                }
             }
-            else
-            {
-                result.Records = records;
-            }
+
+            return row;
+        }
+
+        /// <summary>
+        /// ワイルドカードの全フィールドをResultRowに追加する。
+        /// </summary>
+        private void AddWildcardFieldsToRow(ResultRow row, object record, Type recordType)
+        {
+            foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
+                row.Values[field.Name] = field.GetValue(record);
         }
 
         /// <summary>
@@ -304,20 +303,61 @@ namespace Xeon.XScriptableDB.Editor
         /// </summary>
         private void ExecuteSelectWithJoin(SelectStatement stmt, ITableAsset mainTable, string mainAlias, SqlQueryResult result)
         {
-            // JOIN対象のテーブルを取得
-            var joinTables = new List<(ITableAsset table, string alias, JoinClause clause)>();
-            foreach (var join in stmt.Joins)
+            if (!TryGetJoinTables(stmt.Joins, result, out var joinTables))
+                return;
+
+            var joinedRecords = ExecuteJoins(mainTable, mainAlias, joinTables);
+            ProcessRightJoins(joinedRecords, mainTable, mainAlias, joinTables);
+
+            joinedRecords = ApplyWhereToJoinedRecords(joinedRecords, stmt.WhereClause);
+
+            if (stmt.GroupBy.Count > 0 || HasAggregateFunction(stmt.Columns))
+            {
+                ExecuteJoinedGroupBy(stmt, joinedRecords, result);
+                return;
+            }
+
+            joinedRecords = ApplySortAndPaginationToJoinedRecords(joinedRecords, stmt);
+
+            var columnNames = BuildJoinedColumnNames(stmt.Columns, mainTable, mainAlias, joinTables);
+            var resultRows = ConvertJoinedRecordsToResultRows(joinedRecords, columnNames);
+
+            result.ColumnNames = columnNames;
+            result.Records = resultRows.Cast<object>().ToList();
+        }
+
+        /// <summary>
+        /// JOIN対象のテーブルを取得する。
+        /// </summary>
+        private bool TryGetJoinTables(
+            List<JoinClause> joins,
+            SqlQueryResult result,
+            out List<(ITableAsset table, string alias, JoinClause clause)> joinTables)
+        {
+            joinTables = new List<(ITableAsset, string, JoinClause)>();
+
+            foreach (var join in joins)
             {
                 if (!tables.TryGetValue(join.TableName, out var joinTable))
                 {
                     result.ErrorMessage = $"Table not found: {join.TableName}";
-                    return;
+                    return false;
                 }
                 var alias = join.Alias ?? join.TableName;
                 joinTables.Add((joinTable, alias, join));
             }
 
-            // JOINの実行
+            return true;
+        }
+
+        /// <summary>
+        /// JOINを実行する（INNER/LEFT/CROSS）。
+        /// </summary>
+        private List<JoinedRecord> ExecuteJoins(
+            ITableAsset mainTable,
+            string mainAlias,
+            List<(ITableAsset table, string alias, JoinClause clause)> joinTables)
+        {
             var joinedRecords = new List<JoinedRecord>();
 
             foreach (var mainRecord in mainTable.Records)
@@ -325,149 +365,220 @@ namespace Xeon.XScriptableDB.Editor
                 if (mainRecord == null)
                     continue;
 
-                var currentResults = new List<JoinedRecord>
-                {
-                    new JoinedRecord
-                    {
-                        TableRecords = { [mainAlias] = mainRecord },
-                        TableTypes = { [mainAlias] = mainTable.RecordType }
-                    }
-                };
+                var currentResults = CreateInitialJoinedRecords(mainRecord, mainTable.RecordType, mainAlias);
 
                 foreach (var (joinTable, joinAlias, joinClause) in joinTables)
-                {
-                    var nextResults = new List<JoinedRecord>();
-
-                    foreach (var currentRecord in currentResults)
-                    {
-                        var matched = false;
-
-                        foreach (var joinRecord in joinTable.Records)
-                        {
-                            if (joinRecord == null)
-                                continue;
-
-                            // ON条件の評価
-                            var testRecord = new JoinedRecord
-                            {
-                                TableRecords = new Dictionary<string, object>(currentRecord.TableRecords, StringComparer.OrdinalIgnoreCase)
-                                {
-                                    [joinAlias] = joinRecord
-                                },
-                                TableTypes = new Dictionary<string, Type>(currentRecord.TableTypes, StringComparer.OrdinalIgnoreCase)
-                                {
-                                    [joinAlias] = joinTable.RecordType
-                                }
-                            };
-
-                            if (joinClause.JoinType == JoinType.Cross ||
-                                EvaluateJoinCondition(joinClause.OnCondition, testRecord))
-                            {
-                                nextResults.Add(testRecord);
-                                matched = true;
-                            }
-                        }
-
-                        // LEFT JOINでマッチしなかった場合
-                        if (!matched && joinClause.JoinType == JoinType.Left)
-                        {
-                            var nullRecord = new JoinedRecord
-                            {
-                                TableRecords = new Dictionary<string, object>(currentRecord.TableRecords, StringComparer.OrdinalIgnoreCase)
-                                {
-                                    [joinAlias] = null
-                                },
-                                TableTypes = new Dictionary<string, Type>(currentRecord.TableTypes, StringComparer.OrdinalIgnoreCase)
-                                {
-                                    [joinAlias] = joinTable.RecordType
-                                }
-                            };
-                            nextResults.Add(nullRecord);
-                        }
-                    }
-
-                    currentResults = nextResults;
-                }
+                    currentResults = ProcessSingleJoin(currentResults, joinTable, joinAlias, joinClause);
 
                 joinedRecords.AddRange(currentResults);
             }
 
-            // RIGHT JOINの処理
+            return joinedRecords;
+        }
+
+        /// <summary>
+        /// 初期のJoinedRecordリストを作成する。
+        /// </summary>
+        private List<JoinedRecord> CreateInitialJoinedRecords(object mainRecord, Type mainRecordType, string mainAlias)
+        {
+            return new List<JoinedRecord>
+            {
+                new JoinedRecord
+                {
+                    TableRecords = { [mainAlias] = mainRecord },
+                    TableTypes = { [mainAlias] = mainRecordType }
+                }
+            };
+        }
+
+        /// <summary>
+        /// 単一のJOINを処理する。
+        /// </summary>
+        private List<JoinedRecord> ProcessSingleJoin(
+            List<JoinedRecord> currentResults,
+            ITableAsset joinTable,
+            string joinAlias,
+            JoinClause joinClause)
+        {
+            var nextResults = new List<JoinedRecord>();
+
+            foreach (var currentRecord in currentResults)
+            {
+                var matched = ProcessJoinMatches(currentRecord, joinTable, joinAlias, joinClause, nextResults);
+
+                if (!matched && joinClause.JoinType == JoinType.Left)
+                    nextResults.Add(CreateNullJoinedRecord(currentRecord, joinTable.RecordType, joinAlias));
+            }
+
+            return nextResults;
+        }
+
+        /// <summary>
+        /// JOINのマッチングを処理する。
+        /// </summary>
+        private bool ProcessJoinMatches(
+            JoinedRecord currentRecord,
+            ITableAsset joinTable,
+            string joinAlias,
+            JoinClause joinClause,
+            List<JoinedRecord> results)
+        {
+            var matched = false;
+
+            foreach (var joinRecord in joinTable.Records)
+            {
+                if (joinRecord == null)
+                    continue;
+
+                var testRecord = CreateTestJoinedRecord(currentRecord, joinRecord, joinTable.RecordType, joinAlias);
+
+                if (joinClause.JoinType == JoinType.Cross || EvaluateJoinCondition(joinClause.OnCondition, testRecord))
+                {
+                    results.Add(testRecord);
+                    matched = true;
+                }
+            }
+
+            return matched;
+        }
+
+        /// <summary>
+        /// テスト用のJoinedRecordを作成する。
+        /// </summary>
+        private JoinedRecord CreateTestJoinedRecord(
+            JoinedRecord currentRecord,
+            object joinRecord,
+            Type joinRecordType,
+            string joinAlias)
+        {
+            return new JoinedRecord
+            {
+                TableRecords = new Dictionary<string, object>(currentRecord.TableRecords, StringComparer.OrdinalIgnoreCase)
+                {
+                    [joinAlias] = joinRecord
+                },
+                TableTypes = new Dictionary<string, Type>(currentRecord.TableTypes, StringComparer.OrdinalIgnoreCase)
+                {
+                    [joinAlias] = joinRecordType
+                }
+            };
+        }
+
+        /// <summary>
+        /// NULL値を持つJoinedRecordを作成する（LEFT JOIN用）。
+        /// </summary>
+        private JoinedRecord CreateNullJoinedRecord(JoinedRecord currentRecord, Type joinRecordType, string joinAlias)
+        {
+            return new JoinedRecord
+            {
+                TableRecords = new Dictionary<string, object>(currentRecord.TableRecords, StringComparer.OrdinalIgnoreCase)
+                {
+                    [joinAlias] = null
+                },
+                TableTypes = new Dictionary<string, Type>(currentRecord.TableTypes, StringComparer.OrdinalIgnoreCase)
+                {
+                    [joinAlias] = joinRecordType
+                }
+            };
+        }
+
+        /// <summary>
+        /// RIGHT JOINを処理する。
+        /// </summary>
+        private void ProcessRightJoins(
+            List<JoinedRecord> joinedRecords,
+            ITableAsset mainTable,
+            string mainAlias,
+            List<(ITableAsset table, string alias, JoinClause clause)> joinTables)
+        {
             foreach (var (joinTable, joinAlias, joinClause) in joinTables)
             {
                 if (joinClause.JoinType != JoinType.Right)
                     continue;
 
-                foreach (var joinRecord in joinTable.Records)
+                ProcessSingleRightJoin(joinedRecords, mainTable, mainAlias, joinTable, joinAlias);
+            }
+        }
+
+        /// <summary>
+        /// 単一のRIGHT JOINを処理する。
+        /// </summary>
+        private void ProcessSingleRightJoin(
+            List<JoinedRecord> joinedRecords,
+            ITableAsset mainTable,
+            string mainAlias,
+            ITableAsset joinTable,
+            string joinAlias)
+        {
+            foreach (var joinRecord in joinTable.Records)
+            {
+                if (joinRecord == null)
+                    continue;
+
+                var hasMatch = joinedRecords.Any(jr =>
+                    jr.TableRecords.TryGetValue(joinAlias, out var rec) && rec != null &&
+                    ReferenceEquals(rec, joinRecord));
+
+                if (hasMatch)
+                    continue;
+
+                var nullRecord = new JoinedRecord
                 {
-                    if (joinRecord == null)
-                        continue;
-
-                    var hasMatch = joinedRecords.Any(jr =>
-                        jr.TableRecords.TryGetValue(joinAlias, out var rec) && rec != null &&
-                        ReferenceEquals(rec, joinRecord));
-
-                    if (!hasMatch)
-                    {
-                        var nullRecord = new JoinedRecord
-                        {
-                            TableRecords = { [mainAlias] = null, [joinAlias] = joinRecord },
-                            TableTypes = { [mainAlias] = mainTable.RecordType, [joinAlias] = joinTable.RecordType }
-                        };
-                        joinedRecords.Add(nullRecord);
-                    }
-                }
+                    TableRecords = { [mainAlias] = null, [joinAlias] = joinRecord },
+                    TableTypes = { [mainAlias] = mainTable.RecordType, [joinAlias] = joinTable.RecordType }
+                };
+                joinedRecords.Add(nullRecord);
             }
+        }
 
-            // WHERE句の適用
-            if (stmt.WhereClause != null)
-            {
-                joinedRecords = joinedRecords
-                    .Where(jr => EvaluateJoinCondition(stmt.WhereClause, jr))
-                    .ToList();
-            }
+        /// <summary>
+        /// JoinedRecordsにWHERE句を適用する。
+        /// </summary>
+        private List<JoinedRecord> ApplyWhereToJoinedRecords(List<JoinedRecord> records, SqlExpression whereClause)
+        {
+            if (whereClause == null)
+                return records;
 
-            // GROUP BY がある場合
-            if (stmt.GroupBy.Count > 0 || HasAggregateFunction(stmt.Columns))
-            {
-                ExecuteJoinedGroupBy(stmt, joinedRecords, result);
-                return;
-            }
+            return records.Where(jr => EvaluateJoinCondition(whereClause, jr)).ToList();
+        }
 
-            // ORDER BY
+        /// <summary>
+        /// JoinedRecordsにソートとページネーションを適用する。
+        /// </summary>
+        private List<JoinedRecord> ApplySortAndPaginationToJoinedRecords(List<JoinedRecord> records, SelectStatement stmt)
+        {
             if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
-                joinedRecords = SortJoinedRecords(joinedRecords, stmt.OrderBy);
+                records = SortJoinedRecords(records, stmt.OrderBy);
 
-            // OFFSET
             if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
-                joinedRecords = joinedRecords.Skip(stmt.Offset.Value).ToList();
+                records = records.Skip(stmt.Offset.Value).ToList();
 
-            // LIMIT
             if (stmt.Limit.HasValue)
-                joinedRecords = joinedRecords.Take(stmt.Limit.Value).ToList();
+                records = records.Take(stmt.Limit.Value).ToList();
 
-            // 結果の構築
+            return records;
+        }
+
+        /// <summary>
+        /// JOIN結果のカラム名リストを構築する。
+        /// </summary>
+        private List<string> BuildJoinedColumnNames(
+            List<SelectColumn> columns,
+            ITableAsset mainTable,
+            string mainAlias,
+            List<(ITableAsset table, string alias, JoinClause clause)> joinTables)
+        {
             var columnNames = new List<string>();
-            var hasWildcard = stmt.Columns.Any(c => c.IsWildcard);
+            var hasWildcard = columns.Any(c => c.IsWildcard);
 
-            // カラム名の決定とResultRowへの変換
             if (hasWildcard)
             {
-                // ワイルドカードの場合は全テーブルの全フィールドを展開
-                foreach (var field in ReflectionUtility.GetSerializableFields(mainTable.RecordType))
-                {
-                    columnNames.Add($"{mainAlias}.{field.Name}");
-                }
+                AddWildcardColumnNames(columnNames, mainTable.RecordType, mainAlias);
                 foreach (var (table, alias, _) in joinTables)
-                {
-                    foreach (var field in ReflectionUtility.GetSerializableFields(table.RecordType))
-                    {
-                        columnNames.Add($"{alias}.{field.Name}");
-                    }
-                }
+                    AddWildcardColumnNames(columnNames, table.RecordType, alias);
             }
 
-            foreach (var col in stmt.Columns)
+            foreach (var col in columns)
             {
                 if (col.IsWildcard)
                     continue;
@@ -476,54 +587,84 @@ namespace Xeon.XScriptableDB.Editor
                 columnNames.Add(col.Alias ?? colName);
             }
 
-            // JoinedRecordをResultRowに変換
+            return columnNames;
+        }
+
+        /// <summary>
+        /// ワイルドカードのカラム名を追加する。
+        /// </summary>
+        private void AddWildcardColumnNames(List<string> columnNames, Type recordType, string alias)
+        {
+            foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
+                columnNames.Add($"{alias}.{field.Name}");
+        }
+
+        /// <summary>
+        /// JoinedRecordsをResultRowsに変換する。
+        /// </summary>
+        private List<ResultRow> ConvertJoinedRecordsToResultRows(List<JoinedRecord> joinedRecords, List<string> columnNames)
+        {
             var resultRows = new List<ResultRow>();
+
             foreach (var jr in joinedRecords)
             {
                 var row = new ResultRow();
 
                 foreach (var colName in columnNames)
-                {
-                    object value = null;
-
-                    // テーブルエイリアス付きのカラム名（例: "t.Id"）
-                    if (colName.Contains('.'))
-                    {
-                        var parts = colName.Split('.');
-                        var tableAlias = parts[0];
-                        var fieldName = parts[1];
-
-                        var record = jr.GetRecord(tableAlias);
-                        var recordType = jr.GetRecordType(tableAlias);
-                        if (record != null && recordType != null)
-                            value = GetFieldValue(record, recordType, fieldName);
-                    }
-                    else
-                    {
-                        // テーブルエイリアスがない場合は全テーブルから検索
-                        foreach (var kvp in jr.TableRecords)
-                        {
-                            var record = kvp.Value;
-                            if (record == null)
-                                continue;
-
-                            var recordType = jr.GetRecordType(kvp.Key);
-                            if (HasField(recordType, colName))
-                            {
-                                value = GetFieldValue(record, recordType, colName);
-                                break;
-                            }
-                        }
-                    }
-
-                    row.Values[colName] = value;
-                }
+                    row.Values[colName] = ResolveColumnValueFromJoinedRecord(jr, colName);
 
                 resultRows.Add(row);
             }
 
-            result.ColumnNames = columnNames;
-            result.Records = resultRows.Cast<object>().ToList();
+            return resultRows;
+        }
+
+        /// <summary>
+        /// JoinedRecordからカラム値を解決する。
+        /// </summary>
+        private object ResolveColumnValueFromJoinedRecord(JoinedRecord jr, string colName)
+        {
+            if (colName.Contains('.'))
+                return ResolveQualifiedColumnValue(jr, colName);
+
+            return ResolveUnqualifiedColumnValue(jr, colName);
+        }
+
+        /// <summary>
+        /// テーブル修飾付きカラム値を解決する（例: "t.Id"）。
+        /// </summary>
+        private object ResolveQualifiedColumnValue(JoinedRecord jr, string colName)
+        {
+            var parts = colName.Split('.');
+            var tableAlias = parts[0];
+            var fieldName = parts[1];
+
+            var record = jr.GetRecord(tableAlias);
+            var recordType = jr.GetRecordType(tableAlias);
+
+            if (record != null && recordType != null)
+                return GetFieldValue(record, recordType, fieldName);
+
+            return null;
+        }
+
+        /// <summary>
+        /// テーブル修飾なしカラム値を解決する。
+        /// </summary>
+        private object ResolveUnqualifiedColumnValue(JoinedRecord jr, string colName)
+        {
+            foreach (var kvp in jr.TableRecords)
+            {
+                var record = kvp.Value;
+                if (record == null)
+                    continue;
+
+                var recordType = jr.GetRecordType(kvp.Key);
+                if (HasField(recordType, colName))
+                    return GetFieldValue(record, recordType, colName);
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -561,35 +702,39 @@ namespace Xeon.XScriptableDB.Editor
         private void ExecuteSelectWithGroupBy(SelectStatement stmt, ITableAsset table, SqlQueryResult result)
         {
             var recordType = table.RecordType;
-            var records = new List<object>();
+            var records = FilterRecords(table.Records.Cast<object>(), stmt.WhereClause, recordType);
 
-            // WHEREフィルタリング
-            foreach (var record in table.Records)
-            {
-                if (record == null)
-                    continue;
+            var groups = GroupRecordsByKey(records, stmt.GroupBy, recordType);
+            var filteredGroups = ApplyHavingFilter(groups, stmt.HavingClause, recordType);
 
-                if (stmt.WhereClause == null || EvaluateExpression(stmt.WhereClause, record, recordType))
-                    records.Add(record);
-            }
+            var wildcardFields = GetWildcardFieldsIfNeeded(stmt.Columns, recordType);
+            var resultRows = BuildGroupByResultRows(filteredGroups, stmt.Columns, recordType, wildcardFields);
 
-            // グルーピング
+            resultRows = ApplySortAndPaginationToResultRows(resultRows, stmt);
+
+            result.ColumnNames = BuildGroupByColumnNames(stmt.Columns, wildcardFields);
+            result.Records = resultRows.Cast<object>().ToList();
+        }
+
+        /// <summary>
+        /// レコードをGROUP BYキーでグループ化する。
+        /// </summary>
+        private Dictionary<string, AggregateGroup> GroupRecordsByKey(
+            List<object> records,
+            List<GroupByItem> groupByItems,
+            Type recordType)
+        {
             var groups = new Dictionary<string, AggregateGroup>();
+
+            if (groupByItems.Count == 0)
+            {
+                groups[""] = new AggregateGroup { Records = records };
+                return groups;
+            }
 
             foreach (var record in records)
             {
-                var keyValues = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                var keyParts = new List<string>();
-
-                foreach (var groupItem in stmt.GroupBy)
-                {
-                    var value = ResolveValue(groupItem.Expression, record, recordType);
-                    var columnName = GetExpressionName(groupItem.Expression);
-                    keyValues[columnName] = value;
-                    keyParts.Add(value?.ToString() ?? "NULL");
-                }
-
-                var key = string.Join("|", keyParts);
+                var (key, keyValues) = BuildGroupKey(record, groupByItems, recordType);
 
                 if (!groups.TryGetValue(key, out var group))
                 {
@@ -599,104 +744,172 @@ namespace Xeon.XScriptableDB.Editor
                 group.Records.Add(record);
             }
 
-            // GROUP BY がない場合は全レコードを1グループに
-            if (stmt.GroupBy.Count == 0)
-                groups[""] = new AggregateGroup { Records = records };
+            return groups;
+        }
 
-            // HAVING フィルタリング
-            var filteredGroups = groups.Values.ToList();
-            if (stmt.HavingClause != null)
+        /// <summary>
+        /// レコードからグループキーを構築する。
+        /// </summary>
+        private (string key, Dictionary<string, object> keyValues) BuildGroupKey(
+            object record,
+            List<GroupByItem> groupByItems,
+            Type recordType)
+        {
+            var keyValues = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            var keyParts = new List<string>();
+
+            foreach (var groupItem in groupByItems)
             {
-                filteredGroups = filteredGroups
-                    .Where(g => EvaluateHavingCondition(stmt.HavingClause, g, recordType))
-                    .ToList();
+                var value = ResolveValue(groupItem.Expression, record, recordType);
+                var columnName = GetExpressionName(groupItem.Expression);
+                keyValues[columnName] = value;
+                keyParts.Add(value?.ToString() ?? "NULL");
             }
 
-            // 結果の構築
+            return (string.Join("|", keyParts), keyValues);
+        }
+
+        /// <summary>
+        /// HAVING句でグループをフィルタリングする。
+        /// </summary>
+        private List<AggregateGroup> ApplyHavingFilter(
+            Dictionary<string, AggregateGroup> groups,
+            SqlExpression havingClause,
+            Type recordType)
+        {
+            var filteredGroups = groups.Values.ToList();
+
+            if (havingClause == null)
+                return filteredGroups;
+
+            return filteredGroups
+                .Where(g => EvaluateHavingCondition(havingClause, g, recordType))
+                .ToList();
+        }
+
+        /// <summary>
+        /// ワイルドカードがある場合のフィールドリストを取得する。
+        /// </summary>
+        private List<FieldInfo> GetWildcardFieldsIfNeeded(List<SelectColumn> columns, Type recordType)
+        {
+            var hasWildcard = columns.Any(c => c.IsWildcard);
+            return hasWildcard ? ReflectionUtility.GetSerializableFields(recordType).ToList() : null;
+        }
+
+        /// <summary>
+        /// GROUP BY結果からResultRowリストを構築する。
+        /// </summary>
+        private List<ResultRow> BuildGroupByResultRows(
+            List<AggregateGroup> groups,
+            List<SelectColumn> columns,
+            Type recordType,
+            List<FieldInfo> wildcardFields)
+        {
             var resultRows = new List<ResultRow>();
-            var hasWildcard = stmt.Columns.Any(c => c.IsWildcard);
-            var wildcardFields = hasWildcard ? ReflectionUtility.GetSerializableFields(recordType).ToList() : null;
 
-            foreach (var group in filteredGroups)
+            foreach (var group in groups)
             {
-                var row = new ResultRow();
-
-                foreach (var col in stmt.Columns)
-                {
-                    if (col.IsWildcard)
-                    {
-                        // ワイルドカードの場合は全フィールドを追加（最初のレコードから）
-                        if (group.Records.Count > 0)
-                        {
-                            var firstRecord = group.Records[0];
-                            foreach (var field in wildcardFields)
-                            {
-                                row.Values[field.Name] = field.GetValue(firstRecord);
-                            }
-                        }
-                        continue;
-                    }
-
-                    var colName = col.Alias ?? GetExpressionName(col.Expression);
-                    object value;
-
-                    if (col.Expression is AggregateExpression aggExpr)
-                    {
-                        value = EvaluateAggregate(aggExpr, group.Records, recordType);
-                    }
-                    else
-                    {
-                        // GROUP BY カラムの場合はグループキー値から取得
-                        var exprName = GetExpressionName(col.Expression);
-                        if (group.GroupKeyValues.TryGetValue(exprName, out var keyValue))
-                        {
-                            value = keyValue;
-                        }
-                        else
-                        {
-                            // それ以外は最初のレコードから取得
-                            value = group.Records.Count > 0
-                                ? ResolveValue(col.Expression, group.Records[0], recordType)
-                                : null;
-                        }
-                    }
-
-                    row.Values[colName] = value;
-                }
-
+                var row = BuildGroupByResultRow(group, columns, recordType, wildcardFields);
                 resultRows.Add(row);
             }
 
-            // ORDER BY
-            if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
-                resultRows = SortResultRows(resultRows, stmt.OrderBy);
+            return resultRows;
+        }
 
-            // OFFSET/LIMIT
-            if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
-                resultRows = resultRows.Skip(stmt.Offset.Value).ToList();
+        /// <summary>
+        /// 単一グループからResultRowを構築する。
+        /// </summary>
+        private ResultRow BuildGroupByResultRow(
+            AggregateGroup group,
+            List<SelectColumn> columns,
+            Type recordType,
+            List<FieldInfo> wildcardFields)
+        {
+            var row = new ResultRow();
 
-            if (stmt.Limit.HasValue)
-                resultRows = resultRows.Take(stmt.Limit.Value).ToList();
-
-            // カラム名の構築
-            var columnNames = new List<string>();
-            foreach (var col in stmt.Columns)
+            foreach (var col in columns)
             {
                 if (col.IsWildcard)
                 {
-                    foreach (var field in wildcardFields)
-                    {
-                        columnNames.Add(field.Name);
-                    }
+                    AddWildcardValuesToRow(row, group, wildcardFields);
+                    continue;
                 }
-                else
+
+                var colName = col.Alias ?? GetExpressionName(col.Expression);
+                row.Values[colName] = ResolveGroupByColumnValue(col, group, recordType);
+            }
+
+            return row;
+        }
+
+        /// <summary>
+        /// ワイルドカードの値をResultRowに追加する。
+        /// </summary>
+        private void AddWildcardValuesToRow(ResultRow row, AggregateGroup group, List<FieldInfo> wildcardFields)
+        {
+            if (group.Records.Count == 0 || wildcardFields == null)
+                return;
+
+            var firstRecord = group.Records[0];
+            foreach (var field in wildcardFields)
+                row.Values[field.Name] = field.GetValue(firstRecord);
+        }
+
+        /// <summary>
+        /// GROUP BYコンテキストでカラム値を解決する。
+        /// </summary>
+        private object ResolveGroupByColumnValue(SelectColumn col, AggregateGroup group, Type recordType)
+        {
+            if (col.Expression is AggregateExpression aggExpr)
+                return EvaluateAggregate(aggExpr, group.Records, recordType);
+
+            var exprName = GetExpressionName(col.Expression);
+            if (group.GroupKeyValues.TryGetValue(exprName, out var keyValue))
+                return keyValue;
+
+            return group.Records.Count > 0
+                ? ResolveValue(col.Expression, group.Records[0], recordType)
+                : null;
+        }
+
+        /// <summary>
+        /// ResultRowリストにソートとページネーションを適用する。
+        /// </summary>
+        private List<ResultRow> ApplySortAndPaginationToResultRows(List<ResultRow> rows, SelectStatement stmt)
+        {
+            if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
+                rows = SortResultRows(rows, stmt.OrderBy);
+
+            if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
+                rows = rows.Skip(stmt.Offset.Value).ToList();
+
+            if (stmt.Limit.HasValue)
+                rows = rows.Take(stmt.Limit.Value).ToList();
+
+            return rows;
+        }
+
+        /// <summary>
+        /// GROUP BY結果のカラム名リストを構築する。
+        /// </summary>
+        private List<string> BuildGroupByColumnNames(List<SelectColumn> columns, List<FieldInfo> wildcardFields)
+        {
+            var columnNames = new List<string>();
+
+            foreach (var col in columns)
+            {
+                if (col.IsWildcard && wildcardFields != null)
+                {
+                    foreach (var field in wildcardFields)
+                        columnNames.Add(field.Name);
+                }
+                else if (!col.IsWildcard)
                 {
                     columnNames.Add(col.Alias ?? GetExpressionName(col.Expression));
                 }
             }
 
-            result.ColumnNames = columnNames;
-            result.Records = resultRows.Cast<object>().ToList();
+            return columnNames;
         }
 
         /// <summary>
@@ -704,23 +917,34 @@ namespace Xeon.XScriptableDB.Editor
         /// </summary>
         private void ExecuteJoinedGroupBy(SelectStatement stmt, List<JoinedRecord> joinedRecords, SqlQueryResult result)
         {
-            // グループキー値を保存するための構造体
+            var groups = GroupJoinedRecordsByKey(joinedRecords, stmt.GroupBy);
+            var filteredGroups = ApplyJoinedHavingFilter(groups, stmt.HavingClause);
+
+            var resultRows = BuildJoinedGroupByResultRows(filteredGroups, stmt.Columns);
+            resultRows = ApplySortAndPaginationToResultRows(resultRows, stmt);
+
+            result.ColumnNames = BuildJoinedGroupByColumnNames(stmt.Columns);
+            result.Records = resultRows.Cast<object>().ToList();
+        }
+
+        /// <summary>
+        /// JoinedRecordをGROUP BYキーでグループ化する。
+        /// </summary>
+        private Dictionary<string, (Dictionary<string, object> keyValues, List<JoinedRecord> records)> GroupJoinedRecordsByKey(
+            List<JoinedRecord> joinedRecords,
+            List<GroupByItem> groupByItems)
+        {
             var groups = new Dictionary<string, (Dictionary<string, object> keyValues, List<JoinedRecord> records)>();
+
+            if (groupByItems.Count == 0)
+            {
+                groups[""] = (new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), joinedRecords);
+                return groups;
+            }
 
             foreach (var jr in joinedRecords)
             {
-                var keyValues = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                var keyParts = new List<string>();
-
-                foreach (var groupItem in stmt.GroupBy)
-                {
-                    var value = ResolveJoinedValue(groupItem.Expression, jr);
-                    var columnName = GetExpressionName(groupItem.Expression);
-                    keyValues[columnName] = value;
-                    keyParts.Add(value?.ToString() ?? "NULL");
-                }
-
-                var key = string.Join("|", keyParts);
+                var (key, keyValues) = BuildJoinedGroupKey(jr, groupByItems);
 
                 if (!groups.TryGetValue(key, out var group))
                 {
@@ -730,80 +954,116 @@ namespace Xeon.XScriptableDB.Editor
                 group.records.Add(jr);
             }
 
-            // GROUP BY がない場合は全レコードを1グループに
-            if (stmt.GroupBy.Count == 0)
-                groups[""] = (new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase), joinedRecords);
+            return groups;
+        }
 
-            // HAVINGフィルタリング
-            var filteredGroups = groups.Values.ToList();
-            if (stmt.HavingClause != null)
+        /// <summary>
+        /// JoinedRecordからグループキーを構築する。
+        /// </summary>
+        private (string key, Dictionary<string, object> keyValues) BuildJoinedGroupKey(
+            JoinedRecord jr,
+            List<GroupByItem> groupByItems)
+        {
+            var keyValues = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            var keyParts = new List<string>();
+
+            foreach (var groupItem in groupByItems)
             {
-                filteredGroups = filteredGroups
-                    .Where(g => EvaluateJoinedHavingCondition(stmt.HavingClause, g.records))
-                    .ToList();
+                var value = ResolveJoinedValue(groupItem.Expression, jr);
+                var columnName = GetExpressionName(groupItem.Expression);
+                keyValues[columnName] = value;
+                keyParts.Add(value?.ToString() ?? "NULL");
             }
 
-            // 結果の構築
+            return (string.Join("|", keyParts), keyValues);
+        }
+
+        /// <summary>
+        /// HAVING句でJOINグループをフィルタリングする。
+        /// </summary>
+        private List<(Dictionary<string, object> keyValues, List<JoinedRecord> records)> ApplyJoinedHavingFilter(
+            Dictionary<string, (Dictionary<string, object> keyValues, List<JoinedRecord> records)> groups,
+            SqlExpression havingClause)
+        {
+            var filteredGroups = groups.Values.ToList();
+
+            if (havingClause == null)
+                return filteredGroups;
+
+            return filteredGroups
+                .Where(g => EvaluateJoinedHavingCondition(havingClause, g.records))
+                .ToList();
+        }
+
+        /// <summary>
+        /// JOIN GROUP BY結果からResultRowリストを構築する。
+        /// </summary>
+        private List<ResultRow> BuildJoinedGroupByResultRows(
+            List<(Dictionary<string, object> keyValues, List<JoinedRecord> records)> groups,
+            List<SelectColumn> columns)
+        {
             var resultRows = new List<ResultRow>();
 
-            foreach (var group in filteredGroups)
+            foreach (var group in groups)
             {
-                var groupRecords = group.records;
-                var groupKeyValues = group.keyValues;
-                var row = new ResultRow();
-
-                foreach (var col in stmt.Columns)
-                {
-                    if (col.IsWildcard)
-                        continue;
-
-                    var colName = col.Alias ?? GetExpressionName(col.Expression);
-                    object value;
-
-                    if (col.Expression is AggregateExpression aggExpr)
-                    {
-                        value = EvaluateJoinedAggregate(aggExpr, groupRecords);
-                    }
-                    else
-                    {
-                        // GROUP BY カラムの場合はグループキー値から取得
-                        var exprName = GetExpressionName(col.Expression);
-                        if (groupKeyValues.TryGetValue(exprName, out var keyValue))
-                        {
-                            value = keyValue;
-                        }
-                        else
-                        {
-                            // それ以外は最初のレコードから取得
-                            value = groupRecords.Count > 0
-                                ? ResolveJoinedValue(col.Expression, groupRecords[0])
-                                : null;
-                        }
-                    }
-
-                    row.Values[colName] = value;
-                }
-
+                var row = BuildJoinedGroupByResultRow(group.keyValues, group.records, columns);
                 resultRows.Add(row);
             }
 
-            // ORDER BY
-            if (stmt.OrderBy != null && stmt.OrderBy.Count > 0)
-                resultRows = SortResultRows(resultRows, stmt.OrderBy);
+            return resultRows;
+        }
 
-            // OFFSET
-            if (stmt.Offset.HasValue && stmt.Offset.Value > 0)
-                resultRows = resultRows.Skip(stmt.Offset.Value).ToList();
+        /// <summary>
+        /// 単一JOINグループからResultRowを構築する。
+        /// </summary>
+        private ResultRow BuildJoinedGroupByResultRow(
+            Dictionary<string, object> groupKeyValues,
+            List<JoinedRecord> groupRecords,
+            List<SelectColumn> columns)
+        {
+            var row = new ResultRow();
 
-            // LIMIT
-            if (stmt.Limit.HasValue)
-                resultRows = resultRows.Take(stmt.Limit.Value).ToList();
+            foreach (var col in columns)
+            {
+                if (col.IsWildcard)
+                    continue;
 
-            result.ColumnNames = stmt.Columns
+                var colName = col.Alias ?? GetExpressionName(col.Expression);
+                row.Values[colName] = ResolveJoinedGroupByColumnValue(col, groupKeyValues, groupRecords);
+            }
+
+            return row;
+        }
+
+        /// <summary>
+        /// JOIN GROUP BYコンテキストでカラム値を解決する。
+        /// </summary>
+        private object ResolveJoinedGroupByColumnValue(
+            SelectColumn col,
+            Dictionary<string, object> groupKeyValues,
+            List<JoinedRecord> groupRecords)
+        {
+            if (col.Expression is AggregateExpression aggExpr)
+                return EvaluateJoinedAggregate(aggExpr, groupRecords);
+
+            var exprName = GetExpressionName(col.Expression);
+            if (groupKeyValues.TryGetValue(exprName, out var keyValue))
+                return keyValue;
+
+            return groupRecords.Count > 0
+                ? ResolveJoinedValue(col.Expression, groupRecords[0])
+                : null;
+        }
+
+        /// <summary>
+        /// JOIN GROUP BY結果のカラム名リストを構築する。
+        /// </summary>
+        private List<string> BuildJoinedGroupByColumnNames(List<SelectColumn> columns)
+        {
+            return columns
                 .Where(c => !c.IsWildcard)
                 .Select(c => c.Alias ?? GetExpressionName(c.Expression))
                 .ToList();
-            result.Records = resultRows.Cast<object>().ToList();
         }
 
         /// <summary>
@@ -1114,48 +1374,58 @@ namespace Xeon.XScriptableDB.Editor
         /// </summary>
         private object ResolveJoinedValue(SqlExpression expr, JoinedRecord joinedRecord)
         {
-            switch (expr)
+            return expr switch
             {
-                case LiteralExpression literal:
-                    return literal.Value;
+                LiteralExpression literal => literal.Value,
+                ColumnExpression column => ResolveJoinedColumnValue(column, joinedRecord),
+                ArithmeticExpression arith => EvaluateJoinedArithmetic(arith, joinedRecord),
+                AggregateExpression or CaseExpression or FunctionCallExpression => null,
+                _ => null
+            };
+        }
 
-                case ColumnExpression column:
-                    // テーブルエイリアスが指定されている場合
-                    if (!string.IsNullOrEmpty(column.TableAlias))
-                    {
-                        var record = joinedRecord.GetRecord(column.TableAlias);
-                        var recordType = joinedRecord.GetRecordType(column.TableAlias);
-                        if (record != null && recordType != null)
-                            return GetFieldValue(record, recordType, column.ColumnName);
-                        return null;
-                    }
+        /// <summary>
+        /// JOIN結果からカラム値を取得する。
+        /// </summary>
+        private object ResolveJoinedColumnValue(ColumnExpression column, JoinedRecord joinedRecord)
+        {
+            if (!string.IsNullOrEmpty(column.TableAlias))
+                return ResolveQualifiedJoinedColumnValue(column, joinedRecord);
 
-                    // テーブルエイリアスがない場合は全テーブルから検索
-                    // フィールドが存在するかを確認し、見つかったらnull値でも返す
-                    foreach (var kvp in joinedRecord.TableRecords)
-                    {
-                        var record = kvp.Value;
-                        if (record == null)
-                            continue;
+            return ResolveUnqualifiedJoinedColumnValue(column.ColumnName, joinedRecord);
+        }
 
-                        var recordType = joinedRecord.GetRecordType(kvp.Key);
-                        if (HasField(recordType, column.ColumnName))
-                            return GetFieldValue(record, recordType, column.ColumnName);
-                    }
-                    return null;
+        /// <summary>
+        /// テーブル修飾付きのJOINカラム値を取得する。
+        /// </summary>
+        private object ResolveQualifiedJoinedColumnValue(ColumnExpression column, JoinedRecord joinedRecord)
+        {
+            var record = joinedRecord.GetRecord(column.TableAlias);
+            var recordType = joinedRecord.GetRecordType(column.TableAlias);
 
-                case ArithmeticExpression arith:
-                    return EvaluateJoinedArithmetic(arith, joinedRecord);
+            if (record != null && recordType != null)
+                return GetFieldValue(record, recordType, column.ColumnName);
 
-                case AggregateExpression:
-                case CaseExpression:
-                case FunctionCallExpression:
-                    // これらは別途処理が必要
-                    return null;
+            return null;
+        }
 
-                default:
-                    return null;
+        /// <summary>
+        /// テーブル修飾なしのJOINカラム値を取得する（全テーブルから検索）。
+        /// </summary>
+        private object ResolveUnqualifiedJoinedColumnValue(string columnName, JoinedRecord joinedRecord)
+        {
+            foreach (var kvp in joinedRecord.TableRecords)
+            {
+                var record = kvp.Value;
+                if (record == null)
+                    continue;
+
+                var recordType = joinedRecord.GetRecordType(kvp.Key);
+                if (HasField(recordType, columnName))
+                    return GetFieldValue(record, recordType, columnName);
             }
+
+            return null;
         }
 
         /// <summary>
@@ -1222,31 +1492,47 @@ namespace Xeon.XScriptableDB.Editor
 
             foreach (var record in records)
             {
-                var keyParts = new List<string>();
-
-                foreach (var col in columns)
-                {
-                    if (col.IsWildcard)
-                    {
-                        foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
-                        {
-                            var value = field.GetValue(record);
-                            keyParts.Add(value?.ToString() ?? "NULL");
-                        }
-                    }
-                    else if (col.Expression is ColumnExpression colExpr)
-                    {
-                        var value = GetFieldValue(record, recordType, colExpr.ColumnName);
-                        keyParts.Add(value?.ToString() ?? "NULL");
-                    }
-                }
-
-                var key = string.Join("|", keyParts);
+                var key = BuildDistinctKey(record, columns, recordType);
                 if (seen.Add(key))
                     result.Add(record);
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// レコードからDISTINCT判定用のキー文字列を構築する。
+        /// </summary>
+        private string BuildDistinctKey(object record, List<SelectColumn> columns, Type recordType)
+        {
+            var keyParts = new List<string>();
+
+            foreach (var col in columns)
+                AddDistinctKeyParts(keyParts, col, record, recordType);
+
+            return string.Join("|", keyParts);
+        }
+
+        /// <summary>
+        /// カラムの値をキーパーツに追加する。
+        /// </summary>
+        private void AddDistinctKeyParts(List<string> keyParts, SelectColumn col, object record, Type recordType)
+        {
+            if (col.IsWildcard)
+            {
+                foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
+                {
+                    var value = field.GetValue(record);
+                    keyParts.Add(value?.ToString() ?? "NULL");
+                }
+                return;
+            }
+
+            if (col.Expression is ColumnExpression colExpr)
+            {
+                var value = GetFieldValue(record, recordType, colExpr.ColumnName);
+                keyParts.Add(value?.ToString() ?? "NULL");
+            }
         }
 
         /// <summary>
@@ -1259,35 +1545,48 @@ namespace Xeon.XScriptableDB.Editor
 
             foreach (var record in records)
             {
-                var row = new ResultRow { SourceRecord = record };
-                var keyParts = new List<string>();
-
-                foreach (var col in columns)
-                {
-                    if (col.IsWildcard)
-                    {
-                        foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
-                        {
-                            var value = field.GetValue(record);
-                            row.Values[field.Name] = value;
-                            keyParts.Add(value?.ToString() ?? "NULL");
-                        }
-                    }
-                    else
-                    {
-                        var colName = col.Alias ?? GetExpressionName(col.Expression);
-                        var value = ResolveValue(col.Expression, record, recordType);
-                        row.Values[colName] = value;
-                        keyParts.Add(value?.ToString() ?? "NULL");
-                    }
-                }
-
-                var key = string.Join("|", keyParts);
+                var (row, key) = BuildDistinctRowAndKey(record, columns, recordType);
                 if (seen.Add(key))
                     result.Add(row);
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// レコードからResultRowとDISTINCT判定用のキー文字列を構築する。
+        /// </summary>
+        private (ResultRow row, string key) BuildDistinctRowAndKey(object record, List<SelectColumn> columns, Type recordType)
+        {
+            var row = new ResultRow { SourceRecord = record };
+            var keyParts = new List<string>();
+
+            foreach (var col in columns)
+                AddDistinctRowAndKeyParts(row, keyParts, col, record, recordType);
+
+            return (row, string.Join("|", keyParts));
+        }
+
+        /// <summary>
+        /// カラムの値をResultRowとキーパーツに追加する。
+        /// </summary>
+        private void AddDistinctRowAndKeyParts(ResultRow row, List<string> keyParts, SelectColumn col, object record, Type recordType)
+        {
+            if (col.IsWildcard)
+            {
+                foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
+                {
+                    var value = field.GetValue(record);
+                    row.Values[field.Name] = value;
+                    keyParts.Add(value?.ToString() ?? "NULL");
+                }
+                return;
+            }
+
+            var colName = col.Alias ?? GetExpressionName(col.Expression);
+            var colValue = ResolveValue(col.Expression, record, recordType);
+            row.Values[colName] = colValue;
+            keyParts.Add(colValue?.ToString() ?? "NULL");
         }
 
         /// <summary>
@@ -1453,64 +1752,92 @@ namespace Xeon.XScriptableDB.Editor
         {
             var leftValue = ResolveValue(expr.Left, record, recordType);
 
-            switch (expr.Operator)
+            return expr.Operator switch
             {
-                case ComparisonOperator.IsNull:
-                    return leftValue == null;
+                ComparisonOperator.IsNull => leftValue == null,
+                ComparisonOperator.IsNotNull => leftValue != null,
+                ComparisonOperator.In => EvaluateInOperator(leftValue, expr.Right, record, recordType),
+                _ => EvaluateStandardComparison(expr.Operator, leftValue, expr.Right, record, recordType)
+            };
+        }
 
-                case ComparisonOperator.IsNotNull:
-                    return leftValue != null;
+        /// <summary>
+        /// IN演算子を評価する。
+        /// </summary>
+        private bool EvaluateInOperator(object leftValue, SqlExpression rightExpr, object record, Type recordType)
+        {
+            if (rightExpr is SubqueryExpression subqueryExpr)
+                return EvaluateInSubquery(leftValue, subqueryExpr);
 
-                case ComparisonOperator.In:
-                    // サブクエリの場合
-                    if (expr.Right is SubqueryExpression subqueryExpr)
-                    {
-                        var subqueryValues = ExecuteSubquery(subqueryExpr.Subquery);
-                        foreach (var subValue in subqueryValues)
-                        {
-                            if (AreEqual(leftValue, subValue))
-                                return true;
-                        }
-                        return false;
-                    }
+            if (rightExpr is InListExpression inList)
+                return EvaluateInList(leftValue, inList, record, recordType);
 
-                    // 通常のINリスト
-                    if (expr.Right is InListExpression inList)
-                    {
-                        foreach (var item in inList.Values)
-                        {
-                            var itemValue = ResolveValue(item, record, recordType);
-                            if (AreEqual(leftValue, itemValue))
-                                return true;
-                        }
-                    }
-                    return false;
+            return false;
+        }
 
-                default:
-                    // サブクエリの場合
-                    object rightValue;
-                    if (expr.Right is SubqueryExpression subquery)
-                    {
-                        var subqueryValues = ExecuteSubquery(subquery.Subquery);
-                        rightValue = subqueryValues.FirstOrDefault();
-                    }
-                    else
-                    {
-                        rightValue = ResolveValue(expr.Right, record, recordType);
-                    }
+        /// <summary>
+        /// INサブクエリを評価する。
+        /// </summary>
+        private bool EvaluateInSubquery(object leftValue, SubqueryExpression subqueryExpr)
+        {
+            var subqueryValues = ExecuteSubquery(subqueryExpr.Subquery);
 
-                    return expr.Operator switch
-                    {
-                        ComparisonOperator.Equal => AreEqual(leftValue, rightValue),
-                        ComparisonOperator.NotEqual => !AreEqual(leftValue, rightValue),
-                        ComparisonOperator.LessThan => Compare(leftValue, rightValue) < 0,
-                        ComparisonOperator.LessOrEqual => Compare(leftValue, rightValue) <= 0,
-                        ComparisonOperator.GreaterThan => Compare(leftValue, rightValue) > 0,
-                        ComparisonOperator.GreaterOrEqual => Compare(leftValue, rightValue) >= 0,
-                        ComparisonOperator.Like => EvaluateLike(leftValue?.ToString(), rightValue?.ToString()),
-                        _ => false
-                    };
+            foreach (var subValue in subqueryValues)
+            {
+                if (AreEqual(leftValue, subValue))
+                    return true;
             }
+
+            return false;
+        }
+
+        /// <summary>
+        /// INリストを評価する。
+        /// </summary>
+        private bool EvaluateInList(object leftValue, InListExpression inList, object record, Type recordType)
+        {
+            foreach (var item in inList.Values)
+            {
+                var itemValue = ResolveValue(item, record, recordType);
+                if (AreEqual(leftValue, itemValue))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 標準的な比較演算子を評価する。
+        /// </summary>
+        private bool EvaluateStandardComparison(ComparisonOperator op, object leftValue, SqlExpression rightExpr, object record, Type recordType)
+        {
+            var rightValue = ResolveRightValue(rightExpr, record, recordType);
+
+            return op switch
+            {
+                ComparisonOperator.Equal => AreEqual(leftValue, rightValue),
+                ComparisonOperator.NotEqual => !AreEqual(leftValue, rightValue),
+                ComparisonOperator.LessThan => Compare(leftValue, rightValue) < 0,
+                ComparisonOperator.LessOrEqual => Compare(leftValue, rightValue) <= 0,
+                ComparisonOperator.GreaterThan => Compare(leftValue, rightValue) > 0,
+                ComparisonOperator.GreaterOrEqual => Compare(leftValue, rightValue) >= 0,
+                ComparisonOperator.Like => EvaluateLike(leftValue?.ToString(), rightValue?.ToString()),
+                _ => false
+            };
+        }
+
+        /// <summary>
+        /// 右辺の値を解決する（サブクエリまたは通常の式）。
+        /// </summary>
+        private object ResolveRightValue(SqlExpression rightExpr, object record, Type recordType)
+        {
+            if (rightExpr is SubqueryExpression subquery)
+            {
+                var subqueryValues = ExecuteSubquery(subquery.Subquery);
+                return subqueryValues.FirstOrDefault();
+            }
+
+            return ResolveValue(rightExpr, record, recordType);
         }
 
         /// <summary>
@@ -1533,23 +1860,18 @@ namespace Xeon.XScriptableDB.Editor
                     // ResultRowの場合、最初のカラムの値を取得
                     var firstValue = row.Values.Values.FirstOrDefault();
                     values.Add(firstValue);
+                    continue;
                 }
-                else
+                // 通常レコードの場合、選択されたカラムの値を取得
+                if (subquery.Columns.Count > 0 && !subquery.Columns[0].IsWildcard)
                 {
-                    // 通常レコードの場合、選択されたカラムの値を取得
-                    var recordType = record.GetType();
-                    if (subquery.Columns.Count > 0 && !subquery.Columns[0].IsWildcard)
-                    {
-                        var colExpr = subquery.Columns[0].Expression;
-                        var value = ResolveValue(colExpr, record, recordType);
-                        values.Add(value);
-                    }
-                    else
-                    {
-                        // ワイルドカードの場合、レコード全体を追加
-                        values.Add(record);
-                    }
+                    var colExpr = subquery.Columns[0].Expression;
+                    var value = ResolveValue(colExpr, record, record.GetType());
+                    values.Add(value);
+                    continue;
                 }
+                // ワイルドカードの場合、レコード全体を追加
+                values.Add(record);
             }
 
             return values;
@@ -1911,13 +2233,11 @@ namespace Xeon.XScriptableDB.Editor
                     ordered = item.Order == SortOrder.Descending
                         ? records.OrderByDescending(keySelector, new ObjectComparer())
                         : records.OrderBy(keySelector, new ObjectComparer());
+                    continue;
                 }
-                else
-                {
-                    ordered = item.Order == SortOrder.Descending
-                        ? ordered.ThenByDescending(keySelector, new ObjectComparer())
-                        : ordered.ThenBy(keySelector, new ObjectComparer());
-                }
+                ordered = item.Order == SortOrder.Descending
+                    ? ordered.ThenByDescending(keySelector, new ObjectComparer())
+                    : ordered.ThenBy(keySelector, new ObjectComparer());
             }
 
             return ordered?.ToList() ?? records;

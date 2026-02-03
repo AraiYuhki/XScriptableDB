@@ -6,57 +6,6 @@ using UnityEditor;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// バッチ処理の設定。
-    /// </summary>
-    public class BatchProcessSettings
-    {
-        /// <summary>エラー時に継続するか</summary>
-        public bool ContinueOnError { get; set; } = true;
-
-        /// <summary>自動ソートを行うか</summary>
-        public bool AutoSort { get; set; } = true;
-
-        /// <summary>重複キーを許可するか</summary>
-        public bool AllowDuplicateKeys { get; set; } = false;
-
-        /// <summary>進捗コールバック</summary>
-        public Action<int, int> OnProgress { get; set; }
-    }
-
-    /// <summary>
-    /// バッチ処理の結果。
-    /// </summary>
-    public class BatchProcessResult
-    {
-        /// <summary>成功したかどうか</summary>
-        public bool Success { get; set; }
-
-        /// <summary>追加された件数</summary>
-        public int AddedCount { get; set; }
-
-        /// <summary>更新された件数</summary>
-        public int UpdatedCount { get; set; }
-
-        /// <summary>削除された件数</summary>
-        public int DeletedCount { get; set; }
-
-        /// <summary>スキップされた件数</summary>
-        public int SkippedCount { get; set; }
-
-        /// <summary>失敗した件数</summary>
-        public int FailedCount { get; set; }
-
-        /// <summary>合計処理件数</summary>
-        public int TotalCount => AddedCount + UpdatedCount + DeletedCount + SkippedCount + FailedCount;
-
-        /// <summary>エラーリスト</summary>
-        public List<string> Errors { get; } = new();
-
-        /// <summary>処理時間</summary>
-        public TimeSpan ElapsedTime { get; set; }
-    }
-
-    /// <summary>
     /// テーブルに対するバッチ処理を行うクラス。
     /// TableAsset&lt;TRecord, TKey&gt;のジェネリック引数順序に対応。
     /// </summary>
@@ -354,23 +303,22 @@ namespace Xeon.XScriptableDB.Editor
             var records = table.All.ToArray();
             foreach (var record in records)
             {
-                if (predicate(record))
+                if (!predicate(record))
+                    continue;
+                try
                 {
-                    try
-                    {
-                        updater(record);
-                        result.UpdatedCount++;
-                    }
-                    catch (Exception e)
-                    {
-                        result.FailedCount++;
-                        result.Errors.Add(e.Message);
+                    updater(record);
+                    result.UpdatedCount++;
+                }
+                catch (Exception e)
+                {
+                    result.FailedCount++;
+                    result.Errors.Add(e.Message);
 
-                        if (!settings.ContinueOnError)
-                        {
-                            result.Success = false;
-                            break;
-                        }
+                    if (!settings.ContinueOnError)
+                    {
+                        result.Success = false;
+                        break;
                     }
                 }
             }

@@ -84,39 +84,37 @@ namespace Xeon.XScriptableDB.Editor
                         NewIndex = newEntry.index,
                         FieldDiffs = fieldDiffs
                     });
+                    continue;
                 }
-                else
+                
+                // 新しいデータにない → 削除
+                result.Diffs.Add(new RecordDiff
                 {
-                    // 新しいデータにない → 削除
-                    result.Diffs.Add(new RecordDiff
-                    {
-                        PrimaryKey = key,
-                        DiffType = DiffType.Removed,
-                        OldRecord = oldRecord,
-                        NewRecord = null,
-                        OldIndex = oldIndex,
-                        NewIndex = -1,
-                        FieldDiffs = CreateFieldDiffsForRemoval(oldRecord)
-                    });
-                }
+                    PrimaryKey = key,
+                    DiffType = DiffType.Removed,
+                    OldRecord = oldRecord,
+                    NewRecord = null,
+                    OldIndex = oldIndex,
+                    NewIndex = -1,
+                    FieldDiffs = CreateFieldDiffsForRemoval(oldRecord)
+                });
             }
 
             // 追加の検出
             foreach (var (key, (newRecord, newIndex)) in newByKey)
             {
-                if (!oldByKey.ContainsKey(key))
+                if (oldByKey.ContainsKey(key))
+                    continue;
+                result.Diffs.Add(new RecordDiff
                 {
-                    result.Diffs.Add(new RecordDiff
-                    {
-                        PrimaryKey = key,
-                        DiffType = DiffType.Added,
-                        OldRecord = null,
-                        NewRecord = newRecord,
-                        OldIndex = -1,
-                        NewIndex = newIndex,
-                        FieldDiffs = CreateFieldDiffsForAddition(newRecord)
-                    });
-                }
+                    PrimaryKey = key,
+                    DiffType = DiffType.Added,
+                    OldRecord = null,
+                    NewRecord = newRecord,
+                    OldIndex = -1,
+                    NewIndex = newIndex,
+                    FieldDiffs = CreateFieldDiffsForAddition(newRecord)
+                });
             }
 
             // PrimaryKeyでソート
@@ -213,38 +211,35 @@ namespace Xeon.XScriptableDB.Editor
                         NewIndex = newEntry.index,
                         FieldDiffs = fieldDiffs
                     });
+                    continue;
                 }
-                else
+                result.Diffs.Add(new RecordDiff
                 {
-                    result.Diffs.Add(new RecordDiff
-                    {
-                        PrimaryKey = key,
-                        DiffType = DiffType.Removed,
-                        OldRecord = oldRecord,
-                        NewRecord = null,
-                        OldIndex = oldIndex,
-                        NewIndex = -1,
-                        FieldDiffs = CreateFieldDiffsForRemoval(oldRecord)
-                    });
-                }
+                    PrimaryKey = key,
+                    DiffType = DiffType.Removed,
+                    OldRecord = oldRecord,
+                    NewRecord = null,
+                    OldIndex = oldIndex,
+                    NewIndex = -1,
+                    FieldDiffs = CreateFieldDiffsForRemoval(oldRecord)
+                });
             }
 
             // 追加の検出
             foreach (var (key, (newRecord, newIndex)) in newByKey)
             {
-                if (!oldByKey.ContainsKey(key))
+                if (oldByKey.ContainsKey(key))
+                    continue;
+                result.Diffs.Add(new RecordDiff
                 {
-                    result.Diffs.Add(new RecordDiff
-                    {
-                        PrimaryKey = key,
-                        DiffType = DiffType.Added,
-                        OldRecord = null,
-                        NewRecord = newRecord,
-                        OldIndex = -1,
-                        NewIndex = newIndex,
-                        FieldDiffs = CreateFieldDiffsForAddition(newRecord)
-                    });
-                }
+                    PrimaryKey = key,
+                    DiffType = DiffType.Added,
+                    OldRecord = null,
+                    NewRecord = newRecord,
+                    OldIndex = -1,
+                    NewIndex = newIndex,
+                    FieldDiffs = CreateFieldDiffsForAddition(newRecord)
+                });
             }
 
             // ソート

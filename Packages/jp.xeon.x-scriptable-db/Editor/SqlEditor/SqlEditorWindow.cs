@@ -455,20 +455,23 @@ namespace Xeon.XScriptableDB.Editor
                 e.Use();
             }
 
+            if (!e.control && !e.command)
+                return;
+
             // Ctrl+Enter で実行
-            if (e.keyCode == KeyCode.Return && (e.control || e.command))
+            if (e.keyCode == KeyCode.Return)
             {
                 ExecuteQuery();
                 e.Use();
             }
 
             // Ctrl+上下 で履歴ナビゲーション
-            if ((e.control || e.command) && e.keyCode == KeyCode.UpArrow)
+            if (e.keyCode == KeyCode.UpArrow)
             {
                 NavigateHistory(-1);
                 e.Use();
             }
-            if ((e.control || e.command) && e.keyCode == KeyCode.DownArrow)
+            if (e.keyCode == KeyCode.DownArrow)
             {
                 NavigateHistory(1);
                 e.Use();

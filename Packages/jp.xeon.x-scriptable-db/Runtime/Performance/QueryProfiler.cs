@@ -5,26 +5,6 @@ using System.Diagnostics;
 namespace Xeon.XScriptableDB.Performance
 {
     /// <summary>
-    /// クエリプロファイル結果。
-    /// </summary>
-    public struct QueryProfile
-    {
-        public string QueryName;
-        public Type TableType;
-        public long ElapsedTicks;
-        public double ElapsedMilliseconds;
-        public int ResultCount;
-        public DateTime Timestamp;
-        public bool WasCached;
-
-        public override string ToString()
-        {
-            var cached = WasCached ? " (cached)" : "";
-            return $"[{TableType?.Name}] {QueryName}: {ElapsedMilliseconds:F3}ms, {ResultCount} results{cached}";
-        }
-    }
-
-    /// <summary>
     /// クエリプロファイラー。
     /// クエリの実行時間を計測する。
     /// </summary>
@@ -223,29 +203,6 @@ namespace Xeon.XScriptableDB.Performance
             {
                 profiles.Clear();
             }
-        }
-    }
-
-    /// <summary>
-    /// プロファイル統計。
-    /// </summary>
-    public struct ProfileStatistics
-    {
-        public int QueryCount;
-        public double TotalMilliseconds;
-        public double AverageMilliseconds;
-        public double MinMilliseconds;
-        public double MaxMilliseconds;
-        public int CachedQueryCount;
-
-        public override string ToString()
-        {
-            return $"Queries: {QueryCount}, " +
-                   $"Total: {TotalMilliseconds:F2}ms, " +
-                   $"Avg: {AverageMilliseconds:F3}ms, " +
-                   $"Min: {MinMilliseconds:F3}ms, " +
-                   $"Max: {MaxMilliseconds:F3}ms, " +
-                   $"Cached: {CachedQueryCount}";
         }
     }
 }

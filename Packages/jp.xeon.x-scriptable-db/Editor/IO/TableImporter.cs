@@ -10,54 +10,6 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// テーブルインポーターの設定。
-    /// </summary>
-    public class ImportSettings
-    {
-        /// <summary>ファイルパス</summary>
-        public string FilePath { get; set; }
-
-        /// <summary>エンコーディング</summary>
-        public Encoding Encoding { get; set; } = Encoding.UTF8;
-
-        /// <summary>区切り文字（nullの場合は自動判定）</summary>
-        public char? Delimiter { get; set; }
-
-        /// <summary>プレビューを表示するかどうか</summary>
-        public bool ShowPreview { get; set; } = true;
-
-        /// <summary>変更のない行をスキップするかどうか</summary>
-        public bool SkipUnchangedRecords { get; set; } = false;
-    }
-
-    /// <summary>
-    /// インポート結果。
-    /// </summary>
-    public class ImportResult
-    {
-        /// <summary>成功したかどうか</summary>
-        public bool Success { get; set; }
-
-        /// <summary>インポートされたレコード数</summary>
-        public int ImportedCount { get; set; }
-
-        /// <summary>追加されたレコード数</summary>
-        public int AddedCount { get; set; }
-
-        /// <summary>更新されたレコード数</summary>
-        public int UpdatedCount { get; set; }
-
-        /// <summary>削除されたレコード数</summary>
-        public int DeletedCount { get; set; }
-
-        /// <summary>エラーメッセージ</summary>
-        public string ErrorMessage { get; set; }
-
-        /// <summary>警告リスト</summary>
-        public List<string> Warnings { get; set; } = new();
-    }
-
-    /// <summary>
     /// CSVファイルからテーブルにインポートするクラス。
     /// </summary>
     public static class TableImporter
@@ -159,11 +111,8 @@ namespace Xeon.XScriptableDB.Editor
                     DiffViewerWindow.Open(diffResult, targetTable, importedRecords);
                     return true; // ユーザーがDiffViewerで適用を判断
                 }
-                else
-                {
-                    // プレビューなしで直接適用
-                    return ApplyImport(targetTable, tableAsset, importedRecords);
-                }
+                // プレビューなしで直接適用
+                return ApplyImport(targetTable, tableAsset, importedRecords);
             }
             catch (Exception e)
             {

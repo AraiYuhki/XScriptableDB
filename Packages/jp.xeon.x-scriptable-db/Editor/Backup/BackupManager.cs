@@ -8,36 +8,6 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// バックアップ情報。
-    /// </summary>
-    [Serializable]
-    public class BackupInfo
-    {
-        public string Id;
-        public string Name;
-        public string Description;
-        public string CreatedAt;
-        public string TableName;
-        public string TableType;
-        public int RecordCount;
-        public string FilePath;
-        public long FileSize;
-        public bool IsAutoBackup;
-    }
-
-    /// <summary>
-    /// バックアップマニフェスト。
-    /// </summary>
-    [Serializable]
-    public class BackupManifest
-    {
-        public List<BackupInfo> Backups = new();
-        public string LastBackupAt;
-        public int MaxBackupCount = 10;
-        public bool AutoBackupEnabled = true;
-    }
-
-    /// <summary>
     /// バックアップ管理クラス。
     /// </summary>
     public static class BackupManager
