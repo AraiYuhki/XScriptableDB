@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
 namespace Xeon.XScriptableDB
@@ -105,6 +106,7 @@ namespace Xeon.XScriptableDB
 
         /// <summary>
         /// キーでレコードインデックスを検索する（型安全版）。
+        /// 文字列キーベースで検索し、ハッシュ衝突を回避する。
         /// </summary>
         /// <typeparam name="TKey">キーの型</typeparam>
         /// <param name="key">検索するキー</param>
@@ -116,12 +118,28 @@ namespace Xeon.XScriptableDB
 
             EnsureInitialized();
 
-            // 文字列の場合は文字列検索を優先
-            if (key is string strKey)
-                return FindByString(strKey);
+            // 文字列キーで検索（ハッシュ衝突回避）
+            // インデックス構築時と同じインバリアントカルチャで変換
+            var keyString = ConvertToInvariantString(key);
+            return FindByString(keyString);
+        }
 
-            // それ以外はハッシュ検索
-            return FindByHash(key.GetHashCode());
+        /// <summary>
+        /// キーでレコードインデックスを検索する（object版）。
+        /// 文字列キーベースで検索し、ハッシュ衝突を回避する。
+        /// </summary>
+        /// <param name="key">検索するキー</param>
+        /// <returns>レコードインデックスの配列、見つからない場合は空の配列</returns>
+        public int[] FindByKey(object key)
+        {
+            if (key == null)
+                return Array.Empty<int>();
+
+            EnsureInitialized();
+
+            // インデックス構築時と同じインバリアントカルチャで変換
+            var keyString = ConvertToInvariantString(key);
+            return FindByString(keyString);
         }
 
         /// <summary>
@@ -148,103 +166,22 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// インデックスエントリ。
+        /// カルチャ非依存の文字列変換を行う。
+        /// IndexBuilderと同じ変換ロジックを使用する。
+        /// float/doubleはラウンドトリップフォーマットを使用して精度を保持する。
         /// </summary>
-        [Serializable]
-        public class IndexEntry
+        private static string ConvertToInvariantString(object value)
         {
-            /// <summary>
-            /// キーのハッシュ値。
-            /// </summary>
-            public int keyHash;
-
-            /// <summary>
-            /// キーの文字列表現（デバッグ・文字列検索用）。
-            /// </summary>
-            public string keyString;
-
-            /// <summary>
-            /// このキーに対応するレコードのインデックス配列。
-            /// </summary>
-            public int[] recordIndices;
-        }
-    }
-
-    /// <summary>
-    /// テーブルの全SecondaryKeyインデックスを保持するコンテナ。
-    /// </summary>
-    [Serializable]
-    public class IndexContainer
-    {
-        [SerializeField]
-        private List<IndexData> indices = new();
-
-        /// <summary>
-        /// インデックス数。
-        /// </summary>
-        public int Count => indices.Count;
-
-        /// <summary>
-        /// 名前でインデックスを取得する。
-        /// </summary>
-        /// <param name="name">インデックス名</param>
-        /// <returns>インデックスデータ、見つからない場合はnull</returns>
-        public IndexData GetIndex(string name)
-        {
-            foreach (var index in indices)
+            return value switch
             {
-                if (index.IndexName == name)
-                    return index;
-            }
-            return null;
+                float f => f.ToString("R", CultureInfo.InvariantCulture),
+                double d => d.ToString("R", CultureInfo.InvariantCulture),
+                DateTime dateTime => dateTime.ToString("O", CultureInfo.InvariantCulture),
+                DateTimeOffset dateTimeOffset => dateTimeOffset.ToString("O", CultureInfo.InvariantCulture),
+                SerializableDateTime sdt => sdt.Ticks.ToString(CultureInfo.InvariantCulture),
+                IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+                _ => value.ToString()
+            };
         }
-
-        /// <summary>
-        /// インデックスを追加または更新する。
-        /// </summary>
-        /// <param name="indexData">追加するインデックスデータ</param>
-        public void SetIndex(IndexData indexData)
-        {
-            for (var i = 0; i < indices.Count; i++)
-            {
-                if (indices[i].IndexName == indexData.IndexName)
-                {
-                    indices[i] = indexData;
-                    return;
-                }
-            }
-            indices.Add(indexData);
-        }
-
-        /// <summary>
-        /// 指定した名前のインデックスを削除する。
-        /// </summary>
-        /// <param name="name">削除するインデックス名</param>
-        /// <returns>削除に成功した場合はtrue</returns>
-        public bool RemoveIndex(string name)
-        {
-            for (var i = 0; i < indices.Count; i++)
-            {
-                if (indices[i].IndexName == name)
-                {
-                    indices.RemoveAt(i);
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 全インデックスをクリアする。
-        /// </summary>
-        public void Clear()
-        {
-            indices.Clear();
-        }
-
-        /// <summary>
-        /// 全インデックスを取得する。
-        /// </summary>
-        public IReadOnlyList<IndexData> GetAllIndices() => indices;
     }
 }

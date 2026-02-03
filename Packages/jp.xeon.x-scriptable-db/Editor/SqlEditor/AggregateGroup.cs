@@ -1,0 +1,15 @@
+using System;
+using System.Collections.Generic;
+
+namespace Xeon.XScriptableDB.Editor
+{
+    /// <summary>
+    /// 集計結果のグループ。
+    /// </summary>
+    public class AggregateGroup
+    {
+        /// <summary>グループキーのカラム名→値のマップ</summary>
+        public Dictionary<string, object> GroupKeyValues { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+        public List<object> Records { get; set; } = new();
+    }
+}

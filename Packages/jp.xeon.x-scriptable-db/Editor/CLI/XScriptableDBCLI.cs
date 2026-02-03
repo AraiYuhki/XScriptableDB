@@ -329,13 +329,12 @@ namespace Xeon.XScriptableDB.Editor
 
             foreach (var arg in commandLineArgs)
             {
-                if (arg.StartsWith("-") && arg.Contains("="))
+                if (!arg.StartsWith("-") || !arg.Contains("="))
+                    continue;
+                var parts = arg[1..].Split(new[] { '=' }, 2);
+                if (parts.Length == 2)
                 {
-                    var parts = arg[1..].Split(new[] { '=' }, 2);
-                    if (parts.Length == 2)
-                    {
-                        args[parts[0]] = parts[1].Trim('"', '\'');
-                    }
+                    args[parts[0]] = parts[1].Trim('"', '\'');
                 }
             }
 
@@ -379,40 +378,35 @@ namespace Xeon.XScriptableDB.Editor
             if (table is IExportable exportable)
             {
                 exportable.Export(outputPath);
+                return;
+            }
+            
+            // 汎用エクスポート
+            var records = new List<object>();
+            foreach (var record in table.Records)
+            {
+                if (record != null)
+                    records.Add(record);
+            }
+
+            if (format == "json")
+            {
+                var json = JsonUtility.ToJson(new { Records = records }, true);
+                File.WriteAllText(outputPath, json);
             }
             else
             {
-                // 汎用エクスポート
-                var records = new List<object>();
-                foreach (var record in table.Records)
-                {
-                    if (record != null)
-                        records.Add(record);
-                }
-
-                if (format == "json")
-                {
-                    var json = JsonUtility.ToJson(new { Records = records }, true);
-                    File.WriteAllText(outputPath, json);
-                }
-                else
-                {
-                    var csv = IO.CsvParser.ToCSV(records, table.RecordType);
-                    File.WriteAllText(outputPath, csv);
-                }
+                var csv = IO.CsvParser.ToCSV(records, table.RecordType);
+                File.WriteAllText(outputPath, csv);
             }
         }
 
         private static void ImportTable(ITableAsset table, string inputPath)
         {
-            if (table is IImportable importable)
-            {
-                importable.Import(inputPath);
-            }
-            else
-            {
+            if (table is not IImportable importable)
                 throw new NotSupportedException($"Table {table.GetType().Name} does not support import");
-            }
+            
+            importable.Import(inputPath);
 
             EditorUtility.SetDirty(table as UnityEngine.Object);
             AssetDatabase.SaveAssets();

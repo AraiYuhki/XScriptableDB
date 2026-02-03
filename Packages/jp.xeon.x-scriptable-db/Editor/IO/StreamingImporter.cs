@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
-using Xeon.XScriptableDB;
 using Xeon.XScriptableDB.IO;
 
 namespace Xeon.XScriptableDB.Editor
@@ -23,89 +21,6 @@ namespace Xeon.XScriptableDB.Editor
         Completed,
         Failed,
         Cancelled
-    }
-
-    /// <summary>
-    /// ストリーミングインポートの進捗情報。
-    /// </summary>
-    public class StreamingImportProgress
-    {
-        /// <summary>現在の状態</summary>
-        public StreamingImportState State { get; set; } = StreamingImportState.NotStarted;
-
-        /// <summary>総行数</summary>
-        public int TotalLines { get; set; }
-
-        /// <summary>処理済み行数</summary>
-        public int ProcessedLines { get; set; }
-
-        /// <summary>成功したレコード数</summary>
-        public int SuccessCount { get; set; }
-
-        /// <summary>失敗したレコード数</summary>
-        public int ErrorCount { get; set; }
-
-        /// <summary>警告リスト</summary>
-        public List<string> Warnings { get; } = new();
-
-        /// <summary>エラーリスト</summary>
-        public List<string> Errors { get; } = new();
-
-        /// <summary>現在のチャンク番号</summary>
-        public int CurrentChunk { get; set; }
-
-        /// <summary>総チャンク数</summary>
-        public int TotalChunks { get; set; }
-
-        /// <summary>処理の進捗（0.0〜1.0）</summary>
-        public float Progress
-        {
-            get
-            {
-                if (TotalLines <= 0)
-                    return 0f;
-                return (float)ProcessedLines / TotalLines;
-            }
-        }
-
-        /// <summary>エラーメッセージ（失敗時）</summary>
-        public string ErrorMessage { get; set; }
-
-        /// <summary>開始時刻</summary>
-        public DateTime StartTime { get; set; }
-
-        /// <summary>終了時刻</summary>
-        public DateTime? EndTime { get; set; }
-
-        /// <summary>経過時間</summary>
-        public TimeSpan ElapsedTime => (EndTime ?? DateTime.Now) - StartTime;
-    }
-
-    /// <summary>
-    /// ストリーミングインポートの設定。
-    /// </summary>
-    public class StreamingImportSettings
-    {
-        /// <summary>チャンクサイズ（1回で処理する行数）</summary>
-        public int ChunkSize { get; set; } = 1000;
-
-        /// <summary>エンコーディング</summary>
-        public Encoding Encoding { get; set; } = Encoding.UTF8;
-
-        /// <summary>区切り文字</summary>
-        public char Delimiter { get; set; } = ',';
-
-        /// <summary>ヘッダー行があるか</summary>
-        public bool HasHeader { get; set; } = true;
-
-        /// <summary>エラー時に継続するか</summary>
-        public bool ContinueOnError { get; set; } = true;
-
-        /// <summary>最大エラー数（これを超えると処理を停止）</summary>
-        public int MaxErrors { get; set; } = 100;
-
-        /// <summary>進捗コールバック</summary>
-        public Action<StreamingImportProgress> OnProgress { get; set; }
     }
 
     /// <summary>
@@ -140,106 +55,21 @@ namespace Xeon.XScriptableDB.Editor
             where T : CsvData, new()
         {
             settings ??= new StreamingImportSettings();
-            progress = new StreamingImportProgress
-            {
-                State = StreamingImportState.Reading,
-                StartTime = DateTime.Now
-            };
-            isCancelled = false;
+            InitializeProgress(filePath, settings);
 
             try
             {
-                // ファイルの行数をカウント
-                progress.TotalLines = CountLines(filePath, settings.Encoding);
-                progress.TotalChunks = (progress.TotalLines + settings.ChunkSize - 1) / settings.ChunkSize;
-
                 var allRecords = new List<T>();
-                var lineNumber = 0;
-                string[] headers = null;
-
-                using (var reader = new StreamReader(filePath, settings.Encoding))
-                {
-                    // ヘッダー行の処理
-                    if (settings.HasHeader)
-                    {
-                        var headerLine = reader.ReadLine();
-                        if (headerLine != null)
-                        {
-                            headers = ParseLine(headerLine, settings.Delimiter);
-                            lineNumber++;
-                        }
-                    }
-
-                    progress.State = StreamingImportState.Parsing;
-                    var chunkRecords = new List<T>();
-                    var chunkLines = new List<string>();
-
-                    while (!reader.EndOfStream && !isCancelled)
-                    {
-                        var line = reader.ReadLine();
-                        lineNumber++;
-
-                        if (string.IsNullOrWhiteSpace(line))
-                            continue;
-
-                        chunkLines.Add(line);
-
-                        // チャンクが満タンになったら処理
-                        if (chunkLines.Count >= settings.ChunkSize)
-                        {
-                            ProcessChunk(chunkLines, headers, settings, allRecords);
-                            chunkLines.Clear();
-                            progress.CurrentChunk++;
-                            settings.OnProgress?.Invoke(progress);
-
-                            // エラーが多すぎる場合は中断
-                            if (progress.ErrorCount >= settings.MaxErrors)
-                            {
-                                progress.State = StreamingImportState.Failed;
-                                progress.ErrorMessage = $"エラーが{settings.MaxErrors}件を超えたため中断しました";
-                                break;
-                            }
-                        }
-
-                        progress.ProcessedLines = lineNumber;
-                    }
-
-                    // 残りのチャンクを処理
-                    if (chunkLines.Count > 0 && !isCancelled && progress.State != StreamingImportState.Failed)
-                    {
-                        ProcessChunk(chunkLines, headers, settings, allRecords);
-                        progress.CurrentChunk++;
-                    }
-                }
-
-                if (isCancelled)
-                {
-                    progress.State = StreamingImportState.Cancelled;
-                    progress.ErrorMessage = "インポートがキャンセルされました";
-                }
-                else if (progress.State != StreamingImportState.Failed)
-                {
-                    // テーブルに適用
-                    progress.State = StreamingImportState.Applying;
-                    settings.OnProgress?.Invoke(progress);
-
-                    ApplyToTable(targetTable, allRecords);
-
-                    progress.State = StreamingImportState.Completed;
-                    progress.SuccessCount = allRecords.Count;
-                }
+                ReadAndProcessFile(filePath, settings, allRecords);
+                FinalizeImport(targetTable, allRecords, settings);
             }
             catch (Exception e)
             {
-                progress.State = StreamingImportState.Failed;
-                progress.ErrorMessage = e.Message;
-                progress.Errors.Add($"Fatal: {e.Message}");
-                Debug.LogException(e);
+                HandleFatalError(e);
             }
             finally
             {
-                progress.EndTime = DateTime.Now;
-                settings.OnProgress?.Invoke(progress);
+                FinalizeProgress(settings);
             }
 
             return progress;
@@ -255,6 +85,31 @@ namespace Xeon.XScriptableDB.Editor
             StreamingImportSettings settings = null)
         {
             settings ??= new StreamingImportSettings();
+            InitializeProgress(filePath, settings);
+
+            try
+            {
+                var allRecords = new List<object>();
+                ReadAndProcessFileNonGeneric(filePath, settings, recordType, allRecords);
+                FinalizeImportNonGeneric(targetTable, allRecords, recordType, settings);
+            }
+            catch (Exception e)
+            {
+                HandleFatalError(e);
+            }
+            finally
+            {
+                FinalizeProgress(settings);
+            }
+
+            return progress;
+        }
+
+        /// <summary>
+        /// 進捗状態を初期化する。
+        /// </summary>
+        private void InitializeProgress(string filePath, StreamingImportSettings settings)
+        {
             progress = new StreamingImportProgress
             {
                 State = StreamingImportState.Reading,
@@ -262,95 +117,257 @@ namespace Xeon.XScriptableDB.Editor
             };
             isCancelled = false;
 
-            try
+            progress.TotalLines = CountLines(filePath, settings.Encoding);
+            progress.TotalChunks = (progress.TotalLines + settings.ChunkSize - 1) / settings.ChunkSize;
+        }
+
+        /// <summary>
+        /// ファイルを読み込み処理する（ジェネリック版）。
+        /// </summary>
+        private void ReadAndProcessFile<T>(
+            string filePath,
+            StreamingImportSettings settings,
+            List<T> allRecords) where T : CsvData, new()
+        {
+            var lineNumber = 0;
+
+            using var reader = new StreamReader(filePath, settings.Encoding);
+
+            var headers = ReadHeader(reader, settings, ref lineNumber);
+            progress.State = StreamingImportState.Parsing;
+
+            var chunkLines = new List<string>();
+            ProcessAllLines(reader, settings, chunkLines, headers, allRecords, ref lineNumber);
+            ProcessRemainingChunk(chunkLines, headers, settings, allRecords);
+        }
+
+        /// <summary>
+        /// ファイルを読み込み処理する（非ジェネリック版）。
+        /// </summary>
+        private void ReadAndProcessFileNonGeneric(
+            string filePath,
+            StreamingImportSettings settings,
+            Type recordType,
+            List<object> allRecords)
+        {
+            var lineNumber = 0;
+
+            using var reader = new StreamReader(filePath, settings.Encoding);
+
+            var headers = ReadHeader(reader, settings, ref lineNumber);
+            progress.State = StreamingImportState.Parsing;
+
+            var chunkLines = new List<string>();
+            ProcessAllLinesNonGeneric(reader, settings, chunkLines, headers, recordType, allRecords, ref lineNumber);
+            ProcessRemainingChunkNonGeneric(chunkLines, headers, settings, recordType, allRecords);
+        }
+
+        /// <summary>
+        /// ヘッダー行を読み込む。
+        /// </summary>
+        private string[] ReadHeader(StreamReader reader, StreamingImportSettings settings, ref int lineNumber)
+        {
+            if (!settings.HasHeader)
+                return null;
+
+            var headerLine = reader.ReadLine();
+            if (headerLine == null)
+                return null;
+
+            lineNumber++;
+            return ParseLine(headerLine, settings.Delimiter);
+        }
+
+        /// <summary>
+        /// 全ての行を処理する（ジェネリック版）。
+        /// </summary>
+        private void ProcessAllLines<T>(
+            StreamReader reader,
+            StreamingImportSettings settings,
+            List<string> chunkLines,
+            string[] headers,
+            List<T> allRecords,
+            ref int lineNumber) where T : CsvData, new()
+        {
+            while (!reader.EndOfStream && !isCancelled)
             {
-                progress.TotalLines = CountLines(filePath, settings.Encoding);
-                progress.TotalChunks = (progress.TotalLines + settings.ChunkSize - 1) / settings.ChunkSize;
+                var line = reader.ReadLine();
+                lineNumber++;
 
-                var allRecords = new List<object>();
-                var lineNumber = 0;
-                string[] headers = null;
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
 
-                using (var reader = new StreamReader(filePath, settings.Encoding))
-                {
-                    if (settings.HasHeader)
-                    {
-                        var headerLine = reader.ReadLine();
-                        if (headerLine != null)
-                        {
-                            headers = ParseLine(headerLine, settings.Delimiter);
-                            lineNumber++;
-                        }
-                    }
+                chunkLines.Add(line);
+                progress.ProcessedLines = lineNumber;
 
-                    progress.State = StreamingImportState.Parsing;
-                    var chunkLines = new List<string>();
+                if (chunkLines.Count < settings.ChunkSize)
+                    continue;
 
-                    while (!reader.EndOfStream && !isCancelled)
-                    {
-                        var line = reader.ReadLine();
-                        lineNumber++;
-
-                        if (string.IsNullOrWhiteSpace(line))
-                            continue;
-
-                        chunkLines.Add(line);
-
-                        if (chunkLines.Count >= settings.ChunkSize)
-                        {
-                            ProcessChunkNonGeneric(chunkLines, headers, settings, recordType, allRecords);
-                            chunkLines.Clear();
-                            progress.CurrentChunk++;
-                            settings.OnProgress?.Invoke(progress);
-
-                            if (progress.ErrorCount >= settings.MaxErrors)
-                            {
-                                progress.State = StreamingImportState.Failed;
-                                progress.ErrorMessage = $"エラーが{settings.MaxErrors}件を超えたため中断しました";
-                                break;
-                            }
-                        }
-
-                        progress.ProcessedLines = lineNumber;
-                    }
-
-                    if (chunkLines.Count > 0 && !isCancelled && progress.State != StreamingImportState.Failed)
-                    {
-                        ProcessChunkNonGeneric(chunkLines, headers, settings, recordType, allRecords);
-                        progress.CurrentChunk++;
-                    }
-                }
-
-                if (isCancelled)
-                {
-                    progress.State = StreamingImportState.Cancelled;
-                    progress.ErrorMessage = "インポートがキャンセルされました";
-                }
-                else if (progress.State != StreamingImportState.Failed)
-                {
-                    progress.State = StreamingImportState.Applying;
-                    settings.OnProgress?.Invoke(progress);
-
-                    ApplyToTableNonGeneric(targetTable, allRecords, recordType);
-
-                    progress.State = StreamingImportState.Completed;
-                    progress.SuccessCount = allRecords.Count;
-                }
-            }
-            catch (Exception e)
-            {
-                progress.State = StreamingImportState.Failed;
-                progress.ErrorMessage = e.Message;
-                progress.Errors.Add($"Fatal: {e.Message}");
-                Debug.LogException(e);
-            }
-            finally
-            {
-                progress.EndTime = DateTime.Now;
+                ProcessChunk(chunkLines, headers, settings, allRecords);
+                chunkLines.Clear();
+                progress.CurrentChunk++;
                 settings.OnProgress?.Invoke(progress);
+
+                if (ShouldAbortDueToErrors(settings))
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 全ての行を処理する（非ジェネリック版）。
+        /// </summary>
+        private void ProcessAllLinesNonGeneric(
+            StreamReader reader,
+            StreamingImportSettings settings,
+            List<string> chunkLines,
+            string[] headers,
+            Type recordType,
+            List<object> allRecords,
+            ref int lineNumber)
+        {
+            while (!reader.EndOfStream && !isCancelled)
+            {
+                var line = reader.ReadLine();
+                lineNumber++;
+
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                chunkLines.Add(line);
+                progress.ProcessedLines = lineNumber;
+
+                if (chunkLines.Count < settings.ChunkSize)
+                    continue;
+
+                ProcessChunkNonGeneric(chunkLines, headers, settings, recordType, allRecords);
+                chunkLines.Clear();
+                progress.CurrentChunk++;
+                settings.OnProgress?.Invoke(progress);
+
+                if (ShouldAbortDueToErrors(settings))
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// エラー数が上限を超えたか判定し、超えた場合は状態を更新する。
+        /// </summary>
+        private bool ShouldAbortDueToErrors(StreamingImportSettings settings)
+        {
+            if (progress.ErrorCount < settings.MaxErrors)
+                return false;
+
+            progress.State = StreamingImportState.Failed;
+            progress.ErrorMessage = $"エラーが{settings.MaxErrors}件を超えたため中断しました";
+            return true;
+        }
+
+        /// <summary>
+        /// 残りのチャンクを処理する（ジェネリック版）。
+        /// </summary>
+        private void ProcessRemainingChunk<T>(
+            List<string> chunkLines,
+            string[] headers,
+            StreamingImportSettings settings,
+            List<T> allRecords) where T : CsvData, new()
+        {
+            if (chunkLines.Count == 0 || isCancelled || progress.State == StreamingImportState.Failed)
+                return;
+
+            ProcessChunk(chunkLines, headers, settings, allRecords);
+            progress.CurrentChunk++;
+        }
+
+        /// <summary>
+        /// 残りのチャンクを処理する（非ジェネリック版）。
+        /// </summary>
+        private void ProcessRemainingChunkNonGeneric(
+            List<string> chunkLines,
+            string[] headers,
+            StreamingImportSettings settings,
+            Type recordType,
+            List<object> allRecords)
+        {
+            if (chunkLines.Count == 0 || isCancelled || progress.State == StreamingImportState.Failed)
+                return;
+
+            ProcessChunkNonGeneric(chunkLines, headers, settings, recordType, allRecords);
+            progress.CurrentChunk++;
+        }
+
+        /// <summary>
+        /// インポートを完了する（ジェネリック版）。
+        /// </summary>
+        private void FinalizeImport<T>(
+            ScriptableObject targetTable,
+            List<T> allRecords,
+            StreamingImportSettings settings)
+        {
+            if (isCancelled)
+            {
+                progress.State = StreamingImportState.Cancelled;
+                progress.ErrorMessage = "インポートがキャンセルされました";
+                return;
             }
 
-            return progress;
+            if (progress.State == StreamingImportState.Failed)
+                return;
+
+            progress.State = StreamingImportState.Applying;
+            settings.OnProgress?.Invoke(progress);
+
+            ApplyToTable(targetTable, allRecords);
+
+            progress.State = StreamingImportState.Completed;
+            progress.SuccessCount = allRecords.Count;
+        }
+
+        /// <summary>
+        /// インポートを完了する（非ジェネリック版）。
+        /// </summary>
+        private void FinalizeImportNonGeneric(
+            ScriptableObject targetTable,
+            List<object> allRecords,
+            Type recordType,
+            StreamingImportSettings settings)
+        {
+            if (isCancelled)
+            {
+                progress.State = StreamingImportState.Cancelled;
+                progress.ErrorMessage = "インポートがキャンセルされました";
+                return;
+            }
+
+            if (progress.State == StreamingImportState.Failed)
+                return;
+
+            progress.State = StreamingImportState.Applying;
+            settings.OnProgress?.Invoke(progress);
+
+            ApplyToTableNonGeneric(targetTable, allRecords, recordType);
+
+            progress.State = StreamingImportState.Completed;
+            progress.SuccessCount = allRecords.Count;
+        }
+
+        /// <summary>
+        /// 致命的なエラーを処理する。
+        /// </summary>
+        private void HandleFatalError(Exception e)
+        {
+            progress.State = StreamingImportState.Failed;
+            progress.ErrorMessage = e.Message;
+            progress.Errors.Add($"Fatal: {e.Message}");
+            Debug.LogException(e);
+        }
+
+        /// <summary>
+        /// 進捗状態を完了する。
+        /// </summary>
+        private void FinalizeProgress(StreamingImportSettings settings)
+        {
+            progress.EndTime = DateTime.Now;
+            settings.OnProgress?.Invoke(progress);
         }
 
         private int CountLines(string filePath, Encoding encoding)
@@ -539,150 +556,6 @@ namespace Xeon.XScriptableDB.Editor
                 setRecordsMethod.Invoke(targetTable, new object[] { array });
                 EditorUtility.SetDirty(targetTable);
             }
-        }
-    }
-
-    /// <summary>
-    /// ストリーミングインポートのウィンドウ。
-    /// </summary>
-    public class StreamingImportWindow : EditorWindow
-    {
-        private string filePath;
-        private ScriptableObject targetTable;
-        private StreamingImportSettings settings = new();
-        private StreamingImporter importer;
-        private StreamingImportProgress currentProgress;
-        private bool isImporting;
-
-        public static void Open(ScriptableObject table)
-        {
-            var window = GetWindow<StreamingImportWindow>("ストリーミングインポート");
-            window.targetTable = table;
-            window.Show();
-        }
-
-        private void OnGUI()
-        {
-            EditorGUILayout.LabelField("ストリーミングインポート", EditorStyles.boldLabel);
-            EditorGUILayout.Space();
-
-            // ターゲットテーブル
-            using (new EditorGUI.DisabledGroupScope(isImporting))
-            {
-                targetTable = EditorGUILayout.ObjectField("ターゲットテーブル", targetTable, typeof(ScriptableObject), false) as ScriptableObject;
-
-                // ファイル選択
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    filePath = EditorGUILayout.TextField("ファイルパス", filePath);
-                    if (GUILayout.Button("参照", GUILayout.Width(60)))
-                    {
-                        var path = EditorUtility.OpenFilePanel("CSVファイルを選択", "", "csv");
-                        if (!string.IsNullOrEmpty(path))
-                            filePath = path;
-                    }
-                }
-
-                EditorGUILayout.Space();
-                EditorGUILayout.LabelField("設定", EditorStyles.boldLabel);
-
-                settings.ChunkSize = EditorGUILayout.IntField("チャンクサイズ", settings.ChunkSize);
-                settings.HasHeader = EditorGUILayout.Toggle("ヘッダー行あり", settings.HasHeader);
-                settings.ContinueOnError = EditorGUILayout.Toggle("エラー時に継続", settings.ContinueOnError);
-                settings.MaxErrors = EditorGUILayout.IntField("最大エラー数", settings.MaxErrors);
-
-                var delimiterOptions = new[] { "カンマ (,)", "タブ", "セミコロン (;)" };
-                var delimiterChars = new[] { ',', '\t', ';' };
-                var delimiterIndex = Array.IndexOf(delimiterChars, settings.Delimiter);
-                if (delimiterIndex < 0)
-                    delimiterIndex = 0;
-                delimiterIndex = EditorGUILayout.Popup("区切り文字", delimiterIndex, delimiterOptions);
-                settings.Delimiter = delimiterChars[delimiterIndex];
-            }
-
-            EditorGUILayout.Space();
-
-            // 進捗表示
-            if (currentProgress != null)
-            {
-                EditorGUILayout.LabelField("進捗", EditorStyles.boldLabel);
-                EditorGUILayout.LabelField($"状態: {currentProgress.State}");
-                EditorGUI.ProgressBar(EditorGUILayout.GetControlRect(GUILayout.Height(20)), currentProgress.Progress, $"{currentProgress.ProcessedLines} / {currentProgress.TotalLines}");
-                EditorGUILayout.LabelField($"チャンク: {currentProgress.CurrentChunk} / {currentProgress.TotalChunks}");
-                EditorGUILayout.LabelField($"成功: {currentProgress.SuccessCount}, エラー: {currentProgress.ErrorCount}");
-                EditorGUILayout.LabelField($"経過時間: {currentProgress.ElapsedTime.TotalSeconds:F1}秒");
-
-                if (!string.IsNullOrEmpty(currentProgress.ErrorMessage))
-                    EditorGUILayout.HelpBox(currentProgress.ErrorMessage, MessageType.Error);
-
-                if (currentProgress.Errors.Count > 0)
-                {
-                    EditorGUILayout.Space();
-                    EditorGUILayout.LabelField("エラー一覧", EditorStyles.boldLabel);
-                    foreach (var error in currentProgress.Errors.Take(10))
-                        EditorGUILayout.LabelField(error, EditorStyles.miniLabel);
-                    if (currentProgress.Errors.Count > 10)
-                        EditorGUILayout.LabelField($"... 他 {currentProgress.Errors.Count - 10} 件");
-                }
-            }
-
-            EditorGUILayout.Space();
-
-            // ボタン
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                using (new EditorGUI.DisabledGroupScope(isImporting || targetTable == null || string.IsNullOrEmpty(filePath)))
-                {
-                    if (GUILayout.Button("インポート開始"))
-                        StartImport();
-                }
-
-                using (new EditorGUI.DisabledGroupScope(!isImporting))
-                {
-                    if (GUILayout.Button("キャンセル"))
-                        CancelImport();
-                }
-            }
-        }
-
-        private void StartImport()
-        {
-            if (targetTable is not ITableAsset tableAsset)
-            {
-                EditorUtility.DisplayDialog("エラー", "テーブルがITableAssetを実装していません", "OK");
-                return;
-            }
-
-            isImporting = true;
-            importer = new StreamingImporter();
-            settings.OnProgress = OnProgressUpdate;
-
-            EditorApplication.delayCall += () =>
-            {
-                try
-                {
-                    currentProgress = importer.Import(filePath, targetTable, tableAsset.RecordType, settings);
-
-                    if (currentProgress.State == StreamingImportState.Completed)
-                        EditorUtility.DisplayDialog("完了", $"インポートが完了しました\n成功: {currentProgress.SuccessCount}件", "OK");
-                }
-                finally
-                {
-                    isImporting = false;
-                    Repaint();
-                }
-            };
-        }
-
-        private void CancelImport()
-        {
-            importer?.Cancel();
-        }
-
-        private void OnProgressUpdate(StreamingImportProgress progress)
-        {
-            currentProgress = progress;
-            Repaint();
         }
     }
 }

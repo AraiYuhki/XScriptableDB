@@ -104,25 +104,7 @@ namespace Xeon.XScriptableDB.Editor
                     return GenerateRandomValue(fieldType);
 
                 case GeneratorRule.RandomRange:
-                    if (fieldType == typeof(int))
-                    {
-                        var min = int.Parse(config.MinValue);
-                        var max = int.Parse(config.MaxValue);
-                        return Random.Range(min, max + 1);
-                    }
-                    if (fieldType == typeof(float))
-                    {
-                        var min = float.Parse(config.MinValue);
-                        var max = float.Parse(config.MaxValue);
-                        return Random.Range(min, max);
-                    }
-                    if (fieldType == typeof(double))
-                    {
-                        var min = double.Parse(config.MinValue);
-                        var max = double.Parse(config.MaxValue);
-                        return min + Random.value * (max - min);
-                    }
-                    return GenerateRandomValue(fieldType);
+                    return GenerateRandomNumeric(fieldType, config);
 
                 case GeneratorRule.RandomChoice:
                     if (config.Choices.Count > 0)
@@ -141,6 +123,29 @@ namespace Xeon.XScriptableDB.Editor
                 default:
                     return GenerateRandomValue(fieldType);
             }
+        }
+
+        private static object GenerateRandomNumeric(Type fieldType, FieldGeneratorConfig config)
+        {
+            if (fieldType == typeof(int))
+            {
+                var min = int.Parse(config.MinValue);
+                var max = int.Parse(config.MaxValue);
+                return Random.Range(min, max + 1);
+            }
+            if (fieldType == typeof(float))
+            {
+                var min = float.Parse(config.MinValue);
+                var max = float.Parse(config.MaxValue);
+                return Random.Range(min, max);
+            }
+            if (fieldType == typeof(double))
+            {
+                var min = double.Parse(config.MinValue);
+                var max = double.Parse(config.MaxValue);
+                return min + Random.value * (max - min);
+            }
+            return GenerateRandomValue(fieldType);
         }
 
         private static object GenerateDefaultValue(Type fieldType, string fieldName, int index)

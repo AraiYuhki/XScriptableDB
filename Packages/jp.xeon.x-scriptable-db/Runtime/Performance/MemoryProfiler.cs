@@ -6,31 +6,6 @@ using System.Runtime.InteropServices;
 namespace Xeon.XScriptableDB.Performance
 {
     /// <summary>
-    /// テーブルのメモリ使用量情報。
-    /// </summary>
-    public struct TableMemoryInfo
-    {
-        public string TableName;
-        public Type TableType;
-        public Type RecordType;
-        public int RecordCount;
-        public long EstimatedRecordSize;
-        public long EstimatedTotalSize;
-
-        public override string ToString()
-        {
-            return $"{TableName}: {RecordCount} records, ~{FormatBytes(EstimatedTotalSize)}";
-        }
-
-        private static string FormatBytes(long bytes)
-        {
-            if (bytes < 1024) return $"{bytes} B";
-            if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
-            return $"{bytes / (1024.0 * 1024.0):F1} MB";
-        }
-    }
-
-    /// <summary>
     /// メモリプロファイラー。
     /// テーブルのメモリ使用量を推定する。
     /// </summary>
@@ -209,24 +184,6 @@ namespace Xeon.XScriptableDB.Performance
                 GCCollectionCount1 = GC.CollectionCount(1),
                 GCCollectionCount2 = GC.CollectionCount(2)
             };
-        }
-    }
-
-    /// <summary>
-    /// メモリスナップショット。
-    /// </summary>
-    public struct MemorySnapshot
-    {
-        public DateTime Timestamp;
-        public long TotalMemory;
-        public int GCCollectionCount0;
-        public int GCCollectionCount1;
-        public int GCCollectionCount2;
-
-        public override string ToString()
-        {
-            return $"Memory: {TotalMemory / 1024.0 / 1024.0:F2} MB, " +
-                   $"GC: [{GCCollectionCount0}, {GCCollectionCount1}, {GCCollectionCount2}]";
         }
     }
 }

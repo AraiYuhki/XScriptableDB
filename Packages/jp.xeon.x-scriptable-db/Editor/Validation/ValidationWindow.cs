@@ -263,25 +263,29 @@ namespace Xeon.XScriptableDB.Editor
 
             // レコードレベルのエラー
             var recordsWithErrors = result.RecordResults.Where(r => !r.IsValid).ToList();
-            if (recordsWithErrors.Count > 0)
-            {
-                EditorGUILayout.LabelField($"Record Errors ({recordsWithErrors.Count} records):", EditorStyles.boldLabel);
-
-                foreach (var recordResult in recordsWithErrors)
-                {
-                    var keyStr = recordResult.RecordKey?.ToString() ?? $"Index {recordResult.RecordIndex}";
-                    EditorGUILayout.LabelField($"  [{keyStr}]", EditorStyles.miniBoldLabel);
-
-                    foreach (var error in recordResult.Errors)
-                    {
-                        EditorGUI.indentLevel++;
-                        DrawError(error);
-                        EditorGUI.indentLevel--;
-                    }
-                }
-            }
+            DrawRecordErrors(recordsWithErrors);
 
             EditorGUILayout.EndScrollView();
+        }
+
+        private void DrawRecordErrors(List<RecordValidationResult> recordsWithErrors)
+        {
+            if (recordsWithErrors.Count <= 0)
+                return;
+            EditorGUILayout.LabelField($"Record Errors ({recordsWithErrors.Count} records):", EditorStyles.boldLabel);
+
+            foreach (var recordResult in recordsWithErrors)
+            {
+                var keyStr = recordResult.RecordKey?.ToString() ?? $"Index {recordResult.RecordIndex}";
+                EditorGUILayout.LabelField($"  [{keyStr}]", EditorStyles.miniBoldLabel);
+
+                foreach (var error in recordResult.Errors)
+                {
+                    EditorGUI.indentLevel++;
+                    DrawError(error);
+                    EditorGUI.indentLevel--;
+                }
+            }
         }
 
         private void DrawError(ValidationError error)

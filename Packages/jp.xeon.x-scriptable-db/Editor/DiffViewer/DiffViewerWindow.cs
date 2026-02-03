@@ -13,7 +13,8 @@ namespace Xeon.XScriptableDB.Editor
         /// <summary>
         /// 差分結果を指定してウィンドウを開く。
         /// </summary>
-        public static DiffViewerWindow Open(TableDiffResult diffResult, ScriptableObject targetTable, object[] importedRecords)
+        public static DiffViewerWindow Open(TableDiffResult diffResult, ScriptableObject targetTable,
+            object[] importedRecords)
         {
             return Open(diffResult, targetTable, importedRecords, null);
         }
@@ -21,7 +22,8 @@ namespace Xeon.XScriptableDB.Editor
         /// <summary>
         /// 差分結果を指定してウィンドウを開く（適用時コールバック付き）。
         /// </summary>
-        public static DiffViewerWindow Open(TableDiffResult diffResult, ScriptableObject targetTable, object[] importedRecords, Action onApplied)
+        public static DiffViewerWindow Open(TableDiffResult diffResult, ScriptableObject targetTable,
+            object[] importedRecords, Action onApplied)
         {
             var window = GetWindow<DiffViewerWindow>();
             window.titleContent = new GUIContent("Diff Viewer");
@@ -48,7 +50,8 @@ namespace Xeon.XScriptableDB.Editor
 
         private bool stylesInitialized = false;
 
-        public void SetDiffResult(TableDiffResult result, ScriptableObject table, object[] records, Action onApplied = null)
+        public void SetDiffResult(TableDiffResult result, ScriptableObject table, object[] records,
+            Action onApplied = null)
         {
             diffResult = result;
             targetTable = table;
@@ -158,11 +161,14 @@ namespace Xeon.XScriptableDB.Editor
                 // フィルター
                 if (GUILayout.Toggle(filterType == null, "全て", EditorStyles.toolbarButton, GUILayout.Width(50)))
                     filterType = null;
-                if (GUILayout.Toggle(filterType == DiffType.Added, "追加", EditorStyles.toolbarButton, GUILayout.Width(50)))
+                if (GUILayout.Toggle(filterType == DiffType.Added, "追加", EditorStyles.toolbarButton,
+                        GUILayout.Width(50)))
                     filterType = filterType == DiffType.Added ? null : DiffType.Added;
-                if (GUILayout.Toggle(filterType == DiffType.Removed, "削除", EditorStyles.toolbarButton, GUILayout.Width(50)))
+                if (GUILayout.Toggle(filterType == DiffType.Removed, "削除", EditorStyles.toolbarButton,
+                        GUILayout.Width(50)))
                     filterType = filterType == DiffType.Removed ? null : DiffType.Removed;
-                if (GUILayout.Toggle(filterType == DiffType.Modified, "変更", EditorStyles.toolbarButton, GUILayout.Width(50)))
+                if (GUILayout.Toggle(filterType == DiffType.Modified, "変更", EditorStyles.toolbarButton,
+                        GUILayout.Width(50)))
                     filterType = filterType == DiffType.Modified ? null : DiffType.Modified;
 
                 GUILayout.Space(10);
@@ -180,17 +186,15 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawDiffList()
         {
-            using (var scroll = new EditorGUILayout.ScrollViewScope(scrollPosition))
+            using var scroll = new EditorGUILayout.ScrollViewScope(scrollPosition);
+            scrollPosition = scroll.scrollPosition;
+
+            foreach (var diff in diffResult.Diffs)
             {
-                scrollPosition = scroll.scrollPosition;
+                if (!ShouldShowDiff(diff))
+                    continue;
 
-                foreach (var diff in diffResult.Diffs)
-                {
-                    if (!ShouldShowDiff(diff))
-                        continue;
-
-                    DrawDiffEntry(diff);
-                }
+                DrawDiffEntry(diff);
             }
         }
 
@@ -211,85 +215,83 @@ namespace Xeon.XScriptableDB.Editor
             var isSelected = selectedKeys.Contains(diff.PrimaryKey);
             var canSelect = diff.DiffType != DiffType.Unchanged;
 
-            using (new EditorGUILayout.VerticalScope("Box"))
+            using var _ = new EditorGUILayout.VerticalScope("Box");
+            using (new EditorGUILayout.HorizontalScope())
             {
-                using (new EditorGUILayout.HorizontalScope())
+                // チェックボックス
+                EditorGUI.BeginDisabledGroup(!canSelect);
+                var newSelected = EditorGUILayout.Toggle(isSelected, GUILayout.Width(20));
+                if (newSelected != isSelected && canSelect)
                 {
-                    // チェックボックス
-                    EditorGUI.BeginDisabledGroup(!canSelect);
-                    var newSelected = EditorGUILayout.Toggle(isSelected, GUILayout.Width(20));
-                    if (newSelected != isSelected && canSelect)
-                    {
-                        if (newSelected)
-                            selectedKeys.Add(diff.PrimaryKey);
-                        else
-                            selectedKeys.Remove(diff.PrimaryKey);
-                    }
-                    EditorGUI.EndDisabledGroup();
-
-                    // 差分タイプアイコン
-                    var icon = diff.DiffType switch
-                    {
-                        DiffType.Added => "[+]",
-                        DiffType.Removed => "[-]",
-                        DiffType.Modified => "[*]",
-                        _ => "[=]"
-                    };
-                    EditorGUILayout.LabelField(icon, style, GUILayout.Width(30));
-
-                    // PrimaryKey
-                    EditorGUILayout.LabelField($"Key: {diff.PrimaryKey}", style, GUILayout.Width(150));
-
-                    // 変更フィールド数
-                    if (diff.DiffType == DiffType.Modified)
-                    {
-                        EditorGUILayout.LabelField($"({diff.ChangedFieldCount} fields changed)", GUILayout.Width(120));
-                    }
-
-                    GUILayout.FlexibleSpace();
+                    if (newSelected)
+                        selectedKeys.Add(diff.PrimaryKey);
+                    else
+                        selectedKeys.Remove(diff.PrimaryKey);
                 }
 
-                // フィールド詳細
-                if (diff.DiffType == DiffType.Modified && diff.FieldDiffs.Count > 0)
-                {
-                    EditorGUI.indentLevel++;
-                    foreach (var fieldDiff in diff.FieldDiffs)
-                    {
-                        if (!fieldDiff.HasChanged)
-                            continue;
+                EditorGUI.EndDisabledGroup();
 
-                        DrawFieldDiff(fieldDiff);
-                    }
-                    EditorGUI.indentLevel--;
-                }
-                else if (diff.DiffType == DiffType.Added && diff.NewRecord != null)
+                // 差分タイプアイコン
+                var icon = diff.DiffType switch
                 {
-                    EditorGUI.indentLevel++;
-                    DrawRecordSummary(diff.NewRecord, addedStyle);
-                    EditorGUI.indentLevel--;
-                }
-                else if (diff.DiffType == DiffType.Removed && diff.OldRecord != null)
+                    DiffType.Added => "[+]",
+                    DiffType.Removed => "[-]",
+                    DiffType.Modified => "[*]",
+                    _ => "[=]"
+                };
+                EditorGUILayout.LabelField(icon, style, GUILayout.Width(30));
+
+                // PrimaryKey
+                EditorGUILayout.LabelField($"Key: {diff.PrimaryKey}", style, GUILayout.Width(150));
+
+                // 変更フィールド数
+                if (diff.DiffType == DiffType.Modified)
                 {
-                    EditorGUI.indentLevel++;
-                    DrawRecordSummary(diff.OldRecord, removedStyle);
-                    EditorGUI.indentLevel--;
+                    EditorGUILayout.LabelField($"({diff.ChangedFieldCount} fields changed)", GUILayout.Width(120));
                 }
+
+                GUILayout.FlexibleSpace();
+            }
+
+            // フィールド詳細
+            if (diff.DiffType == DiffType.Modified && diff.FieldDiffs.Count > 0)
+            {
+                EditorGUI.indentLevel++;
+                foreach (var fieldDiff in diff.FieldDiffs)
+                {
+                    if (!fieldDiff.HasChanged)
+                        continue;
+
+                    DrawFieldDiff(fieldDiff);
+                }
+
+                EditorGUI.indentLevel--;
+            }
+            else if (diff.DiffType == DiffType.Added && diff.NewRecord != null)
+            {
+                EditorGUI.indentLevel++;
+                DrawRecordSummary(diff.NewRecord, addedStyle);
+                EditorGUI.indentLevel--;
+            }
+            else if (diff.DiffType == DiffType.Removed && diff.OldRecord != null)
+            {
+                EditorGUI.indentLevel++;
+                DrawRecordSummary(diff.OldRecord, removedStyle);
+                EditorGUI.indentLevel--;
             }
         }
 
         private void DrawFieldDiff(FieldDiff fieldDiff)
         {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                EditorGUILayout.LabelField(fieldDiff.FieldName, GUILayout.Width(120));
+            using var _ = new EditorGUILayout.HorizontalScope();
+            EditorGUILayout.LabelField(fieldDiff.FieldName, GUILayout.Width(120));
 
-                var oldStr = FormatValue(fieldDiff.OldValue);
-                var newStr = FormatValue(fieldDiff.NewValue);
+            var oldStr = FormatValue(fieldDiff.OldValue);
+            var newStr = FormatValue(fieldDiff.NewValue);
 
-                EditorGUILayout.LabelField(oldStr, removedStyle, GUILayout.Width(150));
-                EditorGUILayout.LabelField("→", GUILayout.Width(20));
-                EditorGUILayout.LabelField(newStr, addedStyle, GUILayout.Width(150));
-            }
+            EditorGUILayout.LabelField(oldStr, removedStyle, GUILayout.Width(150));
+            EditorGUILayout.LabelField("→", GUILayout.Width(20));
+            EditorGUILayout.LabelField(newStr, addedStyle, GUILayout.Width(150));
         }
 
         private void DrawRecordSummary(object record, GUIStyle style)
@@ -301,21 +303,19 @@ namespace Xeon.XScriptableDB.Editor
             var fields = ReflectionUtility.GetSerializableFields(type);
             var count = 0;
 
-            using (new EditorGUILayout.HorizontalScope())
+            using var _ = new EditorGUILayout.HorizontalScope();
+            foreach (var field in fields)
             {
-                foreach (var field in fields)
+                if (count >= 4)
                 {
-                    if (count >= 4)
-                    {
-                        EditorGUILayout.LabelField("...", style, GUILayout.Width(30));
-                        break;
-                    }
-
-                    var value = field.GetValue(record);
-                    var str = FormatValue(value);
-                    EditorGUILayout.LabelField($"{field.Name}: {str}", style, GUILayout.Width(150));
-                    count++;
+                    EditorGUILayout.LabelField("...", style, GUILayout.Width(30));
+                    break;
                 }
+
+                var value = field.GetValue(record);
+                var str = FormatValue(value);
+                EditorGUILayout.LabelField($"{field.Name}: {str}", style, GUILayout.Width(150));
+                count++;
             }
         }
 
@@ -365,27 +365,27 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.Space(10);
 
-            using (new EditorGUILayout.HorizontalScope())
+            using var _ = new EditorGUILayout.HorizontalScope();
+            var selectedCount = selectedKeys.Count;
+            EditorGUILayout.LabelField($"選択中: {selectedCount}件");
+
+            GUILayout.FlexibleSpace();
+
+            EditorGUI.BeginDisabledGroup(selectedCount == 0 || targetTable == null);
+            if (GUILayout.Button("選択した変更を適用", GUILayout.Width(150), GUILayout.Height(30)))
             {
-                var selectedCount = selectedKeys.Count;
-                EditorGUILayout.LabelField($"選択中: {selectedCount}件");
-
-                GUILayout.FlexibleSpace();
-
-                EditorGUI.BeginDisabledGroup(selectedCount == 0 || targetTable == null);
-                if (GUILayout.Button("選択した変更を適用", GUILayout.Width(150), GUILayout.Height(30)))
-                {
-                    ApplySelectedChanges();
-                }
-                EditorGUI.EndDisabledGroup();
-
-                EditorGUI.BeginDisabledGroup(targetTable == null || importedRecords == null);
-                if (GUILayout.Button("全ての変更を適用", GUILayout.Width(150), GUILayout.Height(30)))
-                {
-                    ApplyAllChanges();
-                }
-                EditorGUI.EndDisabledGroup();
+                ApplySelectedChanges();
             }
+
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUI.BeginDisabledGroup(targetTable == null || importedRecords == null);
+            if (GUILayout.Button("全ての変更を適用", GUILayout.Width(150), GUILayout.Height(30)))
+            {
+                ApplyAllChanges();
+            }
+
+            EditorGUI.EndDisabledGroup();
         }
 
         private void ApplySelectedChanges()
@@ -401,8 +401,8 @@ namespace Xeon.XScriptableDB.Editor
             }
 
             if (!EditorUtility.DisplayDialog("確認",
-                $"{selectedKeys.Count}件の変更を適用しますか？",
-                "適用", "キャンセル"))
+                    $"{selectedKeys.Count}件の変更を適用しますか？",
+                    "適用", "キャンセル"))
                 return;
 
             try
@@ -430,8 +430,8 @@ namespace Xeon.XScriptableDB.Editor
                 return;
 
             if (!EditorUtility.DisplayDialog("確認",
-                "全ての変更を適用しますか？\nこれにより現在のテーブルデータが上書きされます。",
-                "適用", "キャンセル"))
+                    "全ての変更を適用しますか？\nこれにより現在のテーブルデータが上書きされます。",
+                    "適用", "キャンセル"))
                 return;
 
             try
@@ -498,6 +498,7 @@ namespace Xeon.XScriptableDB.Editor
                             // インデックスで削除すると順序が変わるので、nullにしてあとで除去
                             currentRecords[diff.OldIndex] = null;
                         }
+
                         break;
 
                     case DiffType.Modified:
@@ -505,6 +506,7 @@ namespace Xeon.XScriptableDB.Editor
                         {
                             currentRecords[diff.OldIndex] = diff.NewRecord;
                         }
+
                         break;
                 }
             }

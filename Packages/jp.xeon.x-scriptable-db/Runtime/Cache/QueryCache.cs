@@ -4,45 +4,6 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Cache
 {
     /// <summary>
-    /// クエリキャッシュのキー。
-    /// </summary>
-    public readonly struct QueryCacheKey : IEquatable<QueryCacheKey>
-    {
-        public readonly Type TableType;
-        public readonly string QueryType;
-        public readonly object KeyValue;
-
-        public QueryCacheKey(Type tableType, string queryType, object keyValue)
-        {
-            TableType = tableType;
-            QueryType = queryType;
-            KeyValue = keyValue;
-        }
-
-        public bool Equals(QueryCacheKey other)
-        {
-            return TableType == other.TableType &&
-                   QueryType == other.QueryType &&
-                   Equals(KeyValue, other.KeyValue);
-        }
-
-        public override bool Equals(object obj)
-        {
-            return obj is QueryCacheKey other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(TableType, QueryType, KeyValue);
-        }
-
-        public override string ToString()
-        {
-            return $"{TableType.Name}.{QueryType}({KeyValue})";
-        }
-    }
-
-    /// <summary>
     /// クエリ結果のキャッシュ。
     /// </summary>
     public class QueryCache
@@ -76,6 +37,32 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
+        /// キャッシュエントリが最新かをテーブルバージョンと比較して判定する
+        /// </summary>
+        /// <param name="cacheKey">検査対象のキャッシュキー</param>
+        /// <param name="tableType">対応するテーブルの型</param>
+        /// <returns>有効な場合は true、無効で削除した場合は false</returns>
+        private bool ValidateVersion(QueryCacheKey cacheKey, Type tableType)
+        {
+            lock (versionLock)
+            {
+                if (!entryVersions.TryGetValue(cacheKey, out var entryVersion))
+                    return true;
+
+                if (!tableVersions.TryGetValue(tableType, out var tableVersion))
+                    return true;
+
+                if (entryVersion >= tableVersion)
+                    return true;
+
+                // テーブルが更新されているのでキャッシュは無効
+                cache.Remove(cacheKey);
+                entryVersions.Remove(cacheKey);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// キャッシュから値を取得する。
         /// </summary>
         /// <typeparam name="T">値の型</typeparam>
@@ -88,23 +75,11 @@ namespace Xeon.XScriptableDB.Cache
         {
             var cacheKey = new QueryCacheKey(tableType, queryType, keyValue);
 
-            lock (versionLock)
+            // バージョンチェック
+            if (!ValidateVersion(cacheKey, tableType))
             {
-                // バージョンチェック
-                if (entryVersions.TryGetValue(cacheKey, out var entryVersion))
-                {
-                    if (tableVersions.TryGetValue(tableType, out var tableVersion))
-                    {
-                        if (entryVersion < tableVersion)
-                        {
-                            // テーブルが更新されているのでキャッシュは無効
-                            cache.Remove(cacheKey);
-                            entryVersions.Remove(cacheKey);
-                            value = default;
-                            return false;
-                        }
-                    }
-                }
+                value = default;
+                return false;
             }
 
             if (cache.TryGet(cacheKey, out var obj))
@@ -160,14 +135,7 @@ namespace Xeon.XScriptableDB.Cache
         {
             lock (versionLock)
             {
-                if (tableVersions.TryGetValue(tableType, out var version))
-                {
-                    tableVersions[tableType] = version + 1;
-                }
-                else
-                {
-                    tableVersions[tableType] = 1;
-                }
+                tableVersions[tableType] = tableVersions.GetValueOrDefault(tableType, 0) + 1;
             }
         }
 
@@ -219,23 +187,6 @@ namespace Xeon.XScriptableDB.Cache
                 MissCount = MissCount,
                 HitRate = HitRate
             };
-        }
-    }
-
-    /// <summary>
-    /// キャッシュ統計。
-    /// </summary>
-    public struct CacheStatistics
-    {
-        public int Capacity;
-        public int Count;
-        public long HitCount;
-        public long MissCount;
-        public double HitRate;
-
-        public override string ToString()
-        {
-            return $"Cache: {Count}/{Capacity}, Hit: {HitCount}, Miss: {MissCount}, Rate: {HitRate:P1}";
         }
     }
 }

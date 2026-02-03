@@ -77,8 +77,9 @@ namespace Xeon.XScriptableDB.Editor
                 EditorGUILayout.HelpBox("プライマリーキーは必ず一つ設定してください", MessageType.Error);
             if (columnsCache != null && columnsCache.Length != columnsCache.Distinct().Count())
                 EditorGUILayout.HelpBox("同名のカラムは作成できません", MessageType.Error);
-            if (tableDefinition.Indices.Count != tableDefinition.Indices.Distinct().Count())
-                EditorGUILayout.HelpBox("同じカラムを複数のインデックスに指定できません", MessageType.Error);
+            var indexNames = tableDefinition.Indices.Select(idx => idx.Name).ToList();
+            if (indexNames.Count != indexNames.Distinct().Count())
+                EditorGUILayout.HelpBox("同名のインデックスは作成できません", MessageType.Error);
         }
 
         private void LoadYaml()
@@ -143,10 +144,29 @@ namespace Xeon.XScriptableDB.Editor
 
         private void CreateIndicesView()
         {
-            indicesView = new ReorderableList(tableDefinition.Indices, typeof(string));
+            indicesView = new ReorderableList(tableDefinition.Indices, typeof(IndexDefinition));
             indicesView.drawElementCallback = DrawIndex;
+            indicesView.elementHeightCallback = GetIndexElementHeight;
             indicesView.drawHeaderCallback = rect => EditorGUI.LabelField(rect, $"Indices({tableDefinition.Indices.Count})");
+            indicesView.onAddCallback = OnAddIndex;
             UpdateColumnsCache();
+        }
+
+        private void OnAddIndex(ReorderableList list)
+        {
+            var defaultColumn = columnsCache?.Length > 0 ? columnsCache[0] : "";
+            var newIndex = new IndexDefinition("NewIndex")
+            {
+                Columns = new System.Collections.Generic.List<string> { defaultColumn }
+            };
+            tableDefinition.Indices.Add(newIndex);
+        }
+
+        private float GetIndexElementHeight(int index)
+        {
+            var indexDef = tableDefinition.Indices[index];
+            var lineHeight = EditorGUIUtility.singleLineHeight + 2f;
+            return lineHeight * (2 + indexDef.Columns.Count);
         }
 
         private void OnAddColumn(ReorderableList list)
@@ -157,8 +177,15 @@ namespace Xeon.XScriptableDB.Editor
 
         private void OnRemoveColumn(ReorderableList list)
         {
-            if (list.index >= 0 && list.index < tableDefinition.Columns.Count)
-                tableDefinition.Columns.RemoveAt(list.index);
+            if (list.index < 0 || list.index >= tableDefinition.Columns.Count)
+                return;
+
+            var removedColumnName = tableDefinition.Columns[list.index].Name;
+            tableDefinition.Columns.RemoveAt(list.index);
+
+            foreach (var indexDef in tableDefinition.Indices)
+                indexDef.Columns.Remove(removedColumnName);
+
             UpdateColumnsCache();
         }
 
@@ -174,21 +201,50 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawIndex(Rect rect, int index, bool isActive, bool isFocused)
         {
+            var indexDef = tableDefinition.Indices[index];
+            var lineHeight = EditorGUIUtility.singleLineHeight;
+            var padding = 2f;
+            var y = rect.y + padding;
+
+            var nameRect = new Rect(rect.x, y, rect.width * 0.6f, lineHeight);
+            var duplicateRect = new Rect(rect.x + rect.width * 0.65f, y, rect.width * 0.35f, lineHeight);
+            indexDef.Name = EditorGUI.TextField(nameRect, "Name", indexDef.Name);
+            indexDef.AllowDuplicates = EditorGUI.ToggleLeft(duplicateRect, "AllowDuplicates", indexDef.AllowDuplicates);
+            y += lineHeight + padding;
+
+            EditorGUI.LabelField(new Rect(rect.x, y, 60f, lineHeight), "Columns:");
+            var addButtonRect = new Rect(rect.x + 65f, y, 20f, lineHeight);
+            if (GUI.Button(addButtonRect, "+"))
+                indexDef.Columns.Add(columnsCache?.Length > 0 ? columnsCache[0] : "");
+            y += lineHeight + padding;
+
             if (columnsCache == null || columnsCache.Length == 0)
             {
-                EditorGUI.LabelField(rect, "No columns");
-                if (tableDefinition.Indices[index] != string.Empty)
-                    tableDefinition.Indices[index] = string.Empty;
+                EditorGUI.LabelField(new Rect(rect.x + 20f, y, rect.width - 20f, lineHeight), "No columns defined");
                 return;
             }
 
-            var selectedIndex = System.Array.IndexOf(columnsCache, tableDefinition.Indices[index]);
-            if (selectedIndex < 0)
-                selectedIndex = 0;
-            EditorGUI.BeginChangeCheck();
-            selectedIndex = EditorGUI.Popup(rect, selectedIndex, columnsCache);
-            if (EditorGUI.EndChangeCheck())
-                tableDefinition.Indices[index] = columnsCache[selectedIndex];
+            for (var i = 0; i < indexDef.Columns.Count; i++)
+            {
+                var colRect = new Rect(rect.x + 20f, y, rect.width - 60f, lineHeight);
+                var removeRect = new Rect(rect.x + rect.width - 35f, y, 20f, lineHeight);
+
+                var selectedIdx = System.Array.IndexOf(columnsCache, indexDef.Columns[i]);
+                if (selectedIdx < 0)
+                    selectedIdx = 0;
+                EditorGUI.BeginChangeCheck();
+                selectedIdx = EditorGUI.Popup(colRect, $"[{i}]", selectedIdx, columnsCache);
+                if (EditorGUI.EndChangeCheck())
+                    indexDef.Columns[i] = columnsCache[selectedIdx];
+
+                if (GUI.Button(removeRect, "-") && indexDef.Columns.Count > 1)
+                {
+                    indexDef.Columns.RemoveAt(i);
+                    break;
+                }
+
+                y += lineHeight + padding;
+            }
         }
 
         private void DrawColumn(Rect rect, int index, bool isActive, bool isFocused)
