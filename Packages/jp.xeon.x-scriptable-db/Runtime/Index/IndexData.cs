@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
 namespace Xeon.XScriptableDB
@@ -118,7 +119,8 @@ namespace Xeon.XScriptableDB
             EnsureInitialized();
 
             // 文字列キーで検索（ハッシュ衝突回避）
-            var keyString = key.ToString();
+            // インデックス構築時と同じインバリアントカルチャで変換
+            var keyString = ConvertToInvariantString(key);
             return FindByString(keyString);
         }
 
@@ -135,7 +137,8 @@ namespace Xeon.XScriptableDB
 
             EnsureInitialized();
 
-            var keyString = key.ToString();
+            // インデックス構築時と同じインバリアントカルチャで変換
+            var keyString = ConvertToInvariantString(key);
             return FindByString(keyString);
         }
 
@@ -160,6 +163,19 @@ namespace Xeon.XScriptableDB
             }
 
             isInitialized = true;
+        }
+
+        /// <summary>
+        /// カルチャ非依存の文字列変換を行う。
+        /// IndexBuilderと同じ変換ロジックを使用する。
+        /// </summary>
+        private static string ConvertToInvariantString(object value)
+        {
+            return value switch
+            {
+                IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+                _ => value.ToString()
+            };
         }
     }
 }
