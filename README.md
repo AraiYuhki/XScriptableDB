@@ -2,6 +2,8 @@
 
 Unity用のScriptableObjectベースのデータベースパッケージです。マスターデータの管理、CSV/TSVインポート・エクスポート、SQLライクなクエリ機能を提供します。
 
+> **English documentation:** See [README_EN.md](README_EN.md)
+
 ## 特徴
 
 - **ScriptableObjectベース**: Unityのアセットシステムと完全に統合
@@ -462,9 +464,7 @@ Package Managerからインポートできます:
 - v0.5.0: 高度なSQL機能（JOIN, 集計関数, GROUP BY, CASE式, サブクエリ）
 - v0.6.0: 追加ツール（スキーマ比較, マイグレーション, バックアップ, CLI, テストデータ生成）
 - v0.6.1: SQL実行エンジンのバグ修正（GROUP BY, JOIN, COUNT, SUM等）、メニュー整理、テストカバレッジ向上
-
-**計画中の機能:**
-- v1.0.0: 安定版リリース（テストカバレッジ向上、ドキュメント整備、サンプル拡充）
+- **v1.0.0: 安定版リリース（複合SecondaryKey、カルチャ非依存インデックス、Unity Asset Store対応）**
 
 ## ライセンス
 

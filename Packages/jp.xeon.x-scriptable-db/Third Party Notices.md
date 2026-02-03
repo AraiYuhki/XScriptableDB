@@ -1,0 +1,48 @@
+# Third Party Notices
+
+This package includes third-party software components. The following is a list of these components and their licenses.
+
+---
+
+## YamlDotNet
+
+**Version:** 16.2.1
+**License:** MIT License
+**Project URL:** https://github.com/aaubry/YamlDotNet
+
+### License Text
+
+```
+Copyright (c) 2008, 2009, 2010, 2011, 2012, 2013, 2014 Antoine Aubry and contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### Usage in XScriptableDB
+
+YamlDotNet is used for parsing and serializing YAML configuration files in the Table Editor.
+
+---
+
+## Unity Addressables
+
+**License:** Unity Companion License
+**Note:** Unity Addressables is a Unity package dependency, not bundled with this package.
+
+---

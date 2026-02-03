@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-02-03
+
+### Added
+
+#### Composite Secondary Key Index
+- 複合SecondaryKeyインデックス機能を実装
+  - 同じインデックス名を持つ複数フィールドを複合インデックスとしてグループ化
+  - `SecondaryKeyAttribute` に `Order` プロパティを追加（複合キーの順序指定）
+  - `AllowDuplicates` の一貫性チェックと警告機能
+- `FindByCompositeSecondaryKey` / `FindAllByCompositeSecondaryKey` メソッドを追加
+- `CompositeKeyHelper` - 複合キーの文字列生成とハッシュ計算
+
+#### Culture-Invariant String Conversion
+- インデックス検索でカルチャ非依存の文字列変換を使用
+  - float/double: "R" フォーマット（ラウンドトリップ）
+  - DateTime/DateTimeOffset: "O" フォーマット（ISO 8601）
+  - SerializableDateTime: Ticks値
+
+### Fixed
+
+- GROUP BY + JOIN の組み合わせ処理の改善
+- 集計関数（COUNT, SUM, AVG, MIN, MAX）のバグ修正
+- SqlExecutor のリファクタリング
+
+### Changed
+
+- Unity Asset Store リリースに向けた品質向上
+- テストカバレッジの向上
+- ドキュメントの整備
+
+---
+
 ## [0.4.0] - 2026-01-30
 
 ### Added

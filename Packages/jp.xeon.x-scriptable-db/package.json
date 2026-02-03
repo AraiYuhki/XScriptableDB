@@ -1,8 +1,8 @@
 {
   "name": "jp.xeon.x-scriptable-db",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "displayName": "XScriptableDB",
-  "description": "A scriptable object-based database for Unity.",
+  "description": "A high-performance ScriptableObject-based database system for Unity. Features O(log n) binary search with PrimaryKey, O(1) hash lookup with SecondaryKey, zero GC allocation queries, CSV/TSV import/export with diff preview, SQL Editor with JOIN/GROUP BY/aggregation functions, schema comparison, migration tools, and comprehensive validation system.",
   "license": "MIT OR Apache-2.0",
   "unity": "6000.0",
   "documentationUrl": "https://github.com/AraiYuhki/XScriptableDB#readme",
@@ -10,12 +10,15 @@
   "licensesUrl": "https://github.com/AraiYuhki/XScriptableDB/blob/main/Packages/jp.xeon.x-scriptable-db/LICENSE.md",
   "keywords": [
     "database",
-    "DB",
-    "scriptable object",
+    "master-data",
+    "scriptable-object",
     "csv",
     "tsv",
-    "SQL",
-    "sql"
+    "sql",
+    "data-management",
+    "editor-tool",
+    "query",
+    "indexing"
   ],
   "author": {
     "name": "Xeon",
@@ -32,8 +35,18 @@
   "samples": [
     {
       "displayName": "Basic Usage",
-      "description": "基本的な使い方のサンプル。レコード定義、テーブル作成、検索方法の例を含みます。",
+      "description": "Sample demonstrating basic usage including record definition, table creation, and search methods.",
       "path": "Samples~/BasicUsage"
+    },
+    {
+      "displayName": "Composite Index",
+      "description": "Sample demonstrating composite SecondaryKey index for fast multi-field lookups.",
+      "path": "Samples~/CompositeIndex"
+    },
+    {
+      "displayName": "Interactive Demo",
+      "description": "Interactive demo showcasing all major features with UI controls.",
+      "path": "Samples~/Demo"
     }
   ]
 }

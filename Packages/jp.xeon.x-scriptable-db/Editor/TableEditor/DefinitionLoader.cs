@@ -15,6 +15,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .IgnoreUnmatchedProperties()
                 .Build();
 
             var yamlText = File.ReadAllText(path);
