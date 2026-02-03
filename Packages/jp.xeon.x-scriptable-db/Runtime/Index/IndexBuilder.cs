@@ -30,7 +30,7 @@ namespace Xeon.XScriptableDB
 
             foreach (var (indexName, members) in groups)
             {
-                var allowDuplicates = members[0].attribute.AllowDuplicates;
+                var allowDuplicates = ResolveAllowDuplicates(indexName, members);
                 IndexData indexData;
 
                 if (members.Count == 1)
@@ -68,7 +68,7 @@ namespace Xeon.XScriptableDB
                 return null;
             }
 
-            var allowDuplicates = members[0].attribute.AllowDuplicates;
+            var allowDuplicates = ResolveAllowDuplicates(indexName, members);
             if (members.Count == 1)
             {
                 var (member, _) = members[0];
@@ -128,7 +128,22 @@ namespace Xeon.XScriptableDB
             }
 
             foreach (var key in result.Keys.ToList())
-                result[key] = result[key].OrderBy(item => item.attribute.Order).ToList();
+            {
+                // OrderBy + ThenBy でメンバー名をタイブレーカーとして使用（決定的な順序を保証）
+                result[key] = result[key]
+                    .OrderBy(item => item.attribute.Order)
+                    .ThenBy(item => item.member.Name)
+                    .ToList();
+
+                // 同じOrder値を持つメンバーがある場合は警告
+                var orders = result[key].Select(item => item.attribute.Order).ToList();
+                if (orders.Distinct().Count() != orders.Count)
+                {
+                    Debug.LogWarning(
+                        $"Composite index '{key}' has members with duplicate Order values. " +
+                        $"Member name is used as tie-breaker, but explicit unique Order values are recommended.");
+                }
+            }
 
             return result;
         }
@@ -165,6 +180,49 @@ namespace Xeon.XScriptableDB
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 複合インデックスメンバーのAllowDuplicates設定を解決する。
+        /// 全メンバーで一貫した設定を強制し、不一致の場合は警告を出力して最も制限的な設定（false）を使用する。
+        /// </summary>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="members">メンバーと属性のリスト</param>
+        /// <returns>解決されたAllowDuplicates値</returns>
+        private static bool ResolveAllowDuplicates(
+            string indexName,
+            List<(MemberInfo member, SecondaryKeyAttribute attribute)> members)
+        {
+            if (members.Count == 0)
+                return true;
+
+            if (members.Count == 1)
+                return members[0].attribute.AllowDuplicates;
+
+            var firstValue = members[0].attribute.AllowDuplicates;
+            var hasInconsistency = false;
+
+            for (var i = 1; i < members.Count; i++)
+            {
+                if (members[i].attribute.AllowDuplicates != firstValue)
+                {
+                    hasInconsistency = true;
+                    break;
+                }
+            }
+
+            if (hasInconsistency)
+            {
+                var memberSettings = string.Join(", ",
+                    members.Select(m => $"{m.member.Name}={m.attribute.AllowDuplicates}"));
+                Debug.LogWarning(
+                    $"Composite index '{indexName}' has inconsistent AllowDuplicates settings: {memberSettings}. " +
+                    $"Using the most restrictive setting (false). " +
+                    $"Set all members to the same value to avoid this warning.");
+                return false;
+            }
+
+            return firstValue;
         }
 
         private static IndexData BuildSingleFieldIndex<T>(
