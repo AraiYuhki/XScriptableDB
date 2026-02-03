@@ -76,6 +76,9 @@ namespace Xeon.XScriptableDB
             {
                 float f => f.ToString("R", CultureInfo.InvariantCulture),
                 double d => d.ToString("R", CultureInfo.InvariantCulture),
+                DateTime dateTime => dateTime.ToString("O", CultureInfo.InvariantCulture),
+                DateTimeOffset dateTimeOffset => dateTimeOffset.ToString("O", CultureInfo.InvariantCulture),
+                SerializableDateTime sdt => sdt.Ticks.ToString(CultureInfo.InvariantCulture),
                 IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
                 _ => value.ToString()
             };
