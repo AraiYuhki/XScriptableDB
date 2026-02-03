@@ -68,11 +68,14 @@ namespace Xeon.XScriptableDB
 
         /// <summary>
         /// カルチャ非依存の文字列変換を行う。
+        /// float/doubleはラウンドトリップフォーマットを使用して精度を保持する。
         /// </summary>
         private static string ConvertToInvariantString(object value)
         {
             return value switch
             {
+                float f => f.ToString("R", CultureInfo.InvariantCulture),
+                double d => d.ToString("R", CultureInfo.InvariantCulture),
                 IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
                 _ => value.ToString()
             };
