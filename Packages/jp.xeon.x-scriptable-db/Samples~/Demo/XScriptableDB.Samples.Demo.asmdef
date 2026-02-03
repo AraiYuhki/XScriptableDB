@@ -1,0 +1,16 @@
+{
+    "name": "XScriptableDB.Samples.Demo",
+    "rootNamespace": "XScriptableDB.Samples.Demo",
+    "references": [
+        "Xeon.XScriptableDB"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

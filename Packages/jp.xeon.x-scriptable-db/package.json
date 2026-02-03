@@ -47,6 +47,26 @@
       "displayName": "Interactive Demo",
       "description": "Interactive demo showcasing all major features with UI controls.",
       "path": "Samples~/Demo"
+    },
+    {
+      "displayName": "CSV Import/Export",
+      "description": "Sample demonstrating CSV/TSV import/export with encoding options, delimiter settings, and diff preview.",
+      "path": "Samples~/CsvImportExport"
+    },
+    {
+      "displayName": "Validation",
+      "description": "Sample demonstrating data validation with attributes (Required, Range, StringLength, ForeignKey, Compare).",
+      "path": "Samples~/Validation"
+    },
+    {
+      "displayName": "Foreign Key Reference",
+      "description": "Sample demonstrating foreign key references between tables with practical item/recipe system.",
+      "path": "Samples~/ForeignKeyReference"
+    },
+    {
+      "displayName": "QueryResult (Zero GC)",
+      "description": "Sample demonstrating zero GC allocation query patterns with QueryResult ref struct and performance benchmarks.",
+      "path": "Samples~/QueryResultZeroGC"
     }
   ]
 }
