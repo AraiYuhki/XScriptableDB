@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using Xeon.XScriptableDB.IO;
@@ -22,7 +23,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         /// <param name="encoding">エンコーディング（nullの場合は自動検出）</param>
         /// <param name="delimiter">区切り文字（デフォルト: カンマ）</param>
         /// <returns>インポートしたレコード数</returns>
-        public int ImportCsv(string filePath, Encoding encoding = null, char delimiter = ',')
+        public int ImportCsv(string filePath, Encoding encoding = null, string delimiter = ",")
         {
             if (!File.Exists(filePath))
             {
@@ -37,7 +38,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
             var records = CsvParser.Parse<CharacterRecord>(csvText, delimiter);
 
 #if UNITY_EDITOR
-            characterTable.SetRecords(records);
+            characterTable.SetRecords(records.ToArray());
             UnityEditor.EditorUtility.SetDirty(characterTable);
             Debug.Log($"インポート完了: {records.Count}件のレコード");
 #endif
@@ -52,7 +53,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         /// <param name="encoding">エンコーディング（nullの場合は自動検出）</param>
         /// <param name="delimiter">区切り文字</param>
         /// <returns>プレビュー結果</returns>
-        public ImportPreviewResult PreviewImport(string filePath, Encoding encoding = null, char delimiter = ',')
+        public ImportPreviewResult PreviewImport(string filePath, Encoding encoding = null, string delimiter = ",")
         {
             if (!File.Exists(filePath))
             {
@@ -112,14 +113,14 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         /// <param name="encoding">エンコーディング</param>
         /// <param name="delimiter">区切り文字</param>
         /// <param name="sortByPrimaryKey">主キーでソートするか</param>
-        public void ExportCsv(string filePath, Encoding encoding, char delimiter = ',', bool sortByPrimaryKey = true)
+        public void ExportCsv(string filePath, Encoding encoding, string delimiter = ",", bool sortByPrimaryKey = true)
         {
             var records = new List<CharacterRecord>(characterTable.All);
 
             if (sortByPrimaryKey)
                 records.Sort((a, b) => a.Id.CompareTo(b.Id));
 
-            var csvText = CsvParser.ToCSV(records, delimiter);
+            var csvText = CsvParser.ToCSV<CharacterRecord>(records, delimiter);
             File.WriteAllText(filePath, csvText, encoding);
 
             Debug.Log($"エクスポート完了: {filePath} ({records.Count}件)");
@@ -128,7 +129,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         /// <summary>
         /// 現在のテーブルのレコード数を取得する。
         /// </summary>
-        public int RecordCount => characterTable?.RecordCount ?? 0;
+        public int RecordCount => characterTable?.Count ?? 0;
 
         /// <summary>
         /// 現在のテーブルの全レコードを取得する。

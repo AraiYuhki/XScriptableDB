@@ -26,10 +26,10 @@ namespace XScriptableDB.Samples.Demo
         private int price;
 
         // 複合インデックス: Category + Rarity
-        [SecondaryKey(Name = "CategoryRarity", Order = 0)]
+        [SecondaryKey("CategoryRarity", 0)]
         public string CategoryForIndex => category;
 
-        [SecondaryKey(Name = "CategoryRarity", Order = 1)]
+        [SecondaryKey("CategoryRarity", 1)]
         public int RarityForIndex => rarity;
 
         public int Id => id;

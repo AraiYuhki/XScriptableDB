@@ -19,10 +19,10 @@ namespace XScriptableDB.Samples.CompositeIndex
 
         // 複合インデックス: CategorySubCategory
         // 同じName属性を持つフィールドがグループ化される
-        [SerializeField, SecondaryKey(Name = "CategorySubCategory", Order = 0)]
+        [SerializeField, SecondaryKey("CategorySubCategory",  0)]
         private string category;
 
-        [SerializeField, SecondaryKey(Name = "CategorySubCategory", Order = 1)]
+        [SerializeField, SecondaryKey("CategorySubCategory", 1)]
         private string subCategory;
 
         // 単一のSecondaryKey

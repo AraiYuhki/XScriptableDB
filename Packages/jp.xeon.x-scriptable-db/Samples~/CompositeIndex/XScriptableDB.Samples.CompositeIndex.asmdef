@@ -2,7 +2,7 @@
     "name": "XScriptableDB.Samples.CompositeIndex",
     "rootNamespace": "XScriptableDB.Samples.CompositeIndex",
     "references": [
-        "Xeon.XScriptableDB"
+        "jp.xeon.x-scriptable-db.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

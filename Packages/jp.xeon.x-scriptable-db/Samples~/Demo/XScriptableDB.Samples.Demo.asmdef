@@ -2,7 +2,7 @@
     "name": "XScriptableDB.Samples.Demo",
     "rootNamespace": "XScriptableDB.Samples.Demo",
     "references": [
-        "Xeon.XScriptableDB"
+        "jp.xeon.x-scriptable-db.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

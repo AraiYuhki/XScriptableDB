@@ -10,7 +10,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
     /// 日本語のCSV列名を使用して、企画担当者が編集しやすいようにしている。
     /// </summary>
     [Serializable]
-    public class CharacterRecord
+    public class CharacterRecord : CsvData
     {
         [SerializeField, CsvColumn("ID"), PrimaryKey]
         private int id;

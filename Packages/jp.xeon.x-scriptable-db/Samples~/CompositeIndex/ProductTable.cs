@@ -8,7 +8,7 @@ namespace XScriptableDB.Samples.CompositeIndex
     /// 複合SecondaryKeyによる高速検索をサポート。
     /// </summary>
     [CreateAssetMenu(fileName = "ProductTable", menuName = "XScriptableDB/Samples/ProductTable")]
-    public class ProductTable : TableAsset<int, ProductRecord>
+    public class ProductTable : TableAsset<ProductRecord, int>
     {
         /// <summary>
         /// カテゴリとサブカテゴリで商品を検索する（O(1)）。
@@ -18,7 +18,7 @@ namespace XScriptableDB.Samples.CompositeIndex
         /// <returns>該当する商品の配列</returns>
         public ProductRecord[] FindByCategory(string category, string subCategory)
         {
-            return FindAllByCompositeSecondaryKey("CategorySubCategory", category, subCategory);
+            return FindAllBySecondaryKeyAsArray("CategorySubCategory", category, subCategory);
         }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace XScriptableDB.Samples.CompositeIndex
         /// <returns>該当する商品の配列</returns>
         public ProductRecord[] FindByBrand(string brand)
         {
-            return FindAllBySecondaryKey("Brand", brand);
+            return FindAllBySecondaryKeyAsArray("Brand", brand);
         }
     }
 }

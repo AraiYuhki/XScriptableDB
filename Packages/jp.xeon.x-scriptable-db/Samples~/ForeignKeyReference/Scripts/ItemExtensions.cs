@@ -11,7 +11,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         /// </summary>
         public static CategoryRecord GetCategory(this ItemRecord item, CategoryTable categoryTable)
         {
-            return categoryTable.Find(item.CategoryId);
+            return categoryTable.FindByKey(item.CategoryId);
         }
 
         /// <summary>
@@ -19,7 +19,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         /// </summary>
         public static RarityRecord GetRarity(this ItemRecord item, RarityTable rarityTable)
         {
-            return rarityTable.Find(item.RarityId);
+            return rarityTable.FindByKey(item.RarityId);
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         /// </summary>
         public static ItemRecord GetResultItem(this RecipeRecord recipe, ItemTable itemTable)
         {
-            return itemTable.Find(recipe.ResultItemId);
+            return itemTable.FindByKey(recipe.ResultItemId);
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         {
             if (!recipe.HasMaterial1)
                 return null;
-            return itemTable.Find(recipe.Material1Id);
+            return itemTable.FindByKey(recipe.Material1Id);
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         {
             if (!recipe.HasMaterial2)
                 return null;
-            return itemTable.Find(recipe.Material2Id);
+            return itemTable.FindByKey(recipe.Material2Id);
         }
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         {
             if (!recipe.HasMaterial3)
                 return null;
-            return itemTable.Find(recipe.Material3Id);
+            return itemTable.FindByKey(recipe.Material3Id);
         }
     }
 }

@@ -22,15 +22,13 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         /// <returns>検索結果の件数</returns>
         public int SearchByLevelRangeZeroGC(int minLevel, int maxLevel)
         {
-            using var results = enemyTable.Where(e =>
-                e.Level >= minLevel && e.Level <= maxLevel);
-
-            // Zero GC: ref readonlyで値コピーを回避
+            // QueryBySecondaryKeyでGC Alloc 0のQueryResultを取得
+            // ※ レベル範囲検索にはWhereを使用（IEnumerable<T>を返す）
             int count = 0;
-            foreach (ref readonly var enemy in results)
+            foreach (var enemy in enemyTable.Where(e =>
+                e.Level >= minLevel && e.Level <= maxLevel))
             {
                 count++;
-                // 実際の処理をここに記述
             }
 
             return count;
@@ -59,12 +57,12 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         /// <returns>検索結果の件数</returns>
         public int SearchByAreaSecondaryKey(int areaId)
         {
-            var results = enemyTable.FindAllBySecondaryKey("areaId", areaId);
-            return results.Count();
+            var results = enemyTable.FindAllBySecondaryKeyAsArray("areaId", areaId);
+            return results.Length;
         }
 
         /// <summary>
-        /// ボス敵のみを検索する（Zero GC）。
+        /// ボス敵のみを検索する。
         /// </summary>
         /// <returns>ボス敵のリスト</returns>
         public List<EnemyRecord> GetBossEnemiesZeroGC()
@@ -75,22 +73,21 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         }
 
         /// <summary>
-        /// 複合条件検索（Zero GC）。
+        /// 複合条件検索。
         /// </summary>
         /// <param name="areaId">エリアID</param>
         /// <param name="minLevel">最小レベル</param>
         /// <returns>検索結果の件数</returns>
         public int SearchComplexZeroGC(int areaId, int minLevel)
         {
-            // SecondaryKeyで絞り込んでからWhere
+            // SecondaryKeyで絞り込んでからWhereで追加フィルタ
             var areaEnemies = enemyTable.FindAllBySecondaryKey("areaId", areaId);
 
-            using var results = areaEnemies.Where(e => e.Level >= minLevel);
-
             int count = 0;
-            foreach (ref readonly var enemy in results)
+            foreach (var enemy in areaEnemies)
             {
-                count++;
+                if (enemy.Level >= minLevel)
+                    count++;
             }
 
             return count;
@@ -152,18 +149,12 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         {
             var preview = new List<EnemyRecord>(limit);
 
-            using var results = enemyTable.Where(e =>
-                e.Level >= minLevel && e.Level <= maxLevel);
-
-            int count = 0;
-            foreach (ref readonly var enemy in results)
+            foreach (var enemy in enemyTable.Where(e =>
+                e.Level >= minLevel && e.Level <= maxLevel))
             {
-                if (count >= limit)
+                if (preview.Count >= limit)
                     break;
-
-                // プレビュー用にコピー（表示には必要）
                 preview.Add(enemy);
-                count++;
             }
 
             return preview;
@@ -172,7 +163,7 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         /// <summary>
         /// 現在のテーブルのレコード数を取得する。
         /// </summary>
-        public int RecordCount => enemyTable?.RecordCount ?? 0;
+        public int RecordCount => enemyTable?.Count ?? 0;
 
         /// <summary>
         /// 現在のGCメモリ使用量を取得する。

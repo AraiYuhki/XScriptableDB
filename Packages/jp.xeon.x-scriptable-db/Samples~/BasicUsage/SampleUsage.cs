@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 using Xeon.XScriptableDB;
 
@@ -25,16 +26,16 @@ namespace XScriptableDB.Samples
 
             // PrimaryKeyで検索（O(log n)）
             Debug.Log("=== PrimaryKey検索 ===");
-            var item = itemTable.Find(1001);
+            var item = itemTable.FindByKey(1001);
             if (item != null)
             {
                 Debug.Log($"Found: {item}");
             }
 
-            // TryFindで安全に検索
-            if (itemTable.TryFind(1002, out var item2))
+            // TryFindByKeyで安全に検索
+            if (itemTable.TryFindByKey(1002, out var item2))
             {
-                Debug.Log($"Found with TryFind: {item2}");
+                Debug.Log($"Found with TryFindByKey: {item2}");
             }
 
             // ========================================
@@ -44,7 +45,7 @@ namespace XScriptableDB.Samples
             Debug.Log("=== SecondaryKey検索 ===");
 
             // カテゴリで検索（O(1)）
-            var weapons = itemTable.FindAllBySecondaryKey("Category", "Weapon");
+            var weapons = itemTable.FindAllBySecondaryKeyAsArray("Category", "Weapon");
             Debug.Log($"Weapons count: {weapons.Length}");
             foreach (var weapon in weapons)
             {
@@ -52,7 +53,7 @@ namespace XScriptableDB.Samples
             }
 
             // レアリティで検索
-            var rareItems = itemTable.FindAllBySecondaryKey("Rarity", 3);
+            var rareItems = itemTable.FindAllBySecondaryKeyAsArray("Rarity", 3);
             Debug.Log($"Rarity 3 items: {rareItems.Length}");
 
             // ========================================
@@ -61,22 +62,20 @@ namespace XScriptableDB.Samples
 
             Debug.Log("=== QueryResult検索（GC Alloc 0）===");
 
-            // usingステートメントで自動的にDisposeされます
-            using (var result = itemTable.Where(r => r.Price > 500))
+            // QueryBySecondaryKeyでGC Alloc 0のQueryResultを取得
+            var result = itemTable.QueryBySecondaryKey("Category", "Weapon");
+            Debug.Log($"Weapons via QueryResult: {result.Count}");
+            foreach (var weaponItem in result)
             {
-                Debug.Log($"Items with price > 500: {result.Count}");
-
-                // foreachで列挙（ref readonlyでコピーを避ける）
-                foreach (ref readonly var expensiveItem in result)
-                {
-                    Debug.Log($"  - {expensiveItem.Name}: {expensiveItem.Price}G");
-                }
+                Debug.Log($"  - {weaponItem.Name}: {weaponItem.Price}G");
             }
 
-            // 複合条件
-            using (var result = itemTable.Where(r => r.Category == "Weapon" && r.Attack > 20))
+            // Where()で条件検索（IEnumerable<T>を返す）
+            var expensiveItems = itemTable.Where(r => r.Price > 500);
+            Debug.Log("Items with price > 500:");
+            foreach (var expensiveItem in expensiveItems)
             {
-                Debug.Log($"Strong weapons: {result.Count}");
+                Debug.Log($"  - {expensiveItem.Name}: {expensiveItem.Price}G");
             }
 
             // ========================================

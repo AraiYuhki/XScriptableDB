@@ -48,7 +48,7 @@ namespace XScriptableDB.Samples.CompositeIndex
             }
 
             // 直接メソッドを使用する場合
-            var outdoorBags = productTable.FindAllByCompositeSecondaryKey(
+            var outdoorBags = productTable.FindAllBySecondaryKeyAsArray(
                 "CategorySubCategory", "Outdoor", "Bags");
             Debug.Log($"Outdoor/Bags: {outdoorBags.Length}件");
         }
@@ -91,9 +91,9 @@ namespace XScriptableDB.Samples.CompositeIndex
 
             // 複合キーを使わない場合との比較
             Debug.Log("参考: Where()で同じ検索をした場合（O(n)）");
-            using var result = productTable.Where(
+            var count = productTable.Count(
                 p => p.Category == "Electronics" && p.SubCategory == "Keyboard");
-            Debug.Log($"  結果: {result.Count}件（全件スキャンが必要）");
+            Debug.Log($"  結果: {count}件（全件スキャンが必要）");
         }
     }
 }

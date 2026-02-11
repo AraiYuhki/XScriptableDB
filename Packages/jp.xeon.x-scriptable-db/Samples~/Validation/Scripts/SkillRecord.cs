@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
-using Xeon.XScriptableDB;
 using Xeon.XScriptableDB.IO;
 using Xeon.XScriptableDB.Validation;
+using Range = Xeon.XScriptableDB.Validation.RangeAttribute;
 
 namespace Xeon.XScriptableDB.Samples.Validation
 {
@@ -16,7 +16,7 @@ namespace Xeon.XScriptableDB.Samples.Validation
         [SerializeField, CsvColumn("ID"), PrimaryKey]
         private int id;
 
-        [SerializeField, CsvColumn("スキル名"), Required, StringLength(1, 30)]
+        [SerializeField, CsvColumn("スキル名"), Required, StringLength(30)]
         private string name;
 
         [SerializeField, CsvColumn("説明"), StringLength(200)]
@@ -38,7 +38,7 @@ namespace Xeon.XScriptableDB.Samples.Validation
         private TargetType targetType;
 
         [SerializeField, CsvColumn("習得Lv"), Range(1, 100)]
-        [Compare("maxLevel", CompareOperator.LessThanOrEqual)]
+        [Compare("maxLevel", Operator = CompareOperator.LessThanOrEqual)]
         private int requiredLevel;
 
         [SerializeField, CsvColumn("最大Lv"), Range(1, 100)]

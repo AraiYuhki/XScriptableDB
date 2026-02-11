@@ -59,7 +59,7 @@ namespace XScriptableDB.Samples.Demo
                 return;
             }
 
-            var item = itemTable.Find(id);
+            var item = itemTable.FindByKey(id);
             if (item != null)
             {
                 Log($"Found: {item}");
@@ -85,7 +85,7 @@ namespace XScriptableDB.Samples.Demo
                 return;
             }
 
-            var items = itemTable.FindAllBySecondaryKey("Category", category);
+            var items = itemTable.FindAllBySecondaryKeyAsArray("Category", category);
             Log($"Category = \"{category}\": {items.Length}件");
 
             foreach (var item in items)
@@ -116,7 +116,7 @@ namespace XScriptableDB.Samples.Demo
                 return;
             }
 
-            var items = itemTable.FindAllByCompositeSecondaryKey("CategoryRarity", category, rarity);
+            var items = itemTable.FindAllBySecondaryKeyAsArray("CategoryRarity", category, rarity);
             Log($"Category=\"{category}\", Rarity={rarity}: {items.Length}件");
 
             foreach (var item in items)
@@ -140,13 +140,13 @@ namespace XScriptableDB.Samples.Demo
 
             Log($"Price > {minPrice} のアイテム:");
 
-            using var result = itemTable.Where(r => r.Price > minPrice);
-            Log($"  {result.Count}件見つかりました");
-
-            foreach (ref readonly var item in result)
+            var count = 0;
+            foreach (var item in itemTable.Where(r => r.Price > minPrice))
             {
+                count++;
                 Log($"  {item}");
             }
+            Log($"  {count}件見つかりました");
         }
 
         /// <summary>

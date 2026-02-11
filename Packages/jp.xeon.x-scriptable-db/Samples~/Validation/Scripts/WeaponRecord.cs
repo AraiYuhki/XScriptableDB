@@ -3,6 +3,7 @@ using UnityEngine;
 using Xeon.XScriptableDB;
 using Xeon.XScriptableDB.IO;
 using Xeon.XScriptableDB.Validation;
+using Range =  Xeon.XScriptableDB.Validation.RangeAttribute;
 
 namespace Xeon.XScriptableDB.Samples.Validation
 {

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Xeon.XScriptableDB.Validation;
 
@@ -20,7 +21,7 @@ namespace Xeon.XScriptableDB.Samples.Validation
         /// スキルテーブルのバリデーションを実行する。
         /// </summary>
         /// <returns>バリデーション結果</returns>
-        public ValidationResult ValidateSkillTable()
+        public TableValidationResult ValidateSkillTable()
         {
             if (skillTable == null)
             {
@@ -28,10 +29,10 @@ namespace Xeon.XScriptableDB.Samples.Validation
                 return null;
             }
 
-            var validator = new TableValidator();
-            var result = validator.Validate(skillTable);
+            var result = RecordValidator.ValidateTable<SkillRecord>(
+                skillTable, r => r.Id);
 
-            LogValidationResult("SkillTable", result);
+            LogValidationResult(result);
             return result;
         }
 
@@ -39,7 +40,7 @@ namespace Xeon.XScriptableDB.Samples.Validation
         /// 武器テーブルのバリデーション（外部キー検証含む）を実行する。
         /// </summary>
         /// <returns>バリデーション結果</returns>
-        public ValidationResult ValidateWeaponTable()
+        public TableValidationResult ValidateWeaponTable()
         {
             if (weaponTable == null)
             {
@@ -47,15 +48,24 @@ namespace Xeon.XScriptableDB.Samples.Validation
                 return null;
             }
 
-            var validator = new TableValidator();
+            // レコードバリデーション
+            var result = RecordValidator.ValidateTable<WeaponRecord>(
+                weaponTable, r => r.Id);
 
-            // 外部キー検証用にSkillTableを登録
+            LogValidationResult(result);
+
+            // 外部キー検証
             if (skillTable != null)
-                validator.RegisterForeignKeyTable(skillTable);
+            {
+                var context = new ForeignKeyValidationContext();
+                context.RegisterTable(typeof(SkillTable), skillTable);
 
-            var result = validator.Validate(weaponTable);
+                var fkResult = ForeignKeyValidator.ValidateForeignKeys<WeaponRecord>(
+                    weaponTable, context, r => r.Id);
 
-            LogValidationResult("WeaponTable", result);
+                LogValidationResult(fkResult);
+            }
+
             return result;
         }
 
@@ -63,9 +73,9 @@ namespace Xeon.XScriptableDB.Samples.Validation
         /// 全テーブルの一括バリデーションを実行する。
         /// </summary>
         /// <returns>テーブル名とバリデーション結果のディクショナリ</returns>
-        public Dictionary<string, ValidationResult> ValidateAll()
+        public Dictionary<string, TableValidationResult> ValidateAll()
         {
-            var results = new Dictionary<string, ValidationResult>();
+            var results = new Dictionary<string, TableValidationResult>();
 
             var skillResult = ValidateSkillTable();
             if (skillResult != null)
@@ -76,69 +86,42 @@ namespace Xeon.XScriptableDB.Samples.Validation
                 results["WeaponTable"] = weaponResult;
 
             // サマリーログ
-            var totalErrors = 0;
-            var totalWarnings = 0;
-            foreach (var kvp in results)
-            {
-                totalErrors += kvp.Value.ErrorCount;
-                totalWarnings += kvp.Value.WarningCount;
-            }
+            var totalErrors = results.Values.Sum(r => r.TotalErrorCount);
 
-            Debug.Log($"=== 一括バリデーション完了 ===");
+            Debug.Log("=== 一括バリデーション完了 ===");
             Debug.Log($"テーブル数: {results.Count}");
             Debug.Log($"総エラー数: {totalErrors}");
-            Debug.Log($"総警告数: {totalWarnings}");
 
             return results;
         }
 
         /// <summary>
-        /// 特定のレコードのバリデーションエラーを取得する。
-        /// </summary>
-        /// <param name="recordId">レコードID</param>
-        /// <returns>エラーリスト</returns>
-        public List<ValidationError> GetSkillRecordErrors(int recordId)
-        {
-            var result = ValidateSkillTable();
-            if (result == null)
-                return new List<ValidationError>();
-
-            return result.GetErrorsForRecord(recordId);
-        }
-
-        /// <summary>
         /// バリデーション結果をログ出力する。
         /// </summary>
-        private void LogValidationResult(string tableName, ValidationResult result)
+        private void LogValidationResult(TableValidationResult result)
         {
             if (result.IsValid)
             {
-                Debug.Log($"✓ {tableName}: バリデーション成功");
+                Debug.Log($"{result.GetSummary()}");
                 return;
             }
 
-            Debug.LogWarning($"⚠ {tableName}: {result.ErrorCount}件のエラー、{result.WarningCount}件の警告");
+            Debug.LogWarning(result.GetSummary());
 
-            foreach (var error in result.Errors)
+            foreach (var error in result.GetAllErrors())
             {
-                var icon = error.Severity == ValidationSeverity.Error ? "❌" : "⚠️";
-                Debug.LogError($"{icon} [{tableName}] ID={error.RecordId}, {error.FieldName}: {error.Message}");
-            }
-
-            foreach (var warning in result.Warnings)
-            {
-                Debug.LogWarning($"⚠️ [{tableName}] ID={warning.RecordId}, {warning.FieldName}: {warning.Message}");
+                Debug.LogError($"[{result.TableName}] {error}");
             }
         }
 
         /// <summary>
         /// 現在のSkillTableのレコード数を取得する。
         /// </summary>
-        public int SkillRecordCount => skillTable?.RecordCount ?? 0;
+        public int SkillRecordCount => skillTable?.Count ?? 0;
 
         /// <summary>
         /// 現在のWeaponTableのレコード数を取得する。
         /// </summary>
-        public int WeaponRecordCount => weaponTable?.RecordCount ?? 0;
+        public int WeaponRecordCount => weaponTable?.Count ?? 0;
     }
 }

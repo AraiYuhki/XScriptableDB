@@ -27,7 +27,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         /// </summary>
         public ItemDetailInfo GetItemDetail(int itemId)
         {
-            var item = itemTable.Find(itemId);
+            var item = itemTable.FindByKey(itemId);
             if (item == null)
                 return null;
 
@@ -77,7 +77,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         /// </summary>
         public RecipeDetailInfo GetRecipeDetail(int recipeId)
         {
-            var recipe = recipeTable.Find(recipeId);
+            var recipe = recipeTable.FindByKey(recipeId);
             if (recipe == null)
                 return null;
 

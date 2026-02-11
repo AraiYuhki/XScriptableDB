@@ -5,13 +5,13 @@ namespace XScriptableDB.Samples
 {
     /// <summary>
     /// アイテムテーブル。
-    /// TableAsset<TKey, TRecord>を継承して作成します。
+    /// TableAsset<TRecord, TKey>を継承して作成します。
     /// </summary>
     /// <remarks>
     /// CreateAssetMenuを使用することで、Unityのメニューから作成可能になります。
     /// </remarks>
     [CreateAssetMenu(fileName = "ItemTable", menuName = "XScriptableDB/Samples/ItemTable")]
-    public class ItemTable : TableAsset<int, ItemRecord>
+    public class ItemTable : TableAsset<ItemRecord, int>
     {
         // TableAssetの基本機能はすべて継承されます。
         // 追加のメソッドやプロパティが必要な場合はここに実装します。
@@ -21,7 +21,7 @@ namespace XScriptableDB.Samples
         /// </summary>
         public ItemRecord[] GetItemsByCategory(string category)
         {
-            return FindAllBySecondaryKey("Category", category);
+            return FindAllBySecondaryKeyAsArray("Category", category);
         }
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace XScriptableDB.Samples
         /// </summary>
         public ItemRecord[] GetItemsByRarity(int rarity)
         {
-            return FindAllBySecondaryKey("Rarity", rarity);
+            return FindAllBySecondaryKeyAsArray("Rarity", rarity);
         }
     }
 }
