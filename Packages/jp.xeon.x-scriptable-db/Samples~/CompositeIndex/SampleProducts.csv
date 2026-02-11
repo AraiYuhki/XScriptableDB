@@ -1,0 +1,21 @@
+id,name,category,subCategory,brand,price,stock
+1001,ゲーミングマウス Pro,Electronics,Mouse,TechBrand,8900,50
+1002,ワイヤレスマウス,Electronics,Mouse,TechBrand,3200,120
+1003,静音マウス,Electronics,Mouse,OfficePro,2500,80
+1004,メカニカルキーボード,Electronics,Keyboard,TechBrand,15000,30
+1005,コンパクトキーボード,Electronics,Keyboard,OfficePro,6800,45
+1006,エルゴノミクスキーボード,Electronics,Keyboard,ComfortLine,12000,25
+1007,4Kモニター 27インチ,Electronics,Monitor,ViewMaster,45000,15
+1008,ウルトラワイドモニター,Electronics,Monitor,ViewMaster,68000,10
+1009,ゲーミングモニター 144Hz,Electronics,Monitor,TechBrand,35000,20
+1010,コットンTシャツ,Clothing,Tops,CasualWear,2500,200
+1011,ポロシャツ,Clothing,Tops,CasualWear,3800,150
+1012,デニムシャツ,Clothing,Tops,UrbanStyle,5500,80
+1013,スリムジーンズ,Clothing,Bottoms,UrbanStyle,7800,100
+1014,チノパンツ,Clothing,Bottoms,CasualWear,4500,120
+1015,カーゴパンツ,Clothing,Bottoms,OutdoorGear,6200,60
+1016,トレッキングシューズ,Outdoor,Footwear,OutdoorGear,12000,40
+1017,ランニングシューズ,Outdoor,Footwear,SportMax,9800,70
+1018,登山リュック 40L,Outdoor,Bags,OutdoorGear,18000,25
+1019,デイパック,Outdoor,Bags,CasualWear,5500,90
+1020,防水ジャケット,Outdoor,Outerwear,OutdoorGear,25000,35

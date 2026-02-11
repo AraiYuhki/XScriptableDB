@@ -1,0 +1,16 @@
+{
+    "name": "XScriptableDB.Samples.Demo",
+    "rootNamespace": "XScriptableDB.Samples.Demo",
+    "references": [
+        "jp.xeon.x-scriptable-db.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
