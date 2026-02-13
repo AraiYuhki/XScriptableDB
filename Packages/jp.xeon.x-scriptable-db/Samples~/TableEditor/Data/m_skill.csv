@@ -1,0 +1,7 @@
+id,name,element,power,mp_cost,cooldown
+1,Slash,None,120,0,0.0
+2,Fireball,Fire,220,12,2.5
+3,Ice Lance,Ice,180,10,1.8
+4,Thunder Spear,Lightning,260,18,3.2
+5,Heal,Holy,0,8,1.2
+6,Meteor,Fire,520,40,8.0

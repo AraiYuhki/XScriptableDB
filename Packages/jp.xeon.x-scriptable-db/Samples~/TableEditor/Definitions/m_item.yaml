@@ -1,0 +1,30 @@
+tableName: m_item
+isReadOnly: true
+columns:
+  - name: id
+    type: int
+    isPrimaryKey: true
+  - name: name
+    type: string
+  - name: category
+    type: string
+  - name: rarity
+    type: int
+  - name: price
+    type: int
+  - name: is_tradable
+    type: bool
+indices:
+  - name: category
+    columns:
+      - category
+    allowDuplicates: true
+  - name: category_rarity
+    columns:
+      - category
+      - rarity
+    allowDuplicates: true
+  - name: name
+    columns:
+      - name
+    allowDuplicates: false

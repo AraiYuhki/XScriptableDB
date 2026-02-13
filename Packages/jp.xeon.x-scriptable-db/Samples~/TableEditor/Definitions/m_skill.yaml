@@ -1,0 +1,29 @@
+tableName: m_skill
+isReadOnly: true
+columns:
+  - name: id
+    type: int
+    isPrimaryKey: true
+  - name: name
+    type: string
+  - name: element
+    type: string
+  - name: power
+    type: int
+  - name: mp_cost
+    type: int
+  - name: cooldown
+    type: float
+indices:
+  - name: element
+    columns:
+      - element
+    allowDuplicates: true
+  - name: name
+    columns:
+      - name
+  - name: element_power
+    columns:
+      - element
+      - power
+    allowDuplicates: true

@@ -1,0 +1,9 @@
+id,name,category,rarity,price,is_tradable
+1001,Iron Sword,Weapon,1,120,true
+1002,Silver Sword,Weapon,3,980,true
+1003,Wizard Staff,Weapon,2,720,true
+2001,Leather Armor,Armor,1,260,true
+2002,Knight Armor,Armor,4,2400,true
+3001,Healing Potion,Consumable,1,50,true
+3002,Elixir,Consumable,5,5000,false
+4001,Quest Scroll,Quest,2,0,false

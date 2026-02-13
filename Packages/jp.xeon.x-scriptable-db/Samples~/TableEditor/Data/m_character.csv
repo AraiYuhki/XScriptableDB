@@ -1,0 +1,6 @@
+id,name,class,level,hp,attack,defense,primary_skill_id
+1,Alice,Warrior,12,420,68,44,1
+2,Bob,Mage,10,260,85,22,2
+3,Carol,Ranger,11,310,72,30,3
+4,Dave,Paladin,14,500,62,58,5
+5,Eve,Sorcerer,18,290,110,24,6

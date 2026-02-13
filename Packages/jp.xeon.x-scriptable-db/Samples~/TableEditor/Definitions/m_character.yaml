@@ -1,0 +1,37 @@
+tablename: m_character
+isReadOnly: true
+columns:
+  - name: id
+    type: int
+    isPrimaryKey: true
+  - name: name
+    type: string
+  - name: class
+    type: string
+  - name: level
+    type: int
+  - name: hp
+    type: int
+  - name: attack
+    type: int
+  - name: defense
+    type: int
+  - name: primary_skill_id
+    type: int
+indices:
+  - name: class
+    columns:
+      - class
+    allowDuplicates: true
+  - name: primary_skill_id
+    columns:
+      - primary_skill_id
+    allowDuplicates: true
+  - name: class_level
+    columns:
+      - class
+      - level
+    allowDuplicates: true
+  - name: name
+    columns:
+      - name
