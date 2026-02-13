@@ -92,23 +92,21 @@ public class WeaponRecord
 ## 使い方
 
 ```csharp
-var sample = GetComponent<ValidationSample>();
-
-// スキルテーブルの検証
-var skillResult = sample.ValidateSkillTable();
+// スキルテーブルの検証（静的メソッド）
+var skillResult = RecordValidator.ValidateTable<SkillRecord>(skillTable);
 if (!skillResult.IsValid)
 {
-    foreach (var error in skillResult.Errors)
+    foreach (var recordResult in skillResult.RecordResults)
     {
-        Debug.LogError($"ID={error.RecordId}: {error.Message}");
+        foreach (var error in recordResult.Errors)
+        {
+            Debug.LogError($"[{recordResult.RecordIndex}] {error.FieldName}: {error.Message}");
+        }
     }
 }
 
-// 武器テーブルの検証（外部キー含む）
-var weaponResult = sample.ValidateWeaponTable();
-
-// 全テーブル一括検証
-var allResults = sample.ValidateAll();
+// 武器テーブルの外部キー検証（静的メソッド）
+var weaponResult = ForeignKeyValidator.ValidateForeignKeys<WeaponRecord>(weaponTable, context);
 ```
 
 ## エラーデータのテスト

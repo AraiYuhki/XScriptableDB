@@ -14,46 +14,51 @@
 // 従来のLINQ - GC Allocが発生
 var list = records.Where(r => r.IsActive).ToList();
 
-// QueryResult - GC Alloc 0
-using var result = table.Where(r => r.IsActive);
+// QueryBySecondaryKey - GC Alloc 0
+var result = table.QueryBySecondaryKey("Type", "Slime");
 ```
+
+## QueryResultの取得方法
+
+`QueryResult<T>` は `QueryBySecondaryKey()` メソッドから取得します。
+
+```csharp
+// SecondaryKeyによるGC Alloc 0の検索
+var result = table.QueryBySecondaryKey("Type", "Slime");
+```
+
+> **注意**: `Where()` メソッドは `IEnumerable<T>` を返します。`QueryResult<T>` ではありません。
 
 ## 基本的な使い方
 
-### Where句
+### QueryBySecondaryKey
 
 ```csharp
-// 条件に一致するレコードを検索
-using var result = table.Where(r => r.Price > 100);
+// SecondaryKeyで検索し、QueryResultを取得
+var result = table.QueryBySecondaryKey("Type", "Slime");
 
 // 件数を確認
 Debug.Log($"Found: {result.Count} records");
 
 // 列挙
-foreach (ref readonly var record in result)
+foreach (var record in result)
 {
     Debug.Log(record.Name);
 }
 ```
 
-### usingステートメント
+### Where句（IEnumerable版）
 
-`QueryResult` は `IDisposable` を実装しているため、`using` ステートメントを使用します。
+`Where()` は `IEnumerable<T>` を返すため、通常のforeachで使用します。
 
 ```csharp
-// 推奨: usingステートメント
-using var result = table.Where(r => r.IsActive);
-// resultはスコープ終了時に自動的にDispose
+// 条件に一致するレコードを検索（IEnumerable<T>を返す）
+var result = table.Where(r => r.Price > 100);
 
-// または明示的なDispose
-var result = table.Where(r => r.IsActive);
-try
+// 通常のforeachで列挙
+foreach (var record in result)
 {
-    // 処理
-}
-finally
-{
-    result.Dispose();
+    Debug.Log(record.Name);
 }
 ```
 
@@ -62,14 +67,31 @@ finally
 ### Count
 
 ```csharp
-using var result = table.Where(r => r.Hp > 100);
+var result = table.QueryBySecondaryKey("AreaId", 5);
 int count = result.Count;
+```
+
+### IsEmpty
+
+```csharp
+var result = table.QueryBySecondaryKey("Type", "Dragon");
+if (!result.IsEmpty)
+{
+    Debug.Log("Dragons found!");
+}
+```
+
+### First
+
+```csharp
+var result = table.QueryBySecondaryKey("Type", "Slime");
+var first = result.First;  // 最初のレコード、空の場合はnull
 ```
 
 ### インデクサ
 
 ```csharp
-using var result = table.Where(r => r.IsActive);
+var result = table.QueryBySecondaryKey("Type", "Goblin");
 var first = result[0];
 var last = result[result.Count - 1];
 ```
@@ -77,15 +99,16 @@ var last = result[result.Count - 1];
 ### GetEnumerator
 
 ```csharp
-using var result = table.Where(r => r.IsActive);
-foreach (ref readonly var record in result)
+var result = table.QueryBySecondaryKey("Type", "Goblin");
+foreach (var record in result)
 {
-    // ref readonlyでコピーを避ける
     Debug.Log(record.Name);
 }
 ```
 
-## 拡張メソッド
+## 拡張メソッド（テーブルレベル）
+
+以下のメソッドはテーブルに対して直接使用できます。
 
 ### FirstOrDefault
 
@@ -122,8 +145,8 @@ int weakEnemyCount = table.Count(r => r.Hp < 50);
 ### Select
 
 ```csharp
-// 射影（変換）
-using var names = table.Select(r => r.Name);
+// 射影（変換）- IEnumerable<TResult>を返す
+var names = table.Select(r => r.Name);
 foreach (var name in names)
 {
     Debug.Log(name);
@@ -133,22 +156,25 @@ foreach (var name in names)
 ### Skip / Take
 
 ```csharp
-// ページング
-using var result = table.Where(r => r.IsActive);
-using var page = result.Skip(10).Take(10);  // 11-20件目
+// ページング - IEnumerable<T>を返す
+var page = table.Skip(10).Take(10);  // 11-20件目
 ```
 
-## チェーン
+## ToList() / ToArray()
 
-拡張メソッドをチェーンして複雑なクエリを構築できます。
+結果を永続化する必要がある場合は、`ToList()` や `ToArray()` を使用します。ただし、これはGC Allocが発生します。
 
 ```csharp
-// アクティブなレコードの中から、価格が100以上のものを
-// 価格順にソートして、上位5件を取得
-using var result = table
-    .Where(r => r.IsActive && r.Price >= 100)
-    .OrderBy(r => r.Price)
-    .Take(5);
+// QueryResultから配列に変換（GC Allocが発生）
+var result = table.QueryBySecondaryKey("Type", "Goblin");
+var array = result.ToArray();
+
+// QueryResultからリストに変換（GC Allocが発生）
+var list = result.ToList();
+
+// Whereの場合はLINQのToList/ToArrayを使用（GC Allocが発生）
+List<Item> items = table.Where(r => r.IsActive).ToList();
+Item[] itemArray = table.Where(r => r.IsActive).ToArray();
 ```
 
 ## 注意事項
@@ -173,21 +199,16 @@ Action action = () =>
 // NG: asyncメソッド内で使用できない
 async Task ProcessAsync()
 {
-    using var result = table.Where(r => r.IsActive);  // コンパイルエラー
+    var result = table.QueryBySecondaryKey("Type", "Slime");  // コンパイルエラー
 }
 ```
 
-### ToList() / ToArray()
+### Where() と QueryBySecondaryKey() の違い
 
-結果を永続化する必要がある場合は、`ToList()` や `ToArray()` を使用します。ただし、これはGC Allocが発生します。
-
-```csharp
-// GC Allocが発生するが、結果を保存できる
-List<Item> items = table.Where(r => r.IsActive).ToList();
-
-// 配列として取得
-Item[] itemArray = table.Where(r => r.IsActive).ToArray();
-```
+| メソッド | 戻り値の型 | GC Alloc | 用途 |
+|----------|-----------|----------|------|
+| `Where()` | `IEnumerable<T>` | 発生する | 条件によるフィルタリング |
+| `QueryBySecondaryKey()` | `QueryResult<T>` | 0 | SecondaryKeyによる高速検索 |
 
 ## パフォーマンスのヒント
 
@@ -208,7 +229,7 @@ if (table.Any(r => r.IsActive))
 
 ```csharp
 // 高速な条件を先に書く
-using var result = table.Where(r =>
+var result = table.Where(r =>
     r.IsActive &&      // bool比較は高速
     r.Type == "A" &&   // enum/string比較
     ExpensiveCheck(r)  // 重い処理は最後
@@ -217,10 +238,12 @@ using var result = table.Where(r =>
 
 ### インデックスの活用
 
-SecondaryKeyで絞り込んでからQueryを使用：
+SecondaryKeyで絞り込んでからフィルタリング：
 
 ```csharp
-// SecondaryKeyで絞り込み → 追加条件でフィルタ
-var weapons = table.FindAllBySecondaryKey("Category", "Weapon");
-using var result = weapons.AsQueryResult().Where(r => r.Price > 1000);
+// SecondaryKeyで絞り込み（GC Alloc 0）
+var result = table.QueryBySecondaryKey("Category", "Weapon");
+
+// 配列に変換してからLINQで追加フィルタ
+var expensiveWeapons = result.ToArray().Where(r => r.Price > 1000);
 ```

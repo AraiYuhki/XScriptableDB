@@ -177,7 +177,7 @@ var records = CsvParser.ParseFile<CharacterRecord>(filePath, Encoding.UTF8);
 var records = CsvParser.ParseFile<CharacterRecord>(filePath, Encoding.GetEncoding("Shift_JIS"));
 
 // TSVの場合
-var records = CsvParser.ParseFile<CharacterRecord>(filePath, delimiter: '\t');
+var records = CsvParser.ParseFile<CharacterRecord>(filePath, "\t");
 
 // プレビュー付きインポート（Editor）
 TableImporter.ImportWithPreview(characterTable, filePath);
@@ -190,14 +190,14 @@ TableImporter.ImportWithPreview(characterTable, filePath);
 var settings = new ExportSettings
 {
     FilePath = outputPath,
-    Delimiter = ',',
+    Delimiter = ",",
     Encoding = Encoding.UTF8,
     SortByPrimaryKey = true
 };
 TableExporter.Export(characterTable, settings);
 
 // TSVエクスポート
-settings.Delimiter = '\t';
+settings.Delimiter = "\t";
 settings.FilePath = "characters.tsv";
 ```
 

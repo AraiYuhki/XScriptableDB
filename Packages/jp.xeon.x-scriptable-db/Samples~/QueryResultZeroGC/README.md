@@ -33,14 +33,26 @@ QueryResultZeroGC/
 
 ## 基本的な使い方
 
-### Zero GC パターン（推奨）
+### Zero GC パターン（QueryBySecondaryKey、推奨）
 
 ```csharp
-// using文でQueryResultを囲む
-using var results = table.Where(r => r.Level >= 10 && r.Level <= 50);
+// QueryBySecondaryKeyはQueryResult<T>（ref struct）を返す
+using var results = table.QueryBySecondaryKey<EnemyRecord, int, int>("areaId", 2);
 
 // ref readonlyで値コピーを回避
 foreach (ref readonly var enemy in results)
+{
+    Debug.Log(enemy.Name);
+}
+```
+
+### Where パターン（IEnumerable）
+
+```csharp
+// Where()はIEnumerable<T>を返す（using不要）
+var results = table.Where(r => r.Level >= 10 && r.Level <= 50);
+
+foreach (var enemy in results)
 {
     Debug.Log(enemy.Name);
 }
@@ -51,12 +63,6 @@ foreach (ref readonly var enemy in results)
 ```csharp
 // ❌ ToList()でGCアロケーション発生
 var list = table.All.Where(r => r.Level >= 10).ToList();
-
-// ❌ usingなしで使用
-var results = table.Where(r => r.Level >= 10);
-
-// ❌ 値コピーが発生
-foreach (var enemy in results)  // ref readonly なし
 ```
 
 ## パフォーマンス比較
@@ -86,7 +92,8 @@ Debug.Log(result);
 |------|--------|-----------------|------|
 | PrimaryKey検索 | O(log n) | 0 bytes | ID指定検索 |
 | SecondaryKey検索 | O(1) | 0 bytes | カテゴリ等での検索 |
-| Where (Zero GC) | O(n) | 0 bytes | 複雑な条件検索 |
+| QueryBySecondaryKey (Zero GC) | O(1) | 0 bytes | SecondaryKeyでの検索 |
+| Where (IEnumerable) | O(n) | 最小限 | 複雑な条件検索 |
 | Where + ToList | O(n) | ~数KB | 結果を保持したい場合 |
 
 ## ユースケース
@@ -96,29 +103,37 @@ Debug.Log(result);
 ```csharp
 void Update()
 {
-    // 毎フレーム実行してもGCスパイクが発生しない
-    using var nearby = enemyTable.Where(e =>
+    // Where()はIEnumerable<T>を返す
+    var nearby = enemyTable.Where(e =>
         Vector3.Distance(e.Position, player.Position) < range);
 
-    foreach (ref readonly var enemy in nearby)
+    foreach (var enemy in nearby)
     {
         // AI処理
     }
 }
 ```
 
-### SecondaryKeyとの組み合わせ
+### SecondaryKeyによるZero GC検索
 
 ```csharp
-// SecondaryKeyで高速フィルタ後、さらに条件絞り込み
-var areaEnemies = table.FindAllBySecondaryKey("areaId", 2);
-using var bosses = areaEnemies.Where(e => e.IsBoss);
+// QueryBySecondaryKeyでQueryResult<T>（ref struct、Zero GC）を取得
+using var areaEnemies = table.QueryBySecondaryKey<EnemyRecord, int, int>("areaId", 2);
+
+foreach (ref readonly var enemy in areaEnemies)
+{
+    // エリアの敵を処理
+}
+
+// FindAllBySecondaryKeyはIEnumerable<T>を返す
+var bosses = table.FindAllBySecondaryKey("areaId", 2).Where(e => e.IsBoss);
 ```
 
 ## 注意事項
 
-1. `QueryResult` は `ref struct` なので必ず `using` で囲む
-2. `foreach (ref readonly var item in results)` で値コピーを回避
+1. `QueryResult` は `ref struct` なので必ず `using` で囲む（`QueryBySecondaryKey` で取得）
+2. `foreach (ref readonly var item in results)` で値コピーを回避（`QueryResult` のみ）
 3. `ref struct` はフィールドに保持できない
 4. `async/await` とは併用できない
-5. 結果を保持したい場合のみ `ToList()` を使用
+5. `Where()` は `IEnumerable<T>` を返すため、`using` や `ref readonly` は不要
+6. 結果を保持したい場合は `FindAllBySecondaryKeyAsArray()` で `T[]` を取得

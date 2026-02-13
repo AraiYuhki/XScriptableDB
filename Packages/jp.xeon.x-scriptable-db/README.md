@@ -78,7 +78,7 @@ using UnityEngine;
 using Xeon.XScriptableDB;
 
 [CreateAssetMenu(fileName = "ItemTable", menuName = "Database/ItemTable")]
-public class ItemTable : TableAsset<int, ItemRecord>
+public class ItemTable : TableAsset<ItemRecord, int>
 {
 }
 ```
@@ -87,17 +87,19 @@ public class ItemTable : TableAsset<int, ItemRecord>
 
 ```csharp
 // PrimaryKeyで検索（O(log n)）
-var item = itemTable.Find(1001);
+var item = itemTable.FindByKey(1001);
 
 // SecondaryKeyで検索（O(1)）
 var weapons = itemTable.FindAllBySecondaryKey("Category", "Weapon");
 
 // LINQライクなクエリ
-using var result = itemTable.Where(r => r.Price > 1000);
-foreach (ref readonly var item in result)
+foreach (var item in itemTable.Where(r => r.Price > 1000))
 {
     Debug.Log(item.Name);
 }
+
+// SecondaryKeyクエリ（GC Alloc 0）
+var result = itemTable.QueryBySecondaryKey("Category", "Weapon");
 ```
 
 ## 主要なコンポーネント
@@ -122,38 +124,38 @@ foreach (ref readonly var item in result)
 | `[ForeignKey(typeof(Table))]` | 外部キー参照の検証 |
 | `[Compare(field, operator)]` | 他フィールドとの比較検証 |
 
-### TableAsset<TKey, TRecord>
+### TableAsset<TRecord, TKey>
 
 ScriptableObjectベースのテーブルクラスです。
 
 ```csharp
 // 基本的な検索
-TRecord Find(TKey key);
-bool TryFind(TKey key, out TRecord record);
+TRecord FindByKey(TKey key);
+bool TryFindByKey(TKey key, out TRecord record);
 
 // SecondaryKeyによる検索
 TRecord FindBySecondaryKey<TSecondaryKey>(string keyName, TSecondaryKey key);
 IEnumerable<TRecord> FindAllBySecondaryKey<TSecondaryKey>(string keyName, TSecondaryKey key);
 
-// LINQライクなクエリ（GC Alloc 0）
-QueryResult<TRecord> Where(Func<TRecord, bool> predicate);
+// LINQライクなクエリ（IEnumerable<TRecord>を返す）
+IEnumerable<TRecord> Where(Func<TRecord, bool> predicate);
+
+// SecondaryKeyクエリ（GC Alloc 0、QueryResult<TRecord>を返す）
+QueryResult<TRecord> QueryBySecondaryKey<TSecondaryKey>(string keyName, TSecondaryKey key);
 ```
 
 ### QueryResult<T>
 
-GC Allocationなしでクエリ結果を扱うためのref structです。
+GC Allocationなしでクエリ結果を扱うためのref structです。`QueryBySecondaryKey()`から返されます。
 
 ```csharp
-using var result = table.Where(r => r.IsActive);
+var result = table.QueryBySecondaryKey("Category", "Weapon");
 
 // foreachで列挙
-foreach (ref readonly var record in result)
+foreach (var record in result)
 {
     // ...
 }
-
-// インデクサでアクセス
-var first = result[0];
 
 // 件数
 int count = result.Count;
@@ -429,11 +431,14 @@ Debug.Log($"Total queries: {stats.QueryCount}, Avg: {stats.AverageMilliseconds}m
 ### クエリの最適化
 
 ```csharp
-// Good: ref structを使用してGC Allocを回避
-using var result = table.Where(r => r.IsActive);
+// Good: SecondaryKeyクエリでGC Allocを回避
+var result = table.QueryBySecondaryKey("Category", "Weapon");
 
-// 注意: ToList()はGC Allocが発生
-var list = table.Where(r => r.IsActive).ToList();
+// Where()はIEnumerable<T>を返す（通常のLINQクエリ）
+foreach (var item in table.Where(r => r.IsActive))
+{
+    // ...
+}
 ```
 
 ### CSVインポートのワークフロー

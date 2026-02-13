@@ -243,9 +243,9 @@ public class ItemRecord
 
 ```csharp
 // 方法1: 直接取得
-var item = itemTable.Find(3);
-var category = categoryTable.Find(item.CategoryId);
-var rarity = rarityTable.Find(item.RarityId);
+var item = itemTable.FindByKey(3);
+var category = categoryTable.FindByKey(item.CategoryId);
+var rarity = rarityTable.FindByKey(item.RarityId);
 
 // 方法2: 拡張メソッドを使用
 var category = item.GetCategory(categoryTable);
@@ -266,7 +266,7 @@ var results = SqlExecutor.Execute(sql);
 
 ```csharp
 // カテゴリに属するアイテムを全て取得
-var weaponCategory = categoryTable.Find(1);
+var weaponCategory = categoryTable.FindByKey(1);
 var weapons = itemTable.FindAllBySecondaryKey("categoryId", weaponCategory.Id);
 
 // レシピで素材として使用されているアイテムを検索
@@ -281,7 +281,7 @@ var recipes = recipeTable.All
 ```csharp
 public int CalculatePrice(ItemRecord item, RarityTable rarityTable)
 {
-    var rarity = rarityTable.Find(item.RarityId);
+    var rarity = rarityTable.FindByKey(item.RarityId);
     return (int)(item.BasePrice * rarity.PriceMultiplier);
 }
 ```

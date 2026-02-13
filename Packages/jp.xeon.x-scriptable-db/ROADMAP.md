@@ -7,7 +7,7 @@
 ### v0.1.0 (2026-01-29)
 
 #### Phase 1: Core機能
-- [x] `TableAsset<TKey, TRecord>` - ScriptableObjectベースのテーブル
+- [x] `TableAsset<TRecord, TKey>` - ScriptableObjectベースのテーブル
 - [x] `[PrimaryKey]` 属性 - バイナリサーチによるO(log n)検索
 - [x] `[CsvColumn]` 属性 - CSVカラム名マッピング
 - [x] 基本的なCRUD操作
@@ -74,8 +74,8 @@
 // キャッシュ付きクエリ
 var cache = CacheManager.QueryCache;
 var result = cache.GetOrAdd<Item>(
-    typeof(ItemTable), "FindById", 1,
-    () => itemTable.FindById(1)
+    typeof(ItemTable), "FindByKey", 1,
+    () => itemTable.FindByKey(1)
 );
 
 // 遅延ロード

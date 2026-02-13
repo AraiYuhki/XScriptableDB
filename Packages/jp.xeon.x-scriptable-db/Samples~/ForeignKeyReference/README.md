@@ -78,15 +78,15 @@ public class ItemRecord
 ### 方法1: 直接取得
 
 ```csharp
-var item = itemTable.Find(3);
-var category = categoryTable.Find(item.CategoryId);
-var rarity = rarityTable.Find(item.RarityId);
+var item = itemTable.FindByKey(3);
+var category = categoryTable.FindByKey(item.CategoryId);
+var rarity = rarityTable.FindByKey(item.RarityId);
 ```
 
 ### 方法2: 拡張メソッド
 
 ```csharp
-var item = itemTable.Find(3);
+var item = itemTable.FindByKey(3);
 var category = item.GetCategory(categoryTable);
 var rarity = item.GetRarity(rarityTable);
 var actualPrice = item.GetActualPrice(rarityTable);
@@ -131,5 +131,5 @@ var recipes = sample.FindRecipesUsingItem(8); // 鉄鉱石を使うレシピ
 ## 注意事項
 
 - 外部キーの値が0の場合は「未設定」として扱います
-- 参照先が存在しない場合、`Find()`はnullを返します
+- 参照先が存在しない場合、`FindByKey()`はnullを返します
 - 循環参照は避けてください

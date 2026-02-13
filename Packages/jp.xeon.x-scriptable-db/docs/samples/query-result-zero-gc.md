@@ -33,8 +33,8 @@ foreach (var item in results) { ... }
 ### QueryResult（Zero GC）
 
 ```csharp
-// GCアロケーションなし
-using var results = table.Where(r => r.IsActive);
+// QueryBySecondaryKeyはQueryResult<T>（ref struct）を返す（GCアロケーションなし）
+using var results = table.QueryBySecondaryKey<EnemyRecord, int, bool>("isBoss", true);
 foreach (ref readonly var item in results) { ... }
 ```
 
@@ -42,6 +42,18 @@ foreach (ref readonly var item in results) { ... }
 - `ref struct` による値型のみの処理
 - 内部バッファの再利用
 - `using` で確実にリソース解放
+
+### Where（IEnumerable）
+
+```csharp
+// Where()はIEnumerable<T>を返す（using不要）
+var results = table.Where(r => r.IsActive);
+foreach (var item in results) { ... }
+```
+
+特徴:
+- 柔軟な条件指定が可能
+- GCアロケーションはToList()しなければ最小限
 
 ---
 
@@ -174,11 +186,11 @@ ID,名前,HP,攻撃力,防御力,レベル,エリアID,ボス,ドロップ率
 
 ## 使用するAPI
 
-### QueryResult の基本
+### QueryResult の基本（QueryBySecondaryKey）
 
 ```csharp
-// 条件検索（Zero GC）
-using var results = table.Where(r => r.Level >= 10 && r.Level <= 50);
+// QueryBySecondaryKeyでZero GCのQueryResult<T>を取得
+using var results = table.QueryBySecondaryKey<EnemyRecord, int, int>("areaId", 2);
 
 // 結果の列挙（ref readonly で値コピーを回避）
 foreach (ref readonly var enemy in results)
@@ -193,22 +205,34 @@ var first = results[0];
 int count = results.Count;
 ```
 
+### Where による条件検索
+
+```csharp
+// Where()はIEnumerable<T>を返す（using不要）
+var results = table.Where(r => r.Level >= 10 && r.Level <= 50);
+
+foreach (var enemy in results)
+{
+    Debug.Log(enemy.Name);
+}
+```
+
 ### SecondaryKey との組み合わせ
 
 ```csharp
-// SecondaryKeyで高速フィルタ後、さらに条件絞り込み
+// FindAllBySecondaryKeyはIEnumerable<T>を返す
 var areaEnemies = table.FindAllBySecondaryKey("areaId", 2);
-using var bosses = areaEnemies.Where(e => e.IsBoss);
+var bosses = areaEnemies.Where(e => e.IsBoss);
 ```
 
 ### パフォーマンス計測
 
 ```csharp
-// 方法1: Stopwatch
+// 方法1: Stopwatch（QueryBySecondaryKey）
 var sw = Stopwatch.StartNew();
 for (int i = 0; i < 1000; i++)
 {
-    using var results = table.Where(r => r.Level >= 10);
+    using var results = table.QueryBySecondaryKey<EnemyRecord, int, int>("areaId", 2);
     // 結果を使用
     var count = results.Count;
 }
@@ -217,12 +241,12 @@ Debug.Log($"Time: {sw.ElapsedMilliseconds}ms");
 
 // 方法2: Profiler API
 Profiler.BeginSample("ZeroGC Query");
-using var results = table.Where(r => r.Level >= 10);
+using var results = table.QueryBySecondaryKey<EnemyRecord, int, int>("areaId", 2);
 Profiler.EndSample();
 
 // 方法3: GCアロケーション計測
 long before = GC.GetTotalMemory(false);
-using var results = table.Where(r => r.Level >= 10);
+using var results2 = table.QueryBySecondaryKey<EnemyRecord, int, int>("areaId", 2);
 long after = GC.GetTotalMemory(false);
 Debug.Log($"Allocation: {after - before} bytes");
 ```
@@ -234,36 +258,29 @@ Debug.Log($"Allocation: {after - before} bytes");
 ### ❌ 避けるべきパターン（GC発生）
 
 ```csharp
-// パターン1: ToList()の使用
-var list = table.Where(r => r.IsActive).ToList();
+// パターン1: ToList()でGCアロケーション発生
+var list = table.All.Where(r => r.IsActive).ToList();
 
-// パターン2: usingなしで使用
-var results = table.Where(r => r.IsActive);
+// パターン2: QueryResultをusingなしで使用
+var results = table.QueryBySecondaryKey<EnemyRecord, int, int>("areaId", 2);
 // resultsが破棄されない
-
-// パターン3: 値コピー
-foreach (var item in results)  // 値コピーが発生
-{
-    // ...
-}
 ```
 
 ### ✓ 推奨パターン（Zero GC）
 
 ```csharp
-// パターン1: using + ref readonly
-using var results = table.Where(r => r.IsActive);
+// パターン1: QueryBySecondaryKey + using + ref readonly
+using var results = table.QueryBySecondaryKey<EnemyRecord, int, int>("areaId", 2);
 foreach (ref readonly var item in results)
 {
     // 値コピーなしでアクセス
 }
 
-// パターン2: 即時使用
-using var count = table.Where(r => r.Level > 50).Count;
+// パターン2: FindAllBySecondaryKeyAsArrayで配列取得
+var byArea = table.FindAllBySecondaryKeyAsArray("areaId", 2);
 
-// パターン3: SecondaryKey優先
-var byArea = table.FindAllBySecondaryKey("areaId", 2);
-using var filtered = byArea.Where(r => r.Level > 10);
+// パターン3: Where()で柔軟な条件検索（IEnumerable）
+var filtered = table.Where(r => r.Level > 10);
 ```
 
 ---
@@ -275,28 +292,29 @@ using var filtered = byArea.Where(r => r.Level > 10);
 ```csharp
 void Update()
 {
-    // プレイヤー周辺の敵を検索（毎フレーム）
-    using var nearbyEnemies = enemyTable.Where(e =>
+    // Where()はIEnumerable<T>を返す
+    var nearbyEnemies = enemyTable.Where(e =>
         Vector3.Distance(e.Position, player.Position) < detectionRange);
 
-    foreach (ref readonly var enemy in nearbyEnemies)
+    foreach (var enemy in nearbyEnemies)
     {
         // AI処理
     }
 }
 ```
 
-### ユースケース2: バトル中の対象選択
+### ユースケース2: SecondaryKeyでZero GC検索
 
 ```csharp
-void SelectTarget()
+void ProcessAreaEnemies(int areaId)
 {
-    // HP50%以下の敵を優先ターゲット
-    using var weakEnemies = activeEnemies.Where(e =>
-        e.CurrentHp < e.MaxHp * 0.5f);
+    // QueryBySecondaryKeyでQueryResult<T>（ref struct、Zero GC）を取得
+    using var areaEnemies = enemyTable.QueryBySecondaryKey<EnemyRecord, int, int>("areaId", areaId);
 
-    if (weakEnemies.Count > 0)
-        target = weakEnemies[0];
+    foreach (ref readonly var enemy in areaEnemies)
+    {
+        // 処理
+    }
 }
 ```
 
@@ -305,12 +323,12 @@ void SelectTarget()
 ```csharp
 void CalculateDrops(int areaId)
 {
-    // エリアの敵からドロップアイテムを計算
+    // FindAllBySecondaryKeyはIEnumerable<T>を返す
     var areaEnemies = enemyTable.FindAllBySecondaryKey("areaId", areaId);
-    using var eligibleEnemies = areaEnemies.Where(e =>
+    var eligibleEnemies = areaEnemies.Where(e =>
         Random.value < e.DropRate);
 
-    foreach (ref readonly var enemy in eligibleEnemies)
+    foreach (var enemy in eligibleEnemies)
     {
         // ドロップ処理
     }
@@ -339,11 +357,12 @@ Samples~/QueryResultZeroGC/
 
 ## 注意事項
 
-1. **usingを忘れずに**: `QueryResult` は `ref struct` なので、`using` で囲む
-2. **ref readonly の活用**: `foreach (ref readonly var item in results)` で値コピーを回避
+1. **usingを忘れずに**: `QueryResult` は `ref struct` なので、`using` で囲む（`QueryBySecondaryKey` で取得）
+2. **ref readonly の活用**: `foreach (ref readonly var item in results)` で値コピーを回避（`QueryResult` のみ）
 3. **スコープに注意**: `ref struct` はフィールドに保持できない
 4. **async/awaitとの併用不可**: `ref struct` は非同期メソッドで使用できない
-5. **デバッグ時の注意**: Profilerウィンドウで実際のGCアロケーションを確認
+5. **Where()はIEnumerable**: `Where()` は `IEnumerable<T>` を返すため、`using` や `ref readonly` は不要
+6. **デバッグ時の注意**: Profilerウィンドウで実際のGCアロケーションを確認
 
 ## パフォーマンス目安
 

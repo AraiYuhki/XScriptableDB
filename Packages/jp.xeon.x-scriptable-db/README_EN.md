@@ -78,7 +78,7 @@ using UnityEngine;
 using Xeon.XScriptableDB;
 
 [CreateAssetMenu(fileName = "ItemTable", menuName = "Database/ItemTable")]
-public class ItemTable : TableAsset<int, ItemRecord>
+public class ItemTable : TableAsset<ItemRecord, int>
 {
 }
 ```
@@ -87,17 +87,19 @@ public class ItemTable : TableAsset<int, ItemRecord>
 
 ```csharp
 // Search by PrimaryKey (O(log n))
-var item = itemTable.Find(1001);
+var item = itemTable.FindByKey(1001);
 
 // Search by SecondaryKey (O(1))
 var weapons = itemTable.FindAllBySecondaryKey("Category", "Weapon");
 
 // LINQ-like query
-using var result = itemTable.Where(r => r.Price > 1000);
-foreach (ref readonly var item in result)
+foreach (var item in itemTable.Where(r => r.Price > 1000))
 {
     Debug.Log(item.Name);
 }
+
+// SecondaryKey query (Zero GC Allocation)
+var result = itemTable.QueryBySecondaryKey("Category", "Weapon");
 ```
 
 ## Key Components
@@ -122,38 +124,38 @@ foreach (ref readonly var item in result)
 | `[ForeignKey(typeof(Table))]` | Foreign key reference validation |
 | `[Compare(field, operator)]` | Comparison with other fields |
 
-### TableAsset<TKey, TRecord>
+### TableAsset<TRecord, TKey>
 
 ScriptableObject-based table class.
 
 ```csharp
 // Basic search
-TRecord Find(TKey key);
-bool TryFind(TKey key, out TRecord record);
+TRecord FindByKey(TKey key);
+bool TryFindByKey(TKey key, out TRecord record);
 
 // SecondaryKey search
 TRecord FindBySecondaryKey<TSecondaryKey>(string keyName, TSecondaryKey key);
 IEnumerable<TRecord> FindAllBySecondaryKey<TSecondaryKey>(string keyName, TSecondaryKey key);
 
-// LINQ-like query (Zero GC Allocation)
-QueryResult<TRecord> Where(Func<TRecord, bool> predicate);
+// LINQ-like query (returns IEnumerable<TRecord>)
+IEnumerable<TRecord> Where(Func<TRecord, bool> predicate);
+
+// SecondaryKey query (Zero GC Allocation, returns QueryResult<TRecord>)
+QueryResult<TRecord> QueryBySecondaryKey<TSecondaryKey>(string keyName, TSecondaryKey key);
 ```
 
 ### QueryResult<T>
 
-A ref struct for handling query results without GC allocation.
+A ref struct for handling query results without GC allocation. Returned by `QueryBySecondaryKey()`.
 
 ```csharp
-using var result = table.Where(r => r.IsActive);
+var result = table.QueryBySecondaryKey("Category", "Weapon");
 
 // Enumerate with foreach
-foreach (ref readonly var record in result)
+foreach (var record in result)
 {
     // ...
 }
-
-// Access by indexer
-var first = result[0];
 
 // Count
 int count = result.Count;
@@ -429,11 +431,14 @@ Debug.Log($"Total queries: {stats.QueryCount}, Avg: {stats.AverageMilliseconds}m
 ### Query Optimization
 
 ```csharp
-// Good: Use ref struct to avoid GC allocation
-using var result = table.Where(r => r.IsActive);
+// Good: Use SecondaryKey query to avoid GC allocation
+var result = table.QueryBySecondaryKey("Category", "Weapon");
 
-// Caution: ToList() causes GC allocation
-var list = table.Where(r => r.IsActive).ToList();
+// Where() returns IEnumerable<T> (standard LINQ query)
+foreach (var item in table.Where(r => r.IsActive))
+{
+    // ...
+}
 ```
 
 ### CSV Import Workflow

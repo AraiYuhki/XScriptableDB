@@ -2,7 +2,7 @@
 
 ## 概要
 
-`TableAsset<TKey, TRecord>` は、XScriptableDBの中核となるクラスです。ScriptableObjectを継承しており、Unityのアセットシステムと完全に統合されています。
+`TableAsset<TRecord, TKey>` は、XScriptableDBの中核となるクラスです。ScriptableObjectを継承しており、Unityのアセットシステムと完全に統合されています。
 
 ## 基本的な使い方
 
@@ -36,7 +36,7 @@ using UnityEngine;
 using Xeon.XScriptableDB;
 
 [CreateAssetMenu(fileName = "EnemyTable", menuName = "Database/EnemyTable")]
-public class EnemyTable : TableAsset<int, EnemyRecord>
+public class EnemyTable : TableAsset<EnemyRecord, int>
 {
 }
 ```
@@ -62,10 +62,10 @@ Unityエディタで:
 
 ```csharp
 // キーで検索（見つからない場合はnull）
-var enemy = enemyTable.Find(1001);
+var enemy = enemyTable.FindByKey(1001);
 
 // 安全な検索（見つかったかどうかを返す）
-if (enemyTable.TryFind(1001, out var enemy))
+if (enemyTable.TryFindByKey(1001, out var enemy))
 {
     Debug.Log(enemy.Name);
 }

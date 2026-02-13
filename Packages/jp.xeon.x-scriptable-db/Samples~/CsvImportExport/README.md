@@ -62,7 +62,7 @@ sample.ImportCsv("path/to/characters.csv", Encoding.UTF8);
 sample.ImportCsv("path/to/characters.csv");
 
 // TSVファイル
-sample.ImportCsv("path/to/characters.tsv", delimiter: '\t');
+sample.ImportCsv("path/to/characters.tsv", delimiter: "\t");
 ```
 
 ### エクスポート
@@ -75,7 +75,7 @@ sample.ExportCsv("path/to/output.csv", Encoding.UTF8);
 sample.ExportCsv("path/to/output.csv", Encoding.GetEncoding("Shift_JIS"));
 
 // TSV形式
-sample.ExportCsv("path/to/output.tsv", Encoding.UTF8, delimiter: '\t');
+sample.ExportCsv("path/to/output.tsv", Encoding.UTF8, delimiter: "\t");
 ```
 
 ### プレビュー

@@ -219,20 +219,19 @@ ID,武器名,スキルID,攻撃力,レアリティ
 ### バリデーション実行
 
 ```csharp
-// 単一テーブルのバリデーション
-var validator = new TableValidator();
-var results = validator.Validate(skillTable);
+// 単一テーブルのバリデーション（静的メソッド）
+var results = RecordValidator.ValidateTable<SkillRecord>(skillTable);
 
-foreach (var error in results.Errors)
+foreach (var recordResult in results.RecordResults)
 {
-    Debug.LogError($"[{error.RecordId}] {error.FieldName}: {error.Message}");
+    foreach (var error in recordResult.Errors)
+    {
+        Debug.LogError($"[{recordResult.RecordIndex}] {error.FieldName}: {error.Message}");
+    }
 }
 
-// 外部キー検証
-var fkResults = validator.ValidateForeignKeys(weaponTable);
-
-// 全テーブル一括検証
-var allResults = validator.ValidateAll();
+// 外部キー検証（静的メソッド）
+var fkResults = ForeignKeyValidator.ValidateForeignKeys<WeaponRecord>(weaponTable, context);
 ```
 
 ### バリデーション属性の使用
