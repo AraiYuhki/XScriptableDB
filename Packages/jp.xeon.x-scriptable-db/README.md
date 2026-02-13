@@ -368,6 +368,195 @@ Id,Category,Name,Price,Attack,Defense
 1003,Armor,皮の鎧,80,0,5
 ```
 
+## YAML定義ファイル形式
+
+Table Editorでは、テーブルのスキーマをYAMLファイルで定義します。YAMLファイルからC#コード（Record・Table クラス）を自動生成できます。
+
+メニュー: `Tools > XScriptableDB > Generate C# from YAML file` / `Generate C# from YAML folder`
+
+### 基本構造
+
+```yaml
+tableName: m_item              # テーブル名（snake_case推奨）
+isReadOnly: true               # ランタイムでの不変性（デフォルト: true）
+columns:                       # カラム定義のリスト
+  - name: id                   # カラム名（snake_case）
+    type: int                  # データ型（下記の型変換表を参照）
+    isPrimaryKey: true         # 主キーフラグ
+    isNullable: false          # Nullable許可フラグ
+  - name: name
+    type: string
+indices:                       # SecondaryKeyインデックスのリスト
+  - name: category             # インデックス名
+    columns:                   # 対象カラム（複数指定で複合インデックス）
+      - category
+    allowDuplicates: true      # 重複キー値の許可
+```
+
+### カラム定義
+
+| プロパティ | 型 | 必須 | デフォルト | 説明 |
+|-----------|------|:----:|-----------|------|
+| `name` | string | ○ | - | カラム名（snake_case推奨） |
+| `type` | string | ○ | - | データ型 |
+| `isPrimaryKey` | bool | - | `false` | 主キーとして指定 |
+| `isNullable` | bool | - | `false` | Nullable型として生成 |
+
+### インデックス定義
+
+| プロパティ | 型 | 必須 | デフォルト | 説明 |
+|-----------|------|:----:|-----------|------|
+| `name` | string | ○ | - | インデックス名 |
+| `columns` | string[] | ○ | - | 対象カラム名のリスト |
+| `allowDuplicates` | bool | - | `true` | 重複を許可するか |
+
+`columns`に複数のカラムを指定すると複合インデックスになります。
+
+### サポートされる型
+
+| YAML型名 | C#型 | 説明 |
+|----------|------|------|
+| `int`, `integer`, `mediumint` | `int` | 32bit整数 |
+| `tinyint` | `byte` | 8bit符号なし整数 |
+| `smallint` | `short` | 16bit整数 |
+| `bigint` | `long` | 64bit整数 |
+| `float`, `real` | `float` | 32bit浮動小数点 |
+| `double` | `double` | 64bit浮動小数点 |
+| `decimal`, `numeric` | `decimal` | 高精度小数点 |
+| `bool`, `boolean` | `bool` | 真偽値 |
+| `char` | `char` | 文字 |
+| `string`, `varchar`, `text`, `longtext`, `mediumtext`, `tinytext` | `string` | 文字列 |
+| `datetime`, `timestamp`, `date` | `SerializableDateTime` | 日時 |
+
+`isNullable: true`の場合、値型は`int?`のようにNullable型として生成されます。
+
+### 完全な例
+
+```yaml
+tableName: m_item
+isReadOnly: true
+columns:
+  - name: id
+    type: int
+    isPrimaryKey: true
+  - name: name
+    type: string
+  - name: description
+    type: string
+    isNullable: true
+  - name: category_id
+    type: int
+  - name: price
+    type: int
+  - name: rarity
+    type: int
+  - name: is_tradable
+    type: bool
+  - name: release_date
+    type: datetime
+indices:
+  - name: category_id
+    columns:
+      - category_id
+    allowDuplicates: true
+  - name: rarity
+    columns:
+      - rarity
+    allowDuplicates: true
+```
+
+このYAMLから以下のC#コードが自動生成されます:
+
+```csharp
+// MItemRecord.cs
+[Serializable]
+public partial class MItemRecord
+{
+    [SerializeField, CsvColumn("id"), PrimaryKey]
+    private int id;
+
+    [SerializeField, CsvColumn("name")]
+    private string name;
+
+    [SerializeField, CsvColumn("description")]
+    private string description;
+
+    [SerializeField, CsvColumn("category_id"), SecondaryKey]
+    private int categoryId;
+
+    [SerializeField, CsvColumn("price")]
+    private int price;
+
+    [SerializeField, CsvColumn("rarity"), SecondaryKey]
+    private int rarity;
+
+    [SerializeField, CsvColumn("is_tradable")]
+    private bool isTradable;
+
+    [SerializeField, CsvColumn("release_date")]
+    private SerializableDateTime releaseDate;
+
+    // プロパティ（isReadOnly: trueの場合、setterはEditor限定）
+    public int Id { get => id; }
+    public string Name { get => name; }
+    // ...
+}
+```
+
+### 複合インデックスの例
+
+```yaml
+tableName: m_character
+isReadOnly: true
+columns:
+  - name: id
+    type: int
+    isPrimaryKey: true
+  - name: name
+    type: string
+  - name: class
+    type: string
+  - name: level
+    type: int
+indices:
+  - name: class
+    columns:
+      - class
+    allowDuplicates: true
+  - name: class_level
+    columns:
+      - class
+      - level
+    allowDuplicates: true
+  - name: name
+    columns:
+      - name
+    allowDuplicates: false
+```
+
+### レガシー形式
+
+以前のバージョンでは`indices`が文字列リストで定義されていました。この形式は読み込み時に自動的に現在の形式に変換されます。
+
+```yaml
+# レガシー形式（自動変換される）
+indices:
+  - category_id
+  - rarity
+```
+
+### YAML命名規則
+
+YAMLファイルではYamlDotNetの`CamelCaseNamingConvention`に従い、**camelCase**が使用されます。
+
+| C#プロパティ | YAMLキー |
+|-------------|----------|
+| `TableName` | `tableName` |
+| `IsReadOnly` | `isReadOnly` |
+| `IsPrimaryKey` | `isPrimaryKey` |
+| `IsNullable` | `isNullable` |
+| `AllowDuplicates` | `allowDuplicates` |
+
 ## パフォーマンス機能
 
 ### LRUキャッシュ
