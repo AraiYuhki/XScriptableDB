@@ -532,17 +532,6 @@ indices:
     allowDuplicates: false
 ```
 
-### Legacy Format
-
-In earlier versions, `indices` were defined as a simple string list. This format is automatically converted to the current format on load.
-
-```yaml
-# Legacy format (automatically converted)
-indices:
-  - category_id
-  - rarity
-```
-
 ### YAML Naming Convention
 
 YAML files use **camelCase** following YamlDotNet's `CamelCaseNamingConvention`.

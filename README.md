@@ -532,17 +532,6 @@ indices:
     allowDuplicates: false
 ```
 
-### レガシー形式
-
-以前のバージョンでは`indices`が文字列リストで定義されていました。この形式は読み込み時に自動的に現在の形式に変換されます。
-
-```yaml
-# レガシー形式（自動変換される）
-indices:
-  - category_id
-  - rarity
-```
-
 ### YAML命名規則
 
 YAMLファイルではYamlDotNetの`CamelCaseNamingConvention`に従い、**camelCase**が使用されます。
