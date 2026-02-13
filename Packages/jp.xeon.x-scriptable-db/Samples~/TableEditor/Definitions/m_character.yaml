@@ -1,4 +1,4 @@
-tablename: m_character
+tableName: m_character
 isReadOnly: true
 columns:
   - name: id
@@ -35,3 +35,4 @@ indices:
   - name: name
     columns:
       - name
+    allowDuplicates: false
