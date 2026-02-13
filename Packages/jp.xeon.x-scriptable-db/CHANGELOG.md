@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 同じインデックス名を持つ複数フィールドを複合インデックスとしてグループ化
   - `SecondaryKeyAttribute` に `Order` プロパティを追加（複合キーの順序指定）
   - `AllowDuplicates` の一貫性チェックと警告機能
-- `FindByCompositeSecondaryKey` / `FindAllByCompositeSecondaryKey` メソッドを追加
+- 複合SecondaryKey検索メソッドを追加（`FindBySecondaryKey(indexName, params object[])` / `FindAllBySecondaryKeyAsArray(indexName, params object[])`）
 - `CompositeKeyHelper` - 複合キーの文字列生成とハッシュ計算
 
 #### Culture-Invariant String Conversion
@@ -164,7 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Core Features
-- `TableAsset<TKey, TRecord>` - ScriptableObjectベースのテーブルクラス
+- `TableAsset<TRecord, TKey>` - ScriptableObjectベースのテーブルクラス
 - `[PrimaryKey]` 属性 - 主キーの指定（バイナリサーチによるO(log n)検索）
 - `[SecondaryKey]` 属性 - 副キーの指定（ハッシュインデックスによるO(1)検索）
 - `[CsvColumn]` 属性 - CSV/TSVカラム名のマッピング

@@ -49,11 +49,12 @@ namespace Xeon.XScriptableDB.IO
         }
 
         /// <summary>
-        /// TODO: 古い記法で書かれているコードなので、時間のあるときにリファクタリングする
+        /// バイト列から日本語文字コード（UTF-8, Shift-JIS, EUC-JP, ISO-2022-JP）を判定する。
+        /// BOM判定を行った後、各エンコーディングのバイトパターンと日本語らしさのスコアで判定する。
         /// </summary>
-        /// <param name="bytes"></param>
-        /// <param name="readAll"></param>
-        /// <returns></returns>
+        /// <param name="bytes">判定対象のバイト列</param>
+        /// <param name="readAll">ファイル全体を読み取った場合はtrue</param>
+        /// <returns>検出されたエンコーディング。判定できない場合はnull</returns>
         private static Encoding GetJpEncoding(byte[] bytes, bool readAll = false)
         {
             var len = bytes.Length;

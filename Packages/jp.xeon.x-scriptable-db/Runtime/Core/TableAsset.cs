@@ -494,7 +494,6 @@ namespace Xeon.XScriptableDB
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
                 File.WriteAllText(filePath, csv, encoding);
-                Debug.Log($"Exported {records.Length} records to {filePath}");
             }
             catch (Exception e)
             {

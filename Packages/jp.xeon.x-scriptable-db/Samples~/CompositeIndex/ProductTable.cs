@@ -28,7 +28,7 @@ namespace XScriptableDB.Samples.CompositeIndex
         /// <returns>該当する商品の配列</returns>
         public ProductRecord[] FindByBrand(string brand)
         {
-            return FindAllBySecondaryKeyAsArray("Brand", brand);
+            return FindAllBySecondaryKeyAsArray("brand", brand);
         }
     }
 }

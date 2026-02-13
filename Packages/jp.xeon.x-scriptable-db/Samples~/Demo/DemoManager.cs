@@ -85,7 +85,7 @@ namespace XScriptableDB.Samples.Demo
                 return;
             }
 
-            var items = itemTable.FindAllBySecondaryKeyAsArray("Category", category);
+            var items = itemTable.FindAllBySecondaryKeyAsArray("category", category);
             Log($"Category = \"{category}\": {items.Length}件");
 
             foreach (var item in items)
