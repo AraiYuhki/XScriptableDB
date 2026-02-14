@@ -85,7 +85,7 @@ namespace Xeon.XScriptableDB.Editor
             {
                 var isSerializable = field.GetCustomAttribute<SerializeField>() != null;
                 var isPrimaryKey = field.GetCustomAttribute<PrimaryKeyAttribute>() != null;
-                var isSecondaryKey = field.GetCustomAttribute<SecondaryKeyAttribute>() != null;
+                var isSecondaryKey = field.GetCustomAttributes<SecondaryKeyAttribute>().Any();
 
                 // privateの場合は、SerializeFieldが無ければ対象にしない
                 if (field.IsPrivate && !isSerializable)

@@ -85,7 +85,7 @@ namespace {namespaceName}
             attributes.AddRange(BuildSecondaryKeyAttributes(tableDefinition, column));
 
             sb.Append($"        [{string.Join(", ", attributes)}]\n");
-            sb.Append($"        private {type} {fieldName};");
+            sb.Append($"        private {type} _{fieldName};");
 
             return sb.ToString();
         }
@@ -146,16 +146,16 @@ namespace {namespaceName}
             {
                 return $@"        public {type} {propertyName}
         {{
-            get => {fieldName};
-            set => {fieldName} = value;
+            get => _{fieldName};
+            set => _{fieldName} = value;
         }}";
             }
 
             return $@"        public {type} {propertyName}
         {{
-            get => {fieldName};
+            get => _{fieldName};
 #if UNITY_EDITOR
-            set => {fieldName} = value;
+            set => _{fieldName} = value;
 #endif
         }}";
         }
