@@ -44,6 +44,10 @@ namespace Xeon.XScriptableDB.Editor
         private List<BenchmarkResult> results = new();
         private Vector2 scrollPosition;
         private bool isRunning;
+        private bool cancelRequested;
+        private string currentBenchmarkName = "";
+        private int completedBenchmarkCount;
+        private int totalBenchmarkCount;
 
         private void OnGUI()
         {
@@ -87,7 +91,16 @@ namespace Xeon.XScriptableDB.Editor
 
             if (isRunning)
             {
-                EditorGUILayout.HelpBox("ベンチマーク実行中...", MessageType.Info);
+                var progress = totalBenchmarkCount > 0
+                    ? $"{completedBenchmarkCount}/{totalBenchmarkCount}"
+                    : "...";
+                var label = string.IsNullOrEmpty(currentBenchmarkName)
+                    ? $"ベンチマーク実行中... ({progress})"
+                    : $"実行中: {currentBenchmarkName} ({progress})";
+                EditorGUILayout.HelpBox(label, MessageType.Info);
+
+                if (GUILayout.Button("キャンセル"))
+                    cancelRequested = true;
             }
 
             EditorGUILayout.Space();
@@ -152,6 +165,9 @@ namespace Xeon.XScriptableDB.Editor
         private void RunAllBenchmarks()
         {
             isRunning = true;
+            cancelRequested = false;
+            completedBenchmarkCount = 0;
+            totalBenchmarkCount = 10; // Search:5 + CSV:2 + Memory:3
             results.Clear();
 
             EditorApplication.delayCall += () =>
@@ -159,12 +175,16 @@ namespace Xeon.XScriptableDB.Editor
                 try
                 {
                     RunSearchBenchmarksInternal();
-                    RunCsvBenchmarksInternal();
-                    RunMemoryBenchmarksInternal();
+                    if (!cancelRequested)
+                        RunCsvBenchmarksInternal();
+                    if (!cancelRequested)
+                        RunMemoryBenchmarksInternal();
                 }
                 finally
                 {
                     isRunning = false;
+                    currentBenchmarkName = "";
+                    EditorUtility.ClearProgressBar();
                     Repaint();
                 }
             };
@@ -173,6 +193,9 @@ namespace Xeon.XScriptableDB.Editor
         private void RunSearchBenchmarks()
         {
             isRunning = true;
+            cancelRequested = false;
+            completedBenchmarkCount = 0;
+            totalBenchmarkCount = 5;
 
             EditorApplication.delayCall += () =>
             {
@@ -183,6 +206,8 @@ namespace Xeon.XScriptableDB.Editor
                 finally
                 {
                     isRunning = false;
+                    currentBenchmarkName = "";
+                    EditorUtility.ClearProgressBar();
                     Repaint();
                 }
             };
@@ -191,6 +216,9 @@ namespace Xeon.XScriptableDB.Editor
         private void RunCsvBenchmarks()
         {
             isRunning = true;
+            cancelRequested = false;
+            completedBenchmarkCount = 0;
+            totalBenchmarkCount = 2;
 
             EditorApplication.delayCall += () =>
             {
@@ -201,6 +229,8 @@ namespace Xeon.XScriptableDB.Editor
                 finally
                 {
                     isRunning = false;
+                    currentBenchmarkName = "";
+                    EditorUtility.ClearProgressBar();
                     Repaint();
                 }
             };
@@ -209,6 +239,9 @@ namespace Xeon.XScriptableDB.Editor
         private void RunMemoryBenchmarks()
         {
             isRunning = true;
+            cancelRequested = false;
+            completedBenchmarkCount = 0;
+            totalBenchmarkCount = 3;
 
             EditorApplication.delayCall += () =>
             {
@@ -219,6 +252,8 @@ namespace Xeon.XScriptableDB.Editor
                 finally
                 {
                     isRunning = false;
+                    currentBenchmarkName = "";
+                    EditorUtility.ClearProgressBar();
                     Repaint();
                 }
             };
@@ -249,35 +284,43 @@ namespace Xeon.XScriptableDB.Editor
             var targetId = dataSize / 2;
 
             // 線形検索
-            results.Add(RunBenchmark("Linear Search", records.Length, iterations, () =>
+            AddResult(RunBenchmark("Linear Search", records.Length, iterations, () =>
             {
                 var result = records.FirstOrDefault(r => r.id == targetId);
             }));
+            if (cancelRequested)
+                return;
 
             // バイナリサーチ
             var sorted = records.OrderBy(r => r.id).ToArray();
-            results.Add(RunBenchmark("Binary Search", records.Length, iterations, () =>
+            AddResult(RunBenchmark("Binary Search", records.Length, iterations, () =>
             {
                 BinarySearch(sorted, targetId);
             }));
+            if (cancelRequested)
+                return;
 
             // ハッシュ検索
             var dict = records.ToDictionary(r => r.id);
-            results.Add(RunBenchmark("Hash Lookup", records.Length, iterations, () =>
+            AddResult(RunBenchmark("Hash Lookup", records.Length, iterations, () =>
             {
                 dict.TryGetValue(targetId, out _);
             }));
+            if (cancelRequested)
+                return;
 
             // グループ検索
             var groupIndex = records.GroupBy(r => r.category)
                 .ToDictionary(g => g.Key, g => g.ToArray());
-            results.Add(RunBenchmark("Group Lookup", records.Length, iterations, () =>
+            AddResult(RunBenchmark("Group Lookup", records.Length, iterations, () =>
             {
                 groupIndex.TryGetValue(50, out _);
             }));
+            if (cancelRequested)
+                return;
 
             // フィルタリング
-            results.Add(RunBenchmark("Filter (LINQ)", records.Length, iterations / 10, () =>
+            AddResult(RunBenchmark("Filter (LINQ)", records.Length, iterations / 10, () =>
             {
                 var result = records.Where(r => r.value > 500).ToArray();
             }));
@@ -310,15 +353,17 @@ namespace Xeon.XScriptableDB.Editor
 
             // CSV出力
             var csv = "";
-            results.Add(RunBenchmark("CSV Export", records.Length, 10, () =>
+            AddResult(RunBenchmark("CSV Export", records.Length, 10, () =>
             {
                 csv = CsvParser.ToCSV(records.ToList());
             }));
+            if (cancelRequested)
+                return;
 
             // CSVパース
             if (!string.IsNullOrEmpty(csv))
             {
-                results.Add(RunBenchmark("CSV Parse", records.Length, 10, () =>
+                AddResult(RunBenchmark("CSV Parse", records.Length, 10, () =>
                 {
                     var parsed = CsvParser.Parse<TestRecord>(csv);
                 }));
@@ -328,6 +373,7 @@ namespace Xeon.XScriptableDB.Editor
         private void RunMemoryBenchmarksInternal()
         {
             // レコード生成のメモリ使用量
+            currentBenchmarkName = "Record Generation";
             GC.Collect();
             var before = GC.GetTotalMemory(true);
 
@@ -336,7 +382,7 @@ namespace Xeon.XScriptableDB.Editor
             GC.Collect();
             var after = GC.GetTotalMemory(false);
 
-            results.Add(new BenchmarkResult
+            AddResult(new BenchmarkResult
             {
                 Name = "Record Generation",
                 DataSize = dataSize,
@@ -346,8 +392,11 @@ namespace Xeon.XScriptableDB.Editor
                 MemoryBytes = after - before,
                 Success = true
             });
+            if (cancelRequested)
+                return;
 
             // Dictionary作成のメモリ使用量
+            currentBenchmarkName = "Dictionary Creation";
             GC.Collect();
             before = GC.GetTotalMemory(true);
 
@@ -356,7 +405,7 @@ namespace Xeon.XScriptableDB.Editor
             GC.Collect();
             after = GC.GetTotalMemory(false);
 
-            results.Add(new BenchmarkResult
+            AddResult(new BenchmarkResult
             {
                 Name = "Dictionary Creation",
                 DataSize = dataSize,
@@ -366,8 +415,11 @@ namespace Xeon.XScriptableDB.Editor
                 MemoryBytes = after - before,
                 Success = true
             });
+            if (cancelRequested)
+                return;
 
             // グループインデックス作成のメモリ使用量
+            currentBenchmarkName = "Group Index Creation";
             GC.Collect();
             before = GC.GetTotalMemory(true);
 
@@ -377,7 +429,7 @@ namespace Xeon.XScriptableDB.Editor
             GC.Collect();
             after = GC.GetTotalMemory(false);
 
-            results.Add(new BenchmarkResult
+            AddResult(new BenchmarkResult
             {
                 Name = "Group Index Creation",
                 DataSize = dataSize,
@@ -389,8 +441,25 @@ namespace Xeon.XScriptableDB.Editor
             });
         }
 
+        private void AddResult(BenchmarkResult result)
+        {
+            if (result == null)
+                return;
+            results.Add(result);
+            completedBenchmarkCount++;
+            Repaint();
+        }
+
         private BenchmarkResult RunBenchmark(string name, int dataSize, int iterations, Action action)
         {
+            if (cancelRequested)
+                return null;
+
+            currentBenchmarkName = name;
+            var overallProgress = totalBenchmarkCount > 0
+                ? (float)completedBenchmarkCount / totalBenchmarkCount
+                : 0f;
+
             var result = new BenchmarkResult
             {
                 Name = name,
@@ -404,9 +473,34 @@ namespace Xeon.XScriptableDB.Editor
                 action();
 
                 var sw = Stopwatch.StartNew();
+                var progressInterval = Math.Max(1, iterations / 100);
 
                 for (var i = 0; i < iterations; i++)
+                {
+                    if (i % progressInterval == 0)
+                    {
+                        var iterProgress = (float)i / iterations;
+                        var combinedProgress = (completedBenchmarkCount + iterProgress) / Math.Max(1, totalBenchmarkCount);
+                        var cancelled = EditorUtility.DisplayCancelableProgressBar(
+                            "ベンチマーク実行中",
+                            $"{name} ({i}/{iterations}) - 全体: {completedBenchmarkCount}/{totalBenchmarkCount}",
+                            combinedProgress);
+
+                        if (cancelled || cancelRequested)
+                        {
+                            cancelRequested = true;
+                            sw.Stop();
+                            result.ElapsedMs = sw.Elapsed.TotalMilliseconds;
+                            result.PerOperationUs = i > 0 ? result.ElapsedMs * 1000 / i : 0;
+                            result.Iterations = i;
+                            result.Success = true;
+                            result.Name = $"{name} (中断: {i}/{iterations})";
+                            return result;
+                        }
+                    }
+
                     action();
+                }
 
                 sw.Stop();
 

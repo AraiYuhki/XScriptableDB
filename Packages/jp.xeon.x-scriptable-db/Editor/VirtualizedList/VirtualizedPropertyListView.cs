@@ -181,27 +181,6 @@ namespace Xeon.XScriptableDB.Editor
                 var bgColor = isSelected ? new Color(0.2f, 0.4f, 0.6f, 0.5f) : (i % 2 == 0 ? new Color(0.3f, 0.3f, 0.3f, 0.3f) : Color.clear);
                 EditorGUI.DrawRect(headerRect, bgColor);
 
-                // クリック判定
-                if (Event.current.type == EventType.MouseDown && headerRect.Contains(Event.current.mousePosition))
-                {
-                    if (Event.current.button == 0)
-                    {
-                        if (SelectedIndex != i)
-                        {
-                            SelectedIndex = i;
-                            OnSelectionChanged?.Invoke(i);
-                        }
-                        Event.current.Use();
-                    }
-                }
-
-                // ダブルクリックで展開
-                if (Event.current.type == EventType.MouseDown && Event.current.clickCount == 2 && headerRect.Contains(Event.current.mousePosition))
-                {
-                    ToggleExpand(i);
-                    Event.current.Use();
-                }
-
                 // インデックスと展開ボタン
                 var indexRect = new Rect(4, currentY + 3, 40, ItemHeight - 6);
                 EditorGUI.LabelField(indexRect, $"[{i}]");
@@ -209,6 +188,23 @@ namespace Xeon.XScriptableDB.Editor
                 var expandButtonRect = new Rect(44, currentY + 3, 25, ItemHeight - 6);
                 if (GUI.Button(expandButtonRect, isExpanded ? "v" : ">"))
                     ToggleExpand(i);
+
+                // クリック判定（展開ボタン領域を除外）
+                if (Event.current.type == EventType.MouseDown && Event.current.button == 0
+                    && headerRect.Contains(Event.current.mousePosition)
+                    && !expandButtonRect.Contains(Event.current.mousePosition))
+                {
+                    if (Event.current.clickCount == 2)
+                    {
+                        ToggleExpand(i);
+                    }
+                    else
+                    {
+                        SelectedIndex = i;
+                        OnSelectionChanged?.Invoke(i);
+                    }
+                    Event.current.Use();
+                }
 
                 // サマリー描画
                 var summaryRect = new Rect(74, currentY, width - 78, ItemHeight);

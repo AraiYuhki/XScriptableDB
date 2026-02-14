@@ -228,12 +228,7 @@ namespace Xeon.XScriptableDB.Editor
 
             sqlScrollPosition = EditorGUILayout.BeginScrollView(sqlScrollPosition, GUILayout.Height(height));
 
-            EditorGUI.BeginChangeCheck();
             sqlText = EditorGUILayout.TextArea(sqlText, sqlInputStyle, GUILayout.ExpandHeight(true));
-            if (EditorGUI.EndChangeCheck())
-            {
-                // テキスト変更時の処理
-            }
 
             EditorGUILayout.EndScrollView();
 
