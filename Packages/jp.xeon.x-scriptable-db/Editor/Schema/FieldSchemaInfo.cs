@@ -22,7 +22,7 @@ namespace Xeon.XScriptableDB.Editor
             Name = field.Name;
             FieldType = field.FieldType;
             IsPrimaryKey = field.GetCustomAttribute<PrimaryKeyAttribute>() != null;
-            IsSecondaryKey = field.GetCustomAttribute<SecondaryKeyAttribute>() != null;
+            IsSecondaryKey = field.GetCustomAttributes<SecondaryKeyAttribute>().Any();
             IsReadOnly = field.GetCustomAttribute<ReadOnlyAttribute>() != null;
             Attributes = field.GetCustomAttributes().ToList();
         }

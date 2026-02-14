@@ -169,13 +169,13 @@ namespace Xeon.XScriptableDB
         {
             foreach (var field in type.GetFields(MemberFlags))
             {
-                if (field.GetCustomAttribute<SecondaryKeyAttribute>() != null)
+                if (field.GetCustomAttributes<SecondaryKeyAttribute>().Any())
                     return true;
             }
 
             foreach (var property in type.GetProperties(MemberFlags))
             {
-                if (property.GetCustomAttribute<SecondaryKeyAttribute>() != null)
+                if (property.GetCustomAttributes<SecondaryKeyAttribute>().Any())
                     return true;
             }
 

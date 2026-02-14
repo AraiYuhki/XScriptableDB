@@ -22,6 +22,7 @@ indices:
   - name: name
     columns:
       - name
+    allowDuplicates: false
   - name: element_power
     columns:
       - element

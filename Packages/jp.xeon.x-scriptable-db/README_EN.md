@@ -368,6 +368,184 @@ Id,Category,Name,Price,Attack,Defense
 1003,Armor,Leather Armor,80,0,5
 ```
 
+## YAML Definition File Format
+
+Table Editor defines table schemas in YAML files. C# code (Record and Table classes) can be auto-generated from YAML files.
+
+Menu: `Tools > XScriptableDB > Generate C# from YAML file` / `Generate C# from YAML folder`
+
+### Basic Structure
+
+```yaml
+tableName: m_item              # Table name (snake_case recommended)
+isReadOnly: true               # Immutability at runtime (default: true)
+columns:                       # List of column definitions
+  - name: id                   # Column name (snake_case)
+    type: int                  # Data type (see type conversion table below)
+    isPrimaryKey: true         # Primary key flag
+    isNullable: false          # Nullable flag
+  - name: name
+    type: string
+indices:                       # List of SecondaryKey indexes
+  - name: category             # Index name
+    columns:                   # Target columns (multiple for composite index)
+      - category
+    allowDuplicates: true      # Allow duplicate key values
+```
+
+### Column Definition
+
+| Property | Type | Required | Default | Description |
+|----------|------|:--------:|---------|-------------|
+| `name` | string | Yes | - | Column name (snake_case recommended) |
+| `type` | string | Yes | - | Data type |
+| `isPrimaryKey` | bool | - | `false` | Designate as primary key |
+| `isNullable` | bool | - | `false` | Generate as nullable type |
+
+### Index Definition
+
+| Property | Type | Required | Default | Description |
+|----------|------|:--------:|---------|-------------|
+| `name` | string | Yes | - | Index name |
+| `columns` | string[] | Yes | - | List of target column names |
+| `allowDuplicates` | bool | - | `true` | Allow duplicate values |
+
+Specifying multiple columns in `columns` creates a composite index.
+
+### Supported Types
+
+| YAML Type | C# Type | Description |
+|-----------|---------|-------------|
+| `int`, `integer`, `mediumint` | `int` | 32-bit integer |
+| `tinyint` | `byte` | 8-bit unsigned integer |
+| `smallint` | `short` | 16-bit integer |
+| `bigint` | `long` | 64-bit integer |
+| `float`, `real` | `float` | 32-bit floating point |
+| `double` | `double` | 64-bit floating point |
+| `decimal`, `numeric` | `decimal` | High-precision decimal |
+| `bool`, `boolean` | `bool` | Boolean |
+| `char` | `char` | Character |
+| `string`, `varchar`, `text`, `longtext`, `mediumtext`, `tinytext` | `string` | String |
+| `datetime`, `timestamp`, `date` | `SerializableDateTime` | Date/time |
+
+When `isNullable: true`, value types are generated as nullable (e.g., `int?`).
+
+### Full Example
+
+```yaml
+tableName: m_item
+isReadOnly: true
+columns:
+  - name: id
+    type: int
+    isPrimaryKey: true
+  - name: name
+    type: string
+  - name: description
+    type: string
+    isNullable: true
+  - name: category_id
+    type: int
+  - name: price
+    type: int
+  - name: rarity
+    type: int
+  - name: is_tradable
+    type: bool
+  - name: release_date
+    type: datetime
+indices:
+  - name: category_id
+    columns:
+      - category_id
+    allowDuplicates: true
+  - name: rarity
+    columns:
+      - rarity
+    allowDuplicates: true
+```
+
+This YAML auto-generates the following C# code:
+
+```csharp
+// MItemRecord.cs
+[Serializable]
+public partial class MItemRecord
+{
+    [SerializeField, CsvColumn("id"), PrimaryKey]
+    private int id;
+
+    [SerializeField, CsvColumn("name")]
+    private string name;
+
+    [SerializeField, CsvColumn("description")]
+    private string description;
+
+    [SerializeField, CsvColumn("category_id"), SecondaryKey]
+    private int categoryId;
+
+    [SerializeField, CsvColumn("price")]
+    private int price;
+
+    [SerializeField, CsvColumn("rarity"), SecondaryKey]
+    private int rarity;
+
+    [SerializeField, CsvColumn("is_tradable")]
+    private bool isTradable;
+
+    [SerializeField, CsvColumn("release_date")]
+    private SerializableDateTime releaseDate;
+
+    // Properties (when isReadOnly: true, setters are Editor-only)
+    public int Id { get => id; }
+    public string Name { get => name; }
+    // ...
+}
+```
+
+### Composite Index Example
+
+```yaml
+tableName: m_character
+isReadOnly: true
+columns:
+  - name: id
+    type: int
+    isPrimaryKey: true
+  - name: name
+    type: string
+  - name: class
+    type: string
+  - name: level
+    type: int
+indices:
+  - name: class
+    columns:
+      - class
+    allowDuplicates: true
+  - name: class_level
+    columns:
+      - class
+      - level
+    allowDuplicates: true
+  - name: name
+    columns:
+      - name
+    allowDuplicates: false
+```
+
+### YAML Naming Convention
+
+YAML files use **camelCase** following YamlDotNet's `CamelCaseNamingConvention`.
+
+| C# Property | YAML Key |
+|-------------|----------|
+| `TableName` | `tableName` |
+| `IsReadOnly` | `isReadOnly` |
+| `IsPrimaryKey` | `isPrimaryKey` |
+| `IsNullable` | `isNullable` |
+| `AllowDuplicates` | `allowDuplicates` |
+
 ## Performance Features
 
 ### LRU Cache

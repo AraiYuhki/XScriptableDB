@@ -5,3 +5,97 @@ id,name,element,power,mp_cost,cooldown
 4,Thunder Spear,Lightning,260,18,3.2
 5,Heal,Holy,0,8,1.2
 6,Meteor,Fire,520,40,8.0
+7,Power Strike,None,180,5,1.0
+8,Double Slash,None,200,8,1.5
+9,Whirlwind,Wind,160,10,2.0
+10,Backstab,None,250,6,1.2
+11,Flame Wave,Fire,280,15,3.0
+12,Blizzard,Ice,300,20,4.0
+13,Chain Lightning,Lightning,240,16,2.8
+14,Dark Pulse,Dark,320,22,3.5
+15,Holy Light,Holy,260,18,2.5
+16,Earthquake,Earth,280,20,4.5
+17,Gust,Wind,140,8,1.5
+18,Water Jet,Water,160,9,1.6
+19,Rock Throw,Earth,120,6,1.0
+20,Shadow Strike,Dark,200,12,2.0
+21,Cure,Holy,0,5,0.8
+22,Greater Heal,Holy,0,15,2.0
+23,Regenerate,Holy,0,20,6.0
+24,Revive,Holy,0,30,10.0
+25,Barrier,Holy,0,12,3.0
+26,Fire Breath,Fire,350,25,4.5
+27,Ice Storm,Ice,340,24,4.2
+28,Thunderbolt,Lightning,380,28,5.0
+29,Inferno,Fire,450,35,6.5
+30,Absolute Zero,Ice,420,32,6.0
+31,Judgment,Lightning,460,38,7.0
+32,Void Blast,Dark,400,30,5.5
+33,Sacred Ray,Holy,380,28,5.0
+34,Tornado,Wind,300,22,4.0
+35,Tidal Wave,Water,320,24,4.5
+36,Magma Burst,Earth,360,26,5.0
+37,Poison Sting,Dark,100,4,0.8
+38,Venom Slash,Dark,160,8,1.5
+39,Life Drain,Dark,180,10,2.0
+40,Soul Burn,Dark,280,20,3.8
+41,Triple Strike,None,280,12,2.2
+42,Cross Slash,None,320,15,2.5
+43,Piercing Thrust,None,220,8,1.2
+44,Shield Bash,None,140,4,0.8
+45,Battle Cry,None,0,6,3.0
+46,Flame Arrow,Fire,180,10,1.8
+47,Fire Storm,Fire,380,30,5.5
+48,Flare,Fire,500,42,8.5
+49,Ice Needle,Ice,140,7,1.2
+50,Frost Nova,Ice,260,18,3.5
+51,Diamond Dust,Ice,480,40,8.0
+52,Spark,Lightning,100,5,0.8
+53,Plasma Ball,Lightning,300,22,3.8
+54,Thor Hammer,Lightning,500,45,9.0
+55,Stone Spike,Earth,180,10,1.8
+56,Gravity Well,Earth,240,16,3.0
+57,Terra Break,Earth,440,36,7.5
+58,Air Blade,Wind,180,10,1.6
+59,Storm Edge,Wind,260,18,3.2
+60,Cyclone,Wind,400,32,6.5
+61,Aqua Slash,Water,160,9,1.5
+62,Hydro Pump,Water,280,20,3.5
+63,Maelstrom,Water,420,34,7.0
+64,Shadow Bind,Dark,0,8,2.0
+65,Nightmare,Dark,350,26,4.5
+66,Abyss Gate,Dark,500,45,9.5
+67,Flash,Holy,120,6,1.0
+68,Smite,Holy,200,14,2.2
+69,Divine Storm,Holy,440,36,7.5
+70,Celestial Wrath,Holy,520,48,10.0
+71,Counter Strike,None,200,0,0.5
+72,Feint,None,80,2,0.4
+73,Quick Draw,None,150,4,0.6
+74,Assassinate,None,400,20,5.0
+75,Full Swing,None,260,10,2.0
+76,Ember,Fire,80,3,0.6
+77,Frostbite,Ice,90,4,0.8
+78,Static Shock,Lightning,85,3,0.6
+79,Tremor,Earth,100,5,1.0
+80,Breeze,Wind,70,3,0.5
+81,Splash,Water,75,3,0.5
+82,Dark Mist,Dark,60,4,1.0
+83,Bless,Holy,0,4,0.8
+84,Multi Heal,Holy,0,25,4.0
+85,Resurrection,Holy,0,50,15.0
+86,Fire Shield,Fire,0,10,5.0
+87,Ice Shield,Ice,0,10,5.0
+88,Thunder Shield,Lightning,0,10,5.0
+89,Haste,Wind,0,12,6.0
+90,Protect,Earth,0,10,5.0
+91,Cleanse,Water,0,8,3.0
+92,Debilitate,Dark,0,10,4.0
+93,Rage,None,0,8,8.0
+94,Focus,None,0,6,5.0
+95,Meditate,None,0,0,4.0
+96,Eruption,Fire,550,50,10.0
+97,Glacial Tomb,Ice,530,48,9.5
+98,Ragnarok,Lightning,560,52,10.5
+99,Apocalypse,Dark,580,55,12.0
+100,Genesis,Holy,600,60,15.0
