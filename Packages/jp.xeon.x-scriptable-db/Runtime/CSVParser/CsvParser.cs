@@ -64,33 +64,24 @@ namespace Xeon.XScriptableDB.IO
 
         public List<T> Parse<T>() where T : CsvData, new()
         {
-            var type = typeof(T);
             var (attributes, members) = GetMembers<T>();
             var result = new List<T>();
-            var headers = new List<string>();
-            var isFirst = true;
+            Dictionary<int, MemberInfo> memberIndexMap = null;
 
-            foreach (var line in csv.Split("\n").Select(line => line.Trim()))
+            foreach (var rawLine in csv.Split("\n"))
             {
+                var line = rawLine.Trim();
                 if (string.IsNullOrEmpty(line))
                     continue;
 
                 var columns = line.Split(separator);
-                if (isFirst)
+                if (memberIndexMap == null)
                 {
-                    headers = columns.ToList();
-                    isFirst = false;
+                    memberIndexMap = BuildMemberIndexMap(columns, attributes, members);
                     continue;
                 }
 
-                var parsed = new Dictionary<string, string>();
-                foreach (var (key, index) in headers.Select((key, index) => (key, index)))
-                {
-                    var rawValue = index >= columns.Length ? string.Empty : columns[index];
-                    parsed[key] = RestoreEscapedStrings(rawValue);
-                }
-
-                var instance = CreateInstance<T>(attributes, members, type, parsed);
+                var instance = CreateInstance<T>(memberIndexMap, columns);
                 result.Add(instance);
             }
             return result;
@@ -98,36 +89,43 @@ namespace Xeon.XScriptableDB.IO
 
         public List<T> ParseRecord<T>() where T : class, new()
         {
-            var type = typeof(T);
             var (attributes, members) = GetMembers<T>();
             var result = new List<T>();
-            var headers = new List<string>();
-            var isFirst = true;
+            Dictionary<int, MemberInfo> memberIndexMap = null;
 
-            foreach (var line in csv.Split("\n").Select(line => line.Trim()))
+            foreach (var rawLine in csv.Split("\n"))
             {
+                var line = rawLine.Trim();
                 if (string.IsNullOrEmpty(line))
                     continue;
 
                 var columns = line.Split(separator);
-                if (isFirst)
+                if (memberIndexMap == null)
                 {
-                    headers = columns.ToList();
-                    isFirst = false;
+                    memberIndexMap = BuildMemberIndexMap(columns, attributes, members);
                     continue;
                 }
 
-                var parsed = new Dictionary<string, string>();
-                foreach (var (key, index) in headers.Select((key, index) => (key, index)))
-                {
-                    var rawValue = index >= columns.Length ? string.Empty : columns[index];
-                    parsed[key] = RestoreEscapedStrings(rawValue);
-                }
-
-                var instance = CreateRecordInstance<T>(attributes, members, type, parsed);
+                var instance = CreateRecordInstance<T>(memberIndexMap, columns);
                 result.Add(instance);
             }
             return result;
+        }
+
+        private static Dictionary<int, MemberInfo> BuildMemberIndexMap(
+            string[] headers,
+            Dictionary<string, CsvColumn> attributes,
+            Dictionary<string, MemberInfo> members)
+        {
+            var map = new Dictionary<int, MemberInfo>();
+            for (var i = 0; i < headers.Length; i++)
+            {
+                var header = headers[i];
+                if (!attributes.ContainsKey(header) || !members.TryGetValue(header, out var member))
+                    continue;
+                map[i] = member;
+            }
+            return map;
         }
 
         private static (Dictionary<string, CsvColumn> attributes, Dictionary<string, MemberInfo> members) GetMembers<T>()
@@ -151,21 +149,16 @@ namespace Xeon.XScriptableDB.IO
         }
 
         private T CreateInstance<T>(
-            Dictionary<string, CsvColumn> attributes,
-            Dictionary<string, MemberInfo> members,
-            Type type,
-            Dictionary<string, string> row) where T : CsvData, new()
+            Dictionary<int, MemberInfo> memberIndexMap,
+            string[] columns) where T : CsvData, new()
         {
             var instance = new T();
-            foreach (var (key, value) in row)
+            foreach (var (index, member) in memberIndexMap)
             {
-                if (!attributes.ContainsKey(key) || !members.ContainsKey(key))
-                    continue;
-
-                var member = members[key];
+                var rawValue = index >= columns.Length ? string.Empty : columns[index];
                 try
                 {
-                    SetMemberValue(type, member, instance, value);
+                    SetMemberValue(member, instance, RestoreEscapedStrings(rawValue));
                 }
                 catch (Exception e)
                 {
@@ -177,21 +170,16 @@ namespace Xeon.XScriptableDB.IO
         }
 
         private T CreateRecordInstance<T>(
-            Dictionary<string, CsvColumn> attributes,
-            Dictionary<string, MemberInfo> members,
-            Type type,
-            Dictionary<string, string> row) where T : class, new()
+            Dictionary<int, MemberInfo> memberIndexMap,
+            string[] columns) where T : class, new()
         {
             var instance = new T();
-            foreach (var (key, value) in row)
+            foreach (var (index, member) in memberIndexMap)
             {
-                if (!attributes.ContainsKey(key) || !members.ContainsKey(key))
-                    continue;
-
-                var member = members[key];
+                var rawValue = index >= columns.Length ? string.Empty : columns[index];
                 try
                 {
-                    SetMemberValue(type, member, instance, value);
+                    SetMemberValue(member, instance, RestoreEscapedStrings(rawValue));
                 }
                 catch (Exception e)
                 {
@@ -219,24 +207,18 @@ namespace Xeon.XScriptableDB.IO
             return result;
         }
 
-        private void SetMemberValue<T>(Type type, MemberInfo member, T instance, string value)
+        private void SetMemberValue<T>(MemberInfo member, T instance, string value)
         {
             Type memberType;
             Action<object> setValue;
 
-            if (member.MemberType == MemberTypes.Property)
+            if (member is PropertyInfo propertyInfo)
             {
-                var propertyInfo = type.GetProperty(member.Name, MemberFlags);
-                if (propertyInfo == null)
-                    return;
                 memberType = propertyInfo.PropertyType;
                 setValue = v => propertyInfo.SetValue(instance, v);
             }
-            else if (member.MemberType == MemberTypes.Field)
+            else if (member is FieldInfo fieldInfo)
             {
-                var fieldInfo = type.GetField(member.Name, MemberFlags);
-                if (fieldInfo == null)
-                    return;
                 memberType = fieldInfo.FieldType;
                 setValue = v => fieldInfo.SetValue(instance, v);
             }
