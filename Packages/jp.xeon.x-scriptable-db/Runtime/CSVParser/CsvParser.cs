@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Xeon.XScriptableDB.IO
@@ -189,22 +190,18 @@ namespace Xeon.XScriptableDB.IO
             return instance;
         }
 
+        private static readonly Regex EscapedPattern = new(@"<escaped string>\d+</escaped string>", RegexOptions.Compiled);
+
         private string RestoreEscapedStrings(string text)
         {
-            var result = text;
-            var hasReplacement = true;
-            while (hasReplacement)
+            if (escapedData.Count == 0)
+                return text;
+
+            return EscapedPattern.Replace(text, match =>
             {
-                hasReplacement = false;
-                foreach (var (escaped, origin) in escapedData)
-                {
-                    if (!result.Contains(escaped))
-                        continue;
-                    result = result.Replace(escaped, origin);
-                    hasReplacement = true;
-                }
-            }
-            return result;
+                var key = match.Value;
+                return escapedData.TryGetValue(key, out var origin) ? origin : key;
+            });
         }
 
         private void SetMemberValue<T>(MemberInfo member, T instance, string value)
@@ -311,10 +308,10 @@ namespace Xeon.XScriptableDB.IO
                 var values = new List<string>();
                 foreach (var (_, member) in members)
                 {
-                    object value = member.MemberType switch
+                    object value = member switch
                     {
-                        MemberTypes.Property => recordType.GetProperty(member.Name)?.GetValue(row),
-                        MemberTypes.Field => recordType.GetField(member.Name, MemberFlags)?.GetValue(row),
+                        PropertyInfo prop => prop.GetValue(row),
+                        FieldInfo field => field.GetValue(row),
                         _ => null
                     };
                     values.Add(ValueToString(value));

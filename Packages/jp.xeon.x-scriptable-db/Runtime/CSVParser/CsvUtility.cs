@@ -28,6 +28,7 @@ namespace Xeon.XScriptableDB.IO
                 var startIndex = index;
                 index++;
 
+                var foundClose = false;
                 while (index < csv.Length)
                 {
                     if (csv[index] == '"')
@@ -39,10 +40,18 @@ namespace Xeon.XScriptableDB.IO
                         }
 
                         index++;
+                        foundClose = true;
                         break;
                     }
 
                     index++;
+                }
+
+                if (!foundClose)
+                {
+                    result.Append(csv[startIndex..index]);
+                    index--;
+                    continue;
                 }
 
                 var endIndex = index;
