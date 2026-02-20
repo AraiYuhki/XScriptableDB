@@ -304,6 +304,72 @@ namespace Xeon.XScriptableDB.Tests.Editor
             }
         }
 
+        [Test]
+        public void ClassGenerator_TypeConversion_SnakeCaseEnum_ConvertsToPascalCase()
+        {
+            // スネークケースのenum型名はPascalCaseに変換される
+            var definition = new TableDefinition
+            {
+                TableName = "test",
+                Columns = new List<ColumnDefinition>
+                {
+                    new ColumnDefinition { Name = "id", Type = "int", IsPrimaryKey = true },
+                    new ColumnDefinition { Name = "element_type", Type = "element_type" }
+                }
+            };
+
+            var code = ClassGenerator.GenerateRecord(definition);
+            Assert.IsTrue(code.Contains("ElementType"),
+                "スネークケースのenum型名はPascalCaseに変換される");
+            Assert.IsFalse(code.Contains("private element_type "),
+                "スネークケースのままのフィールド型は生成されない");
+        }
+
+        [Test]
+        public void ClassGenerator_TypeConversion_PascalCaseEnum_PreservedAsPascalCase()
+        {
+            // すでにPascalCaseのenum型名はそのまま維持される
+            var definition = new TableDefinition
+            {
+                TableName = "test",
+                Columns = new List<ColumnDefinition>
+                {
+                    new ColumnDefinition { Name = "id", Type = "int", IsPrimaryKey = true },
+                    new ColumnDefinition { Name = "rarity", Type = "RarityType" }
+                }
+            };
+
+            var code = ClassGenerator.GenerateRecord(definition);
+            Assert.IsTrue(code.Contains("RarityType"),
+                "PascalCaseのenum型名はそのまま維持される");
+        }
+
+        [Test]
+        public void ClassGenerator_GenerateRecord_FieldName_HasUnderscorePrefix()
+        {
+            var definition = new TableDefinition
+            {
+                TableName = "test",
+                Columns = new List<ColumnDefinition>
+                {
+                    new ColumnDefinition { Name = "id", Type = "int", IsPrimaryKey = true },
+                    new ColumnDefinition { Name = "item_name", Type = "varchar" }
+                }
+            };
+
+            var code = ClassGenerator.GenerateRecord(definition);
+            // フィールド名にはアンダースコアプレフィックスが付く
+            Assert.IsTrue(code.Contains("private int _id"),
+                "int型フィールドは_プレフィックス付きで生成される");
+            Assert.IsTrue(code.Contains("private string _itemName"),
+                "スネークケースのフィールド名はキャメルケースに変換され_プレフィックスが付く");
+            // プロパティのゲッターも_プレフィックス付きフィールドを参照する
+            Assert.IsTrue(code.Contains("get => _id"),
+                "プロパティのgetterは_プレフィックス付きフィールドを参照する");
+            Assert.IsTrue(code.Contains("get => _itemName"),
+                "スネークケース由来のプロパティのgetterも_プレフィックス付きフィールドを参照する");
+        }
+
         #endregion
 
         #region DefinitionLoader Tests

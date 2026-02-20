@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-20
+
+### Changed
+
+- **ClassGenerator**: フィールド名に `_` プレフィックスを追加（Unityコーディング規約に準拠）
+  - 例: `private int id;` → `private int _id;`
+  - プロパティのゲッター/セッターも `_fieldName` 形式に更新
+- **ClassGenerator**: enum・ユーザー定義型名のスネークケース → PascalCase 自動変換
+  - 例: `element_type` → `ElementType`
+  - PascalCase の型名はそのまま保持
+
+### Added
+
+- ClassGenerator のフィールド名・型変換に関するユニットテストを追加
+
+---
+
 ## [1.0.0] - 2026-02-03
 
 ### Added
