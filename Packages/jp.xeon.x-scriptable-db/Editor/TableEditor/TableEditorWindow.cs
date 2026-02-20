@@ -95,8 +95,8 @@ namespace Xeon.XScriptableDB.Editor
 
         private void SaveAs()
         {
-            var defaultPath = string.IsNullOrEmpty(filePath) ? "NewTable" : filePath;
-            var saveFilePath = EditorUtility.SaveFilePanel("YAMLファイルの保存先を選択してください", Path.Combine(Application.dataPath, "../"), defaultPath, "yaml,yml");
+            var defaultFileName = string.IsNullOrEmpty(filePath) ? "NewTable" : Path.GetFileNameWithoutExtension(filePath);
+            var saveFilePath = EditorUtility.SaveFilePanel("YAMLファイルの保存先を選択してください", Path.Combine(Application.dataPath, "../"), defaultFileName, "yaml");
             if (string.IsNullOrEmpty(saveFilePath))
                 return;
             filePath = saveFilePath;
