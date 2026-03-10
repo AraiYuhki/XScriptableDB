@@ -122,8 +122,8 @@ namespace Xeon.XScriptableDB.Editor
             if (!directoryInfo.Exists)
                 directoryInfo.Create();
 
-            File.WriteAllText(tableFilePath, ClassGenerator.GenerateTable(tableDefinition));
-            File.WriteAllText(recordFilePath, ClassGenerator.GenerateRecord(tableDefinition));
+            File.WriteAllText(tableFilePath, ClassGenerator.GenerateTable(tableDefinition, TableGenerateSetting.Instance.NamespaceName));
+            File.WriteAllText(recordFilePath, ClassGenerator.GenerateRecord(tableDefinition, TableGenerateSetting.Instance.NamespaceName));
             EditorUtility.DisplayDialog("ファイルの生成完了", $"以下のファイルを生成しました\n{tableFilePath}\n{recordFilePath}", "OK");
             AssetDatabase.ImportAsset(tableFilePath.Replace(Application.dataPath, "Assets"));
             AssetDatabase.ImportAsset(recordFilePath.Replace(Application.dataPath, "Assets"));

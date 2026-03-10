@@ -14,9 +14,8 @@ namespace Xeon.XScriptableDB.Editor
             "bool", "char", "SerializableDateTime"
         };
 
-        public static string GenerateTable(TableDefinition definition)
+        public static string GenerateTable(TableDefinition definition, string namespaceName = "Xeon.XScriptableDB.Generated")
         {
-            var namespaceName = "Xeon.XScriptableDB.Generated";
             var className = definition.TableName.SnakeToPascalCase();
             var primaryKey = definition.Columns.FirstOrDefault(column => column.IsPrimaryKey) ?? definition.Columns[0];
             var primaryKeyType = ConvertType(primaryKey.Type, false);
@@ -32,9 +31,8 @@ namespace {namespaceName}
 ";
         }
 
-        public static string GenerateRecord(TableDefinition definition)
+        public static string GenerateRecord(TableDefinition definition, string namespaceName = "Xeon.XScriptableDB.Generated")
         {
-            var namespaceName = "Xeon.XScriptableDB.Generated";
             var className = definition.TableName.SnakeToPascalCase();
             var fields = GenerateFields(definition);
             var properties = GenerateProperties(definition.Columns, definition.IsReadOnly);
