@@ -3,11 +3,9 @@
   "version": "1.1.2",
   "displayName": "XScriptableDB",
   "description": "A high-performance ScriptableObject-based database system for Unity. Features O(log n) binary search with PrimaryKey, O(1) hash lookup with SecondaryKey, zero GC allocation queries, CSV/TSV import/export with diff preview, SQL Editor with JOIN/GROUP BY/aggregation functions, schema comparison, migration tools, and comprehensive validation system.",
-  "license": "MIT OR Apache-2.0",
   "unity": "6000.0",
   "documentationUrl": "https://github.com/AraiYuhki/XScriptableDB#readme",
   "changelogUrl": "https://github.com/AraiYuhki/XScriptableDB/blob/main/Packages/jp.xeon.x-scriptable-db/CHANGELOG.md",
-  "licensesUrl": "https://github.com/AraiYuhki/XScriptableDB/blob/main/Packages/jp.xeon.x-scriptable-db/LICENSE.md",
   "keywords": [
     "database",
     "master-data",
