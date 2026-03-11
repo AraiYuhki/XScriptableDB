@@ -84,8 +84,8 @@ namespace Xeon.XScriptableDB.Editor
             var tableFilePath = Path.Combine(directoryPath, $"{className}Table.cs");
             var recordFilePath = Path.Combine(directoryPath, $"{className}Record.cs");
 
-            File.WriteAllText(tableFilePath, ClassGenerator.GenerateTable(definition));
-            File.WriteAllText(recordFilePath, ClassGenerator.GenerateRecord(definition));
+            File.WriteAllText(tableFilePath, ClassGenerator.GenerateTable(definition, TableGenerateSetting.Instance.NamespaceName));
+            File.WriteAllText(recordFilePath, ClassGenerator.GenerateRecord(definition, TableGenerateSetting.Instance.NamespaceName));
 
             Debug.Log($"Generated: {tableFilePath}, {recordFilePath}");
         }
