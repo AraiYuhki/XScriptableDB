@@ -649,10 +649,6 @@ Package Managerからインポートできます:
 - v0.6.1: SQL実行エンジンのバグ修正（GROUP BY, JOIN, COUNT, SUM等）、メニュー整理、テストカバレッジ向上
 - **v1.0.0: 安定版リリース（複合SecondaryKey、カルチャ非依存インデックス、Unity Asset Store対応）**
 
-## ライセンス
-
-MIT OR Apache-2.0
-
 ## 作者
 
 Xeon ([@AraiYuhki](https://github.com/AraiYuhki))

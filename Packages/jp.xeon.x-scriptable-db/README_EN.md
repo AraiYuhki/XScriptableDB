@@ -635,10 +635,6 @@ You can import them from Package Manager:
 2. Open the `Samples` tab
 3. Click `Import` for the desired sample
 
-## License
-
-MIT OR Apache-2.0
-
 ## Author
 
 Xeon ([@AraiYuhki](https://github.com/AraiYuhki))
