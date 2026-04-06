@@ -51,40 +51,40 @@ namespace Xeon.XScriptableDB.Editor
 
         private void OnGUI()
         {
-            EditorGUILayout.LabelField("XScriptableDB ベンチマーク", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("XScriptableDB Benchmark", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
             using (new EditorGUI.DisabledGroupScope(isRunning))
             {
                 // 設定
-                EditorGUILayout.LabelField("設定", EditorStyles.boldLabel);
-                dataSize = EditorGUILayout.IntSlider("データサイズ", dataSize, 100, 100000);
-                iterations = EditorGUILayout.IntSlider("反復回数", iterations, 10, 10000);
+                EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
+                dataSize = EditorGUILayout.IntSlider("Data Size", dataSize, 100, 100000);
+                iterations = EditorGUILayout.IntSlider("Iterations", iterations, 10, 10000);
 
                 EditorGUILayout.Space();
 
                 // ベンチマーク実行ボタン
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("全ベンチマーク実行"))
+                    if (GUILayout.Button("Run All Benchmarks"))
                         RunAllBenchmarks();
 
-                    if (GUILayout.Button("検索ベンチマーク"))
+                    if (GUILayout.Button("Search Benchmark"))
                         RunSearchBenchmarks();
 
-                    if (GUILayout.Button("CSVベンチマーク"))
+                    if (GUILayout.Button("CSV Benchmark"))
                         RunCsvBenchmarks();
                 }
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("メモリベンチマーク"))
+                    if (GUILayout.Button("Memory Benchmark"))
                         RunMemoryBenchmarks();
 
-                    if (GUILayout.Button("結果をクリア"))
+                    if (GUILayout.Button("Clear Results"))
                         results.Clear();
 
-                    if (GUILayout.Button("レポート出力"))
+                    if (GUILayout.Button("Export Report"))
                         ExportReport();
                 }
             }
@@ -95,11 +95,11 @@ namespace Xeon.XScriptableDB.Editor
                     ? $"{completedBenchmarkCount}/{totalBenchmarkCount}"
                     : "...";
                 var label = string.IsNullOrEmpty(currentBenchmarkName)
-                    ? $"ベンチマーク実行中... ({progress})"
-                    : $"実行中: {currentBenchmarkName} ({progress})";
+                    ? $"Running benchmarks... ({progress})"
+                    : $"Running: {currentBenchmarkName} ({progress})";
                 EditorGUILayout.HelpBox(label, MessageType.Info);
 
-                if (GUILayout.Button("キャンセル"))
+                if (GUILayout.Button("Cancel"))
                     cancelRequested = true;
             }
 
@@ -109,19 +109,19 @@ namespace Xeon.XScriptableDB.Editor
                 return;
 
             // 結果表示
-            EditorGUILayout.LabelField($"結果 ({results.Count}件)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Results ({results.Count})", EditorStyles.boldLabel);
             using var scroll = new EditorGUILayout.ScrollViewScope(scrollPosition);
             scrollPosition = scroll.scrollPosition;
 
             // ヘッダー
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
-                GUILayout.Label("テスト名", GUILayout.Width(200));
-                GUILayout.Label("データ数", GUILayout.Width(80));
-                GUILayout.Label("反復", GUILayout.Width(60));
-                GUILayout.Label("合計(ms)", GUILayout.Width(80));
-                GUILayout.Label("1回あたり", GUILayout.Width(100));
-                GUILayout.Label("メモリ", GUILayout.Width(80));
+                GUILayout.Label("Test Name", GUILayout.Width(200));
+                GUILayout.Label("Data Size", GUILayout.Width(80));
+                GUILayout.Label("Iters", GUILayout.Width(60));
+                GUILayout.Label("Total (ms)", GUILayout.Width(80));
+                GUILayout.Label("Per Op", GUILayout.Width(100));
+                GUILayout.Label("Memory", GUILayout.Width(80));
             }
 
             foreach (var result in results)
@@ -482,8 +482,8 @@ namespace Xeon.XScriptableDB.Editor
                         var iterProgress = (float)i / iterations;
                         var combinedProgress = (completedBenchmarkCount + iterProgress) / Math.Max(1, totalBenchmarkCount);
                         var cancelled = EditorUtility.DisplayCancelableProgressBar(
-                            "ベンチマーク実行中",
-                            $"{name} ({i}/{iterations}) - 全体: {completedBenchmarkCount}/{totalBenchmarkCount}",
+                            "Running Benchmark",
+                            $"{name} ({i}/{iterations}) - Overall: {completedBenchmarkCount}/{totalBenchmarkCount}",
                             combinedProgress);
 
                         if (cancelled || cancelRequested)
@@ -494,7 +494,7 @@ namespace Xeon.XScriptableDB.Editor
                             result.PerOperationUs = i > 0 ? result.ElapsedMs * 1000 / i : 0;
                             result.Iterations = i;
                             result.Success = true;
-                            result.Name = $"{name} (中断: {i}/{iterations})";
+                            result.Name = $"{name} (Cancelled: {i}/{iterations})";
                             return result;
                         }
                     }
@@ -522,7 +522,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (results.Count == 0)
             {
-                EditorUtility.DisplayDialog("エラー", "結果がありません", "OK");
+                EditorUtility.DisplayDialog("Error", "No results to export", "OK");
                 return;
             }
 
@@ -555,11 +555,11 @@ namespace Xeon.XScriptableDB.Editor
             var report = sb.ToString();
             Debug.Log(report);
 
-            var path = EditorUtility.SaveFilePanel("レポートを保存", "", "benchmark_report.md", "md");
+            var path = EditorUtility.SaveFilePanel("Save Report", "", "benchmark_report.md", "md");
             if (!string.IsNullOrEmpty(path))
             {
                 System.IO.File.WriteAllText(path, report);
-                EditorUtility.DisplayDialog("完了", $"レポートを保存しました:\n{path}", "OK");
+                EditorUtility.DisplayDialog("Done", $"Report saved:\n{path}", "OK");
             }
         }
     }

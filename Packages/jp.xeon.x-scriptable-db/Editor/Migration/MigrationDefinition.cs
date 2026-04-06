@@ -24,19 +24,19 @@ namespace Xeon.XScriptableDB.Editor
     [CreateAssetMenu(fileName = "NewMigration", menuName = "XScriptableDB/Migration Definition")]
     public class MigrationDefinition : ScriptableObject
     {
-        [Header("基本情報")]
+        [Header("Basic Info")]
         public string MigrationName;
         public string Description;
         public int Version;
 
-        [Header("対象テーブル")]
+        [Header("Target Table")]
         public string SourceTableType;
         public string TargetTableType;
 
-        [Header("操作")]
+        [Header("Operations")]
         public List<MigrationOperation> Operations = new();
 
-        [Header("メタデータ")]
+        [Header("Metadata")]
         public string CreatedAt;
         public string CreatedBy;
         public bool IsApplied;

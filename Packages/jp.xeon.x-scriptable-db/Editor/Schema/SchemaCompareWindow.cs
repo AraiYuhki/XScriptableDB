@@ -76,19 +76,19 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
-            if (GUILayout.Button("テーブル更新", EditorStyles.toolbarButton, GUILayout.Width(100)))
+            if (GUILayout.Button("Refresh Tables", EditorStyles.toolbarButton, GUILayout.Width(100)))
                 RefreshTableList();
 
             GUILayout.FlexibleSpace();
 
             if (sourceTable != null && targetTable != null)
             {
-                if (GUILayout.Button("比較実行", EditorStyles.toolbarButton, GUILayout.Width(80)))
+                if (GUILayout.Button("Run Compare", EditorStyles.toolbarButton, GUILayout.Width(80)))
                     ExecuteComparison();
 
                 if (comparisonResult != null)
                 {
-                    if (GUILayout.Button("結果クリア", EditorStyles.toolbarButton, GUILayout.Width(80)))
+                    if (GUILayout.Button("Clear Result", EditorStyles.toolbarButton, GUILayout.Width(80)))
                         comparisonResult = null;
                 }
             }
@@ -102,7 +102,7 @@ namespace Xeon.XScriptableDB.Editor
 
             // ソーステーブル選択
             EditorGUILayout.BeginVertical(GUILayout.Width(position.width / 2 - 10));
-            EditorGUILayout.LabelField("比較元 (Source)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Source", EditorStyles.boldLabel);
 
             EditorGUI.BeginChangeCheck();
             sourceTableIndex = EditorGUILayout.Popup(sourceTableIndex, tableNames);
@@ -116,7 +116,7 @@ namespace Xeon.XScriptableDB.Editor
 
             // ターゲットテーブル選択
             EditorGUILayout.BeginVertical(GUILayout.Width(position.width / 2 - 10));
-            EditorGUILayout.LabelField("比較先 (Target)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Target", EditorStyles.boldLabel);
 
             EditorGUI.BeginChangeCheck();
             targetTableIndex = EditorGUILayout.Popup(targetTableIndex, tableNames);
@@ -151,14 +151,14 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUILayout.BeginVertical(GUILayout.Width(position.width / 2 - 10));
             if (sourceTable != null)
             {
-                EditorGUILayout.LabelField($"スキーマ: {sourceTable.RecordType.Name}", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField($"Schema: {sourceTable.RecordType.Name}", EditorStyles.boldLabel);
                 sourceScrollPosition = EditorGUILayout.BeginScrollView(sourceScrollPosition, GUILayout.Height(300));
                 DrawSchemaInfo(sourceTable.RecordType);
                 EditorGUILayout.EndScrollView();
             }
             else
             {
-                EditorGUILayout.HelpBox("比較元テーブルを選択してください", MessageType.Info);
+                EditorGUILayout.HelpBox("Please select the source table", MessageType.Info);
             }
             EditorGUILayout.EndVertical();
         }
@@ -168,14 +168,14 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUILayout.BeginVertical(GUILayout.Width(position.width / 2 - 10));
             if (targetTable != null)
             {
-                EditorGUILayout.LabelField($"スキーマ: {targetTable.RecordType.Name}", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField($"Schema: {targetTable.RecordType.Name}", EditorStyles.boldLabel);
                 targetScrollPosition = EditorGUILayout.BeginScrollView(targetScrollPosition, GUILayout.Height(300));
                 DrawSchemaInfo(targetTable.RecordType);
                 EditorGUILayout.EndScrollView();
             }
             else
             {
-                EditorGUILayout.HelpBox("比較先テーブルを選択してください", MessageType.Info);
+                EditorGUILayout.HelpBox("Please select the target table", MessageType.Info);
             }
             EditorGUILayout.EndVertical();
         }
@@ -242,10 +242,10 @@ namespace Xeon.XScriptableDB.Editor
                 EditorGUILayout.LabelField(comparisonResult.CompatibilityNote, EditorStyles.miniLabel);
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField($"追加: {comparisonResult.AddedFieldCount}", GUILayout.Width(80));
-            EditorGUILayout.LabelField($"削除: {comparisonResult.RemovedFieldCount}", GUILayout.Width(80));
-            EditorGUILayout.LabelField($"変更: {comparisonResult.ChangedFieldCount}", GUILayout.Width(80));
-            EditorGUILayout.LabelField($"合計: {comparisonResult.Differences.Count}", GUILayout.Width(80));
+            EditorGUILayout.LabelField($"Added: {comparisonResult.AddedFieldCount}", GUILayout.Width(80));
+            EditorGUILayout.LabelField($"Removed: {comparisonResult.RemovedFieldCount}", GUILayout.Width(80));
+            EditorGUILayout.LabelField($"Changed: {comparisonResult.ChangedFieldCount}", GUILayout.Width(80));
+            EditorGUILayout.LabelField($"Total: {comparisonResult.Differences.Count}", GUILayout.Width(80));
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.EndVertical();
@@ -254,10 +254,10 @@ namespace Xeon.XScriptableDB.Editor
             // フィルター
             EditorGUILayout.Space(5);
             EditorGUILayout.BeginHorizontal();
-            showAddedFields = GUILayout.Toggle(showAddedFields, "追加", EditorStyles.toolbarButton);
-            showRemovedFields = GUILayout.Toggle(showRemovedFields, "削除", EditorStyles.toolbarButton);
-            showChangedFields = GUILayout.Toggle(showChangedFields, "変更", EditorStyles.toolbarButton);
-            showKeyChanges = GUILayout.Toggle(showKeyChanges, "キー変更", EditorStyles.toolbarButton);
+            showAddedFields = GUILayout.Toggle(showAddedFields, "Added", EditorStyles.toolbarButton);
+            showRemovedFields = GUILayout.Toggle(showRemovedFields, "Removed", EditorStyles.toolbarButton);
+            showChangedFields = GUILayout.Toggle(showChangedFields, "Changed", EditorStyles.toolbarButton);
+            showKeyChanges = GUILayout.Toggle(showKeyChanges, "Key Changes", EditorStyles.toolbarButton);
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
@@ -275,7 +275,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (comparisonResult.Differences.Count == 0)
             {
-                EditorGUILayout.HelpBox("差分はありません", MessageType.Info);
+                EditorGUILayout.HelpBox("No differences found", MessageType.Info);
             }
 
             EditorGUILayout.EndScrollView();

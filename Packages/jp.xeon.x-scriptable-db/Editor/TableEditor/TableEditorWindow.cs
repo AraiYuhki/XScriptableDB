@@ -22,32 +22,32 @@ namespace Xeon.XScriptableDB.Editor
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("新規作成"))
+                if (GUILayout.Button("New"))
                 {
                     tableDefinition = new TableDefinition();
                     CreateColumnView();
                     CreateIndicesView();
                 }
 
-                if (GUILayout.Button("YAML読み込み"))
+                if (GUILayout.Button("Load YAML"))
                     LoadYaml();
             }
 
             if (tableDefinition == null)
             {
-                EditorGUILayout.HelpBox("編集するファイルを選択するか、新規作成してください", MessageType.Info);
+                EditorGUILayout.HelpBox("Select a file to edit or create a new one", MessageType.Info);
                 return;
             }
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("名前を付けて保存"))
+                if (GUILayout.Button("Save As"))
                     SaveAs();
                 EditorGUI.BeginDisabledGroup(string.IsNullOrEmpty(filePath));
-                if (GUILayout.Button("上書き保存"))
+                if (GUILayout.Button("Save"))
                     OverrideSave();
 
-                if (GUILayout.Button("C#ファイル生成"))
+                if (GUILayout.Button("Generate C#"))
                     GenerateFiles();
                 EditorGUI.EndDisabledGroup();
             }
@@ -56,8 +56,8 @@ namespace Xeon.XScriptableDB.Editor
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                tableDefinition.TableName = EditorGUILayout.TextField("テーブル名", tableDefinition.TableName);
-                tableDefinition.IsReadOnly = EditorGUILayout.ToggleLeft("読み取り専用", tableDefinition.IsReadOnly, GUILayout.Width(100f));
+                tableDefinition.TableName = EditorGUILayout.TextField("Table Name", tableDefinition.TableName);
+                tableDefinition.IsReadOnly = EditorGUILayout.ToggleLeft("Read Only", tableDefinition.IsReadOnly, GUILayout.Width(100f));
             }
             if (columnView == null)
                 CreateColumnView();
@@ -74,12 +74,12 @@ namespace Xeon.XScriptableDB.Editor
         private void Validate()
         {
             if (tableDefinition.Columns.Count(column => column.IsPrimaryKey) > 1)
-                EditorGUILayout.HelpBox("プライマリーキーは必ず一つ設定してください", MessageType.Error);
+                EditorGUILayout.HelpBox("There must be exactly one primary key", MessageType.Error);
             if (columnsCache != null && columnsCache.Length != columnsCache.Distinct().Count())
-                EditorGUILayout.HelpBox("同名のカラムは作成できません", MessageType.Error);
+                EditorGUILayout.HelpBox("Duplicate column names are not allowed", MessageType.Error);
             var indexNames = tableDefinition.Indices.Select(idx => idx.Name).ToList();
             if (indexNames.Count != indexNames.Distinct().Count())
-                EditorGUILayout.HelpBox("同名のインデックスは作成できません", MessageType.Error);
+                EditorGUILayout.HelpBox("Duplicate index names are not allowed", MessageType.Error);
         }
 
         private void LoadYaml()
@@ -96,12 +96,12 @@ namespace Xeon.XScriptableDB.Editor
         private void SaveAs()
         {
             var defaultFileName = string.IsNullOrEmpty(filePath) ? "NewTable" : Path.GetFileNameWithoutExtension(filePath);
-            var saveFilePath = EditorUtility.SaveFilePanel("YAMLファイルの保存先を選択してください", Path.Combine(Application.dataPath, "../"), defaultFileName, "yaml");
+            var saveFilePath = EditorUtility.SaveFilePanel("Select save location for YAML file", Path.Combine(Application.dataPath, "../"), defaultFileName, "yaml");
             if (string.IsNullOrEmpty(saveFilePath))
                 return;
             filePath = saveFilePath;
             DefinitionLoader.ExportYAML(tableDefinition, saveFilePath);
-            EditorUtility.DisplayDialog("ファイルを保存しました", $"{saveFilePath}に保存しました", "OK");
+            EditorUtility.DisplayDialog("File Saved", $"Saved to {saveFilePath}", "OK");
         }
 
         private void OverrideSave()
@@ -109,7 +109,7 @@ namespace Xeon.XScriptableDB.Editor
             if (string.IsNullOrEmpty(filePath))
                 return;
             DefinitionLoader.ExportYAML(tableDefinition, filePath);
-            EditorUtility.DisplayDialog("ファイルを保存しました", $"{filePath}に上書き保存しました", "OK");
+            EditorUtility.DisplayDialog("File Saved", $"Overwritten to {filePath}", "OK");
         }
 
         private void GenerateFiles()
@@ -124,7 +124,7 @@ namespace Xeon.XScriptableDB.Editor
 
             File.WriteAllText(tableFilePath, ClassGenerator.GenerateTable(tableDefinition, TableGenerateSetting.Instance.NamespaceName));
             File.WriteAllText(recordFilePath, ClassGenerator.GenerateRecord(tableDefinition, TableGenerateSetting.Instance.NamespaceName));
-            EditorUtility.DisplayDialog("ファイルの生成完了", $"以下のファイルを生成しました\n{tableFilePath}\n{recordFilePath}", "OK");
+            EditorUtility.DisplayDialog("Files Generated", $"The following files were generated\n{tableFilePath}\n{recordFilePath}", "OK");
             AssetDatabase.ImportAsset(tableFilePath.Replace(Application.dataPath, "Assets"));
             AssetDatabase.ImportAsset(recordFilePath.Replace(Application.dataPath, "Assets"));
             AssetDatabase.Refresh();

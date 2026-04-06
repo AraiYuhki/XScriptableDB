@@ -32,7 +32,7 @@ namespace Xeon.XScriptableDB.Editor
             var entry = AddressableAssetSettingsDefaultObject.Settings.FindAssetEntry(guid);
             if (!TryGetAddressProperty(property, out var addressProperty))
             {
-                Debug.LogError($"{property.propertyPath}に対応したAddress用のプロパティが見つかりませんでした");
+                Debug.LogError($"No Address property found corresponding to {property.propertyPath}");
                 return;
             }
             addressProperty.stringValue = entry?.address;
@@ -66,7 +66,7 @@ namespace Xeon.XScriptableDB.Editor
             result = null;
             if (!TryGetAddressPropertyPath(targetProperty, out var addressPath))
             {
-                Debug.LogError("アドレスの生成に失敗しました");
+                Debug.LogError("Failed to generate address path");
                 return false;
             }
 
@@ -77,7 +77,7 @@ namespace Xeon.XScriptableDB.Editor
             var replaceRegex = new Regex(@"\.Array\.data\[(?<index>[0-9]+)\]$");
             if (!replaceRegex.IsMatch(targetProperty.propertyPath))
             {
-                Debug.LogError($"{targetProperty.propertyPath}からアドレス用のパスを検出できませんでした");
+                Debug.LogError($"Could not detect address path from {targetProperty.propertyPath}");
                 return false;
             }
 
@@ -85,14 +85,14 @@ namespace Xeon.XScriptableDB.Editor
             var arrayProperty = targetProperty.serializedObject.FindProperty(arrayAddressPath);
             if (arrayProperty == null)
             {
-                Debug.LogError($"{targetProperty.propertyPath}から{arrayAddressPath}が見つかりませんでした");
+                Debug.LogError($"{arrayAddressPath} not found from {targetProperty.propertyPath}");
                 return false;
             }
 
             var match = replaceRegex.Match(targetProperty.propertyPath);
             if (!int.TryParse(match.Groups["index"].Value, out var index))
             {
-                Debug.LogError($"{match.Groups["index"].Value}がパースできませんでした");
+                Debug.LogError($"Could not parse {match.Groups["index"].Value}");
                 return false;
             }
 

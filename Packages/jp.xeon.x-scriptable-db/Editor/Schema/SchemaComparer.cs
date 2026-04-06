@@ -59,7 +59,7 @@ namespace Xeon.XScriptableDB.Editor
                 var field = sourceFields[name];
                 result.Differences.Add(new(SchemaDifferenceType.FieldRemoved, name, field.FieldType.Name, null));
                 result.IsCompatible = false;
-                result.CompatibilityNote = "フィールドが削除されているため、データ損失の可能性があります";
+                result.CompatibilityNote = "Fields have been removed, potential data loss may occur";
             }
 
             // 共通フィールドの比較
@@ -76,7 +76,7 @@ namespace Xeon.XScriptableDB.Editor
                     if (!IsTypeConvertible(sourceField.FieldType, targetField.FieldType))
                     {
                         result.IsCompatible = false;
-                        result.CompatibilityNote = $"フィールド '{name}' の型変換が不可能です";
+                        result.CompatibilityNote = $"Type conversion for field '{name}' is not possible";
                     }
                 }
 
@@ -162,8 +162,8 @@ namespace Xeon.XScriptableDB.Editor
             var fields = GetFieldSchemas(type);
             var lines = new List<string>
             {
-                $"テーブル: {type.Name}",
-                $"フィールド数: {fields.Count}",
+                $"Table: {type.Name}",
+                $"Field Count: {fields.Count}",
                 ""
             };
 
@@ -178,7 +178,7 @@ namespace Xeon.XScriptableDB.Editor
             }
 
             lines.Add("");
-            lines.Add("フィールド一覧:");
+            lines.Add("Fields:");
             foreach (var field in fields.Values.OrderBy(f => f.Name))
             {
                 var attrs = new List<string>();

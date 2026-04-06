@@ -25,7 +25,7 @@ namespace Xeon.XScriptableDB.Editor
             var indexies = new int[] { -1 }.Concat(data.Select(row => row.GroupId).Distinct()).ToArray();
             var elements = indexies.Select(id =>
             {
-                if (id <= 0) return "なし";
+                if (id <= 0) return "None";
                 var row = data.FirstOrDefault(row => row.GroupId == id);
                 return $"GroupId{id}:{row.Name}";
             }).ToArray();

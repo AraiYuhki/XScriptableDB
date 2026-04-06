@@ -33,14 +33,14 @@
         {
             return Type switch
             {
-                SchemaDifferenceType.FieldAdded => $"フィールド追加: {FieldName} ({NewValue})",
-                SchemaDifferenceType.FieldRemoved => $"フィールド削除: {FieldName} ({OldValue})",
-                SchemaDifferenceType.FieldTypeChanged => $"型変更: {FieldName} ({OldValue} -> {NewValue})",
-                SchemaDifferenceType.FieldAttributeChanged => $"属性変更: {FieldName} - {Description}",
-                SchemaDifferenceType.PrimaryKeyChanged => $"PrimaryKey変更: {OldValue} -> {NewValue}",
-                SchemaDifferenceType.SecondaryKeyAdded => $"SecondaryKey追加: {FieldName}",
-                SchemaDifferenceType.SecondaryKeyRemoved => $"SecondaryKey削除: {FieldName}",
-                _ => Description ?? "不明な差分"
+                SchemaDifferenceType.FieldAdded => $"Field Added: {FieldName} ({NewValue})",
+                SchemaDifferenceType.FieldRemoved => $"Field Removed: {FieldName} ({OldValue})",
+                SchemaDifferenceType.FieldTypeChanged => $"Type Changed: {FieldName} ({OldValue} -> {NewValue})",
+                SchemaDifferenceType.FieldAttributeChanged => $"Attribute Changed: {FieldName} - {Description}",
+                SchemaDifferenceType.PrimaryKeyChanged => $"PrimaryKey Changed: {OldValue} -> {NewValue}",
+                SchemaDifferenceType.SecondaryKeyAdded => $"SecondaryKey Added: {FieldName}",
+                SchemaDifferenceType.SecondaryKeyRemoved => $"SecondaryKey Removed: {FieldName}",
+                _ => Description ?? "Unknown difference"
             };
         }
     }

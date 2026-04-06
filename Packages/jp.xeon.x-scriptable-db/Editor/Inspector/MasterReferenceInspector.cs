@@ -19,7 +19,7 @@ namespace Xeon.XScriptableDB.Editor
             position.x += position.width;
             EditorGUI.BeginChangeCheck();
             var indexies = new int[] { -1 }.Concat(data.Select(row => row.Id)).ToArray();
-            var elements = new string[] { "なし" }.Concat(data.Select(row => $"ID{row.Id}:{row.Name}")).ToArray();
+            var elements = new string[] { "None" }.Concat(data.Select(row => $"ID{row.Id}:{row.Name}")).ToArray();
             selectedId = EditorGUI.IntPopup(position, selectedId, elements, indexies);
             position.x += position.width;
             using (new EditorGUI.DisabledGroupScope(true))

@@ -122,11 +122,11 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawNoDiffState()
         {
-            EditorGUILayout.HelpBox("差分データがありません。\nテーブルエディタからCSVをインポートするか、比較するデータを選択してください。", MessageType.Info);
+            EditorGUILayout.HelpBox("No diff data available.\nImport a CSV from the table editor or select data to compare.", MessageType.Info);
 
             EditorGUILayout.Space(20);
 
-            if (GUILayout.Button("テーブルエディタを開く", GUILayout.Height(30)))
+            if (GUILayout.Button("Open Table Editor", GUILayout.Height(30)))
             {
                 DataEditorWindow.Open();
             }
@@ -134,7 +134,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawHeader()
         {
-            EditorGUILayout.LabelField($"差分比較: {diffResult.TableName}", headerStyle);
+            EditorGUILayout.LabelField($"Diff Comparison: {diffResult.TableName}", headerStyle);
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -159,27 +159,27 @@ namespace Xeon.XScriptableDB.Editor
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
                 // フィルター
-                if (GUILayout.Toggle(filterType == null, "全て", EditorStyles.toolbarButton, GUILayout.Width(50)))
+                if (GUILayout.Toggle(filterType == null, "All", EditorStyles.toolbarButton, GUILayout.Width(50)))
                     filterType = null;
-                if (GUILayout.Toggle(filterType == DiffType.Added, "追加", EditorStyles.toolbarButton,
+                if (GUILayout.Toggle(filterType == DiffType.Added, "Added", EditorStyles.toolbarButton,
                         GUILayout.Width(50)))
                     filterType = filterType == DiffType.Added ? null : DiffType.Added;
-                if (GUILayout.Toggle(filterType == DiffType.Removed, "削除", EditorStyles.toolbarButton,
-                        GUILayout.Width(50)))
+                if (GUILayout.Toggle(filterType == DiffType.Removed, "Removed", EditorStyles.toolbarButton,
+                        GUILayout.Width(60)))
                     filterType = filterType == DiffType.Removed ? null : DiffType.Removed;
-                if (GUILayout.Toggle(filterType == DiffType.Modified, "変更", EditorStyles.toolbarButton,
-                        GUILayout.Width(50)))
+                if (GUILayout.Toggle(filterType == DiffType.Modified, "Modified", EditorStyles.toolbarButton,
+                        GUILayout.Width(60)))
                     filterType = filterType == DiffType.Modified ? null : DiffType.Modified;
 
                 GUILayout.Space(10);
-                showUnchanged = GUILayout.Toggle(showUnchanged, "変更なしを表示", EditorStyles.toolbarButton);
+                showUnchanged = GUILayout.Toggle(showUnchanged, "Show Unchanged", EditorStyles.toolbarButton);
 
                 GUILayout.FlexibleSpace();
 
                 // 選択操作
-                if (GUILayout.Button("全選択", EditorStyles.toolbarButton, GUILayout.Width(60)))
+                if (GUILayout.Button("Select All", EditorStyles.toolbarButton, GUILayout.Width(70)))
                     SelectAll();
-                if (GUILayout.Button("選択解除", EditorStyles.toolbarButton, GUILayout.Width(60)))
+                if (GUILayout.Button("Deselect All", EditorStyles.toolbarButton, GUILayout.Width(75)))
                     selectedKeys.Clear();
             }
         }
@@ -367,12 +367,12 @@ namespace Xeon.XScriptableDB.Editor
 
             using var _ = new EditorGUILayout.HorizontalScope();
             var selectedCount = selectedKeys.Count;
-            EditorGUILayout.LabelField($"選択中: {selectedCount}件");
+            EditorGUILayout.LabelField($"Selected: {selectedCount}");
 
             GUILayout.FlexibleSpace();
 
             EditorGUI.BeginDisabledGroup(selectedCount == 0 || targetTable == null);
-            if (GUILayout.Button("選択した変更を適用", GUILayout.Width(150), GUILayout.Height(30)))
+            if (GUILayout.Button("Apply Selected Changes", GUILayout.Width(160), GUILayout.Height(30)))
             {
                 ApplySelectedChanges();
             }
@@ -380,7 +380,7 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUI.EndDisabledGroup();
 
             EditorGUI.BeginDisabledGroup(targetTable == null || importedRecords == null);
-            if (GUILayout.Button("全ての変更を適用", GUILayout.Width(150), GUILayout.Height(30)))
+            if (GUILayout.Button("Apply All Changes", GUILayout.Width(150), GUILayout.Height(30)))
             {
                 ApplyAllChanges();
             }
@@ -396,20 +396,20 @@ namespace Xeon.XScriptableDB.Editor
             var tableAsset = targetTable as ITableAsset;
             if (tableAsset == null)
             {
-                EditorUtility.DisplayDialog("エラー", "テーブルアセットが無効です", "OK");
+                EditorUtility.DisplayDialog("Error", "Table asset is invalid", "OK");
                 return;
             }
 
-            if (!EditorUtility.DisplayDialog("確認",
-                    $"{selectedKeys.Count}件の変更を適用しますか？",
-                    "適用", "キャンセル"))
+            if (!EditorUtility.DisplayDialog("Confirm",
+                    $"Apply {selectedKeys.Count} change(s)?",
+                    "Apply", "Cancel"))
                 return;
 
             try
             {
                 ApplyChangesToTable(tableAsset, selectedKeys);
                 EditorUtility.SetDirty(targetTable);
-                EditorUtility.DisplayDialog("完了", "変更を適用しました", "OK");
+                EditorUtility.DisplayDialog("Complete", "Changes have been applied", "OK");
 
                 // コールバック呼び出し
                 onAppliedCallback?.Invoke();
@@ -419,7 +419,7 @@ namespace Xeon.XScriptableDB.Editor
             }
             catch (Exception e)
             {
-                EditorUtility.DisplayDialog("エラー", $"変更の適用中にエラーが発生しました:\n{e.Message}", "OK");
+                EditorUtility.DisplayDialog("Error", $"An error occurred while applying changes:\n{e.Message}", "OK");
                 Debug.LogException(e);
             }
         }
@@ -429,9 +429,9 @@ namespace Xeon.XScriptableDB.Editor
             if (targetTable == null || importedRecords == null)
                 return;
 
-            if (!EditorUtility.DisplayDialog("確認",
-                    "全ての変更を適用しますか？\nこれにより現在のテーブルデータが上書きされます。",
-                    "適用", "キャンセル"))
+            if (!EditorUtility.DisplayDialog("Confirm",
+                    "Apply all changes?\nThis will overwrite the current table data.",
+                    "Apply", "Cancel"))
                 return;
 
             try
@@ -455,7 +455,7 @@ namespace Xeon.XScriptableDB.Editor
                 if (onAppliedCallback == null)
                     AssetDatabase.SaveAssetIfDirty(targetTable);
 
-                EditorUtility.DisplayDialog("完了", "全ての変更を適用しました", "OK");
+                EditorUtility.DisplayDialog("Complete", "All changes have been applied", "OK");
 
                 // コールバック呼び出し
                 onAppliedCallback?.Invoke();
@@ -465,7 +465,7 @@ namespace Xeon.XScriptableDB.Editor
             }
             catch (Exception e)
             {
-                EditorUtility.DisplayDialog("エラー", $"変更の適用中にエラーが発生しました:\n{e.Message}", "OK");
+                EditorUtility.DisplayDialog("Error", $"An error occurred while applying changes:\n{e.Message}", "OK");
                 Debug.LogException(e);
             }
         }

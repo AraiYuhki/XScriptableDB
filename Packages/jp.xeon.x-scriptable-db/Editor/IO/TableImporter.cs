@@ -98,7 +98,7 @@ namespace Xeon.XScriptableDB.Editor
 
                 if (importedRecords.Length == 0)
                 {
-                    EditorUtility.DisplayDialog("警告", "インポートするレコードがありません", "OK");
+                    EditorUtility.DisplayDialog("Warning", "No records to import", "OK");
                     return false;
                 }
 
@@ -116,7 +116,7 @@ namespace Xeon.XScriptableDB.Editor
             }
             catch (Exception e)
             {
-                EditorUtility.DisplayDialog("インポートエラー", e.Message, "OK");
+                EditorUtility.DisplayDialog("Import Error", e.Message, "OK");
                 Debug.LogException(e);
                 return false;
             }
@@ -130,7 +130,7 @@ namespace Xeon.XScriptableDB.Editor
             var setRecordsMethod = targetTable.GetType().GetMethod("SetRecords");
             if (setRecordsMethod == null)
             {
-                EditorUtility.DisplayDialog("エラー", "SetRecordsメソッドが見つかりません", "OK");
+                EditorUtility.DisplayDialog("Error", "SetRecords method not found", "OK");
                 return false;
             }
 

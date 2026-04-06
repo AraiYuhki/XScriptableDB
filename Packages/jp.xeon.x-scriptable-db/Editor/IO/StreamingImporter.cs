@@ -258,7 +258,7 @@ namespace Xeon.XScriptableDB.Editor
                 return false;
 
             progress.State = StreamingImportState.Failed;
-            progress.ErrorMessage = $"エラーが{settings.MaxErrors}件を超えたため中断しました";
+            progress.ErrorMessage = $"Aborted because errors exceeded {settings.MaxErrors}";
             return true;
         }
 
@@ -306,7 +306,7 @@ namespace Xeon.XScriptableDB.Editor
             if (isCancelled)
             {
                 progress.State = StreamingImportState.Cancelled;
-                progress.ErrorMessage = "インポートがキャンセルされました";
+                progress.ErrorMessage = "Import was cancelled";
                 return;
             }
 
@@ -334,7 +334,7 @@ namespace Xeon.XScriptableDB.Editor
             if (isCancelled)
             {
                 progress.State = StreamingImportState.Cancelled;
-                progress.ErrorMessage = "インポートがキャンセルされました";
+                progress.ErrorMessage = "Import was cancelled";
                 return;
             }
 

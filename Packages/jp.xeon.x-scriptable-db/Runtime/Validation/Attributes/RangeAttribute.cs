@@ -38,7 +38,7 @@ namespace Xeon.XScriptableDB.Validation
             }
             catch
             {
-                return ValidationResult.Error(fieldName, $"{fieldName} は数値である必要があります。");
+                return ValidationResult.Error(fieldName, $"{fieldName} must be a numeric value.");
             }
 
             if (numValue < Minimum || numValue > Maximum)
@@ -49,7 +49,7 @@ namespace Xeon.XScriptableDB.Validation
 
         protected override string GetDefaultErrorMessage(string fieldName)
         {
-            return $"{fieldName} は {Minimum} から {Maximum} の範囲である必要があります。";
+            return $"{fieldName} must be between {Minimum} and {Maximum}.";
         }
     }
 }

@@ -24,7 +24,7 @@ namespace Xeon.XScriptableDB.Validation
 
         protected override string GetDefaultErrorMessage(string fieldName)
         {
-            return $"{fieldName} は必須です。";
+            return $"{fieldName} is required.";
         }
     }
 }

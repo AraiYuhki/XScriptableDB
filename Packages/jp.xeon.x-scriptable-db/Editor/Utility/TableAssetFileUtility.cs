@@ -39,7 +39,7 @@ namespace Xeon.XScriptableDB.Editor
         public static void ExportAll(string extension)
         {
             var folderPath = EditorUtility.SaveFolderPanel(
-                "エクスポート先フォルダを選択",
+                "Select export destination folder",
                 Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                 "Masters");
             if (string.IsNullOrEmpty(folderPath))
@@ -68,7 +68,7 @@ namespace Xeon.XScriptableDB.Editor
                 }
             }
 
-            ShowResultDialog("エクスポート完了", successList, failedList);
+            ShowResultDialog("Export Complete", successList, failedList);
         }
 
         /// <summary>
@@ -77,7 +77,7 @@ namespace Xeon.XScriptableDB.Editor
         public static void ImportAll(string extension)
         {
             var folderPath = EditorUtility.OpenFolderPanel(
-                "インポート元フォルダを選択",
+                "Select import source folder",
                 Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                 "Masters");
             if (string.IsNullOrEmpty(folderPath))
@@ -100,13 +100,13 @@ namespace Xeon.XScriptableDB.Editor
 
                 if (targetTable == null)
                 {
-                    skippedList.Add($"{file.Name} (テーブルが見つかりません)");
+                    skippedList.Add($"{file.Name} (table not found)");
                     continue;
                 }
 
                 if (targetTable is not IImportable importable)
                 {
-                    skippedList.Add($"{file.Name} (IImportable未実装)");
+                    skippedList.Add($"{file.Name} (IImportable not implemented)");
                     continue;
                 }
 
@@ -137,7 +137,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (table is not IExportable exporter)
             {
-                Debug.LogWarning($"{table.name} はIExportableを実装していません");
+                Debug.LogWarning($"{table.name} does not implement IExportable");
                 return false;
             }
 
@@ -152,7 +152,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (table is not IImportable importable)
             {
-                Debug.LogWarning($"{table.name} はIImportableを実装していません");
+                Debug.LogWarning($"{table.name} does not implement IImportable");
                 return false;
             }
 
@@ -168,7 +168,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (successList.Count > 0)
             {
-                message.AppendLine($"成功 ({successList.Count}件):");
+                message.AppendLine($"Success ({successList.Count}):");
                 foreach (var item in successList)
                     message.AppendLine($"  - {item}");
             }
@@ -177,13 +177,13 @@ namespace Xeon.XScriptableDB.Editor
             {
                 if (message.Length > 0)
                     message.AppendLine();
-                message.AppendLine($"失敗 ({failedList.Count}件):");
+                message.AppendLine($"Failed ({failedList.Count}):");
                 foreach (var item in failedList)
                     message.AppendLine($"  - {item}");
             }
 
             if (successList.Count == 0 && failedList.Count == 0)
-                message.AppendLine("対象のテーブルがありませんでした。");
+                message.AppendLine("No target tables were found.");
 
             EditorUtility.DisplayDialog(title, message.ToString(), "OK");
         }
@@ -194,7 +194,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (successList.Count > 0)
             {
-                message.AppendLine($"成功 ({successList.Count}件):");
+                message.AppendLine($"Success ({successList.Count}):");
                 foreach (var item in successList)
                     message.AppendLine($"  - {item}");
             }
@@ -203,7 +203,7 @@ namespace Xeon.XScriptableDB.Editor
             {
                 if (message.Length > 0)
                     message.AppendLine();
-                message.AppendLine($"失敗 ({failedList.Count}件):");
+                message.AppendLine($"Failed ({failedList.Count}):");
                 foreach (var item in failedList)
                     message.AppendLine($"  - {item}");
             }
@@ -212,15 +212,15 @@ namespace Xeon.XScriptableDB.Editor
             {
                 if (message.Length > 0)
                     message.AppendLine();
-                message.AppendLine($"スキップ ({skippedList.Count}件):");
+                message.AppendLine($"Skipped ({skippedList.Count}):");
                 foreach (var item in skippedList)
                     message.AppendLine($"  - {item}");
             }
 
             if (successList.Count == 0 && failedList.Count == 0 && skippedList.Count == 0)
-                message.AppendLine("対象のファイルがありませんでした。");
+                message.AppendLine("No target files were found.");
 
-            EditorUtility.DisplayDialog("インポート完了", message.ToString(), "OK");
+            EditorUtility.DisplayDialog("Import Complete", message.ToString(), "OK");
         }
 
         [MenuItem("Tools/XScriptableDB/Direct Export/CSV")]

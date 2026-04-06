@@ -30,25 +30,25 @@ namespace Xeon.XScriptableDB.Editor
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                tableCreatePath = EditorGUILayout.TextField("テーブル作成先", tableCreatePath);
+                tableCreatePath = EditorGUILayout.TextField("Table Output Path", tableCreatePath);
                 if (GUILayout.Button("...", GUILayout.Width(50f)))
                     tableCreatePath = SelectCreatePath(tableCreatePath);
             }
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                infoCreatePath = EditorGUILayout.TextField("Info作成先", infoCreatePath);
+                infoCreatePath = EditorGUILayout.TextField("Info Output Path", infoCreatePath);
                 if (GUILayout.Button("...", GUILayout.Width(50f)))
                     infoCreatePath = SelectCreatePath(infoCreatePath);
             }
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                tableName = EditorGUILayout.TextField("テーブルクラス名", tableName);
-                infoName = EditorGUILayout.TextField("Infoクラス名", infoName);
+                tableName = EditorGUILayout.TextField("Table Class Name", tableName);
+                infoName = EditorGUILayout.TextField("Info Class Name", infoName);
             }
 
-            if (GUILayout.Button("生成"))
+            if (GUILayout.Button("Generate"))
             {
                 GenerateTableClass();
                 GenerateInfoClass();
@@ -63,7 +63,7 @@ namespace Xeon.XScriptableDB.Editor
             var directoryName = currentPath;
             if (!string.IsNullOrEmpty(Path.GetExtension(directoryName)))
                 directoryName = Path.GetDirectoryName(directoryName);
-            directoryName = EditorUtility.SaveFolderPanel("保存先を選択", directoryName, directoryName);
+            directoryName = EditorUtility.SaveFolderPanel("Select save location", directoryName, directoryName);
             if (!string.IsNullOrEmpty(directoryName))
                 return directoryName;
             return currentPath;

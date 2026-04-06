@@ -110,7 +110,7 @@ namespace Xeon.XScriptableDB.Editor
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    Debug.LogWarning("無効な日時が入力されました。");
+                    Debug.LogWarning("Invalid date/time was entered.");
                 }
             }
 
@@ -201,7 +201,7 @@ namespace Xeon.XScriptableDB.Editor
         public static string FormatDateTime(DateTime dateTime)
         {
             if (dateTime == DateTime.MinValue)
-                return "(未設定)";
+                return "(not set)";
             return dateTime.ToString("yyyy/MM/dd HH:mm:ss");
         }
 

@@ -17,7 +17,7 @@ namespace Xeon.XScriptableDB.Validation
 
         protected override string GetDefaultErrorMessage(string fieldName)
         {
-            return $"{fieldName} の値が重複しています。";
+            return $"The value of {fieldName} is duplicated.";
         }
     }
 }

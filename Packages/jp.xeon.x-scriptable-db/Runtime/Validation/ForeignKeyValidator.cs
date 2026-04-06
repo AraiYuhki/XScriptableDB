@@ -90,7 +90,7 @@ namespace Xeon.XScriptableDB.Validation
             {
                 recordResult.AddError(
                     field.Name,
-                    $"参照先テーブル {attr.ReferenceTableType.Name} が登録されていません。",
+                    $"The reference table {attr.ReferenceTableType.Name} is not registered.",
                     ValidationErrorType.ForeignKey);
                 return;
             }
@@ -99,7 +99,7 @@ namespace Xeon.XScriptableDB.Validation
             {
                 recordResult.AddError(
                     field.Name,
-                    attr.ErrorMessage ?? $"{field.Name} の値 '{value}' は {attr.ReferenceTableType.Name} に存在しません。",
+                    attr.ErrorMessage ?? $"The value '{value}' of {field.Name} does not exist in {attr.ReferenceTableType.Name}.",
                     ValidationErrorType.ForeignKey);
             }
         }
@@ -146,7 +146,7 @@ namespace Xeon.XScriptableDB.Validation
 
             if (fkField == null)
             {
-                report.Errors.Add($"フィールド '{foreignKeyField}' が見つかりません。");
+                report.Errors.Add($"Field '{foreignKeyField}' was not found.");
                 return report;
             }
 

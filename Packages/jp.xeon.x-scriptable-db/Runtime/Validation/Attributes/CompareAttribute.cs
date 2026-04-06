@@ -30,15 +30,15 @@ namespace Xeon.XScriptableDB.Validation
         {
             var opStr = Operator switch
             {
-                CompareOperator.Equal => "等しい",
-                CompareOperator.NotEqual => "異なる",
-                CompareOperator.LessThan => "より小さい",
-                CompareOperator.LessThanOrEqual => "以下",
-                CompareOperator.GreaterThan => "より大きい",
-                CompareOperator.GreaterThanOrEqual => "以上",
+                CompareOperator.Equal => "equal to",
+                CompareOperator.NotEqual => "not equal to",
+                CompareOperator.LessThan => "less than",
+                CompareOperator.LessThanOrEqual => "less than or equal to",
+                CompareOperator.GreaterThan => "greater than",
+                CompareOperator.GreaterThanOrEqual => "greater than or equal to",
                 _ => "?"
             };
-            return $"{fieldName} は {OtherField} と{opStr}必要があります。";
+            return $"{fieldName} must be {opStr} {OtherField}.";
         }
     }
 }

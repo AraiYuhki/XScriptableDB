@@ -72,7 +72,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
-            if (GUILayout.Button("テーブル更新", EditorStyles.toolbarButton, GUILayout.Width(100)))
+            if (GUILayout.Button("Refresh Tables", EditorStyles.toolbarButton, GUILayout.Width(100)))
                 RefreshTableList();
 
             GUILayout.FlexibleSpace();
@@ -85,7 +85,7 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUILayout.Space(10);
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("対象テーブル:", GUILayout.Width(100));
+            EditorGUILayout.LabelField("Target Table:", GUILayout.Width(100));
 
             EditorGUI.BeginChangeCheck();
             selectedTableIndex = EditorGUILayout.Popup(selectedTableIndex, tableNames);
@@ -101,7 +101,7 @@ namespace Xeon.XScriptableDB.Editor
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField("", GUILayout.Width(100));
-                EditorGUILayout.LabelField($"現在のレコード数: {selectedTable.Count}", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField($"Current record count: {selectedTable.Count}", EditorStyles.miniLabel);
                 EditorGUILayout.EndHorizontal();
             }
         }
@@ -109,10 +109,10 @@ namespace Xeon.XScriptableDB.Editor
         private void DrawGenerationSettings()
         {
             EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("生成設定", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Generation Settings", EditorStyles.boldLabel);
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("生成件数:", GUILayout.Width(100));
+            EditorGUILayout.LabelField("Generate Count:", GUILayout.Width(100));
             generateCount = EditorGUILayout.IntField(generateCount, GUILayout.Width(100));
             generateCount = Mathf.Clamp(generateCount, 1, 100000);
 
@@ -129,7 +129,7 @@ namespace Xeon.XScriptableDB.Editor
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
-            showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "詳細設定");
+            showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "Advanced Settings");
         }
 
         private void DrawFieldConfigs()
@@ -160,7 +160,7 @@ namespace Xeon.XScriptableDB.Editor
             switch (fieldConfig.Rule)
             {
                 case GeneratorRule.Sequential:
-                    EditorGUILayout.LabelField("開始値:", GUILayout.Width(50));
+                    EditorGUILayout.LabelField("Start:", GUILayout.Width(50));
                     fieldConfig.StartValue = EditorGUILayout.IntField(fieldConfig.StartValue, GUILayout.Width(60));
                     break;
 
@@ -177,7 +177,7 @@ namespace Xeon.XScriptableDB.Editor
                     break;
 
                 case GeneratorRule.Fixed:
-                    EditorGUILayout.LabelField("値:", GUILayout.Width(30));
+                    EditorGUILayout.LabelField("Value:", GUILayout.Width(30));
                     fieldConfig.FixedValue = EditorGUILayout.TextField(fieldConfig.FixedValue, GUILayout.Width(100));
                     break;
             }
@@ -195,7 +195,7 @@ namespace Xeon.XScriptableDB.Editor
             GUILayout.FlexibleSpace();
 
             GUI.backgroundColor = new Color(0.6f, 0.8f, 0.6f);
-            if (GUILayout.Button($"{generateCount}件 生成", GUILayout.Width(120), GUILayout.Height(30)))
+            if (GUILayout.Button($"Generate {generateCount}", GUILayout.Width(120), GUILayout.Height(30)))
             {
                 GenerateData();
             }
@@ -204,7 +204,7 @@ namespace Xeon.XScriptableDB.Editor
             GUILayout.Space(10);
 
             GUI.backgroundColor = new Color(1f, 0.8f, 0.6f);
-            if (GUILayout.Button("テーブルクリア", GUILayout.Width(100), GUILayout.Height(30)))
+            if (GUILayout.Button("Clear Table", GUILayout.Width(100), GUILayout.Height(30)))
             {
                 ClearTable();
             }
@@ -217,8 +217,8 @@ namespace Xeon.XScriptableDB.Editor
             // プレビュー情報
             EditorGUILayout.Space(10);
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField($"生成後のレコード数: {selectedTable.Count + generateCount}");
-            EditorGUILayout.LabelField($"推定メモリ使用量: 約 {EstimateMemoryUsage()} KB");
+            EditorGUILayout.LabelField($"Records after generation: {selectedTable.Count + generateCount}");
+            EditorGUILayout.LabelField($"Estimated memory usage: ~{EstimateMemoryUsage()} KB");
             EditorGUILayout.EndVertical();
         }
 
@@ -231,7 +231,7 @@ namespace Xeon.XScriptableDB.Editor
 
             var startTime = DateTime.Now;
 
-            EditorUtility.DisplayProgressBar("データ生成", "テストデータを生成しています...", 0);
+            EditorUtility.DisplayProgressBar("Generating Data", "Generating test data...", 0);
 
             try
             {
@@ -240,8 +240,8 @@ namespace Xeon.XScriptableDB.Editor
                 var elapsed = DateTime.Now - startTime;
                 EditorUtility.ClearProgressBar();
 
-                EditorUtility.DisplayDialog("完了",
-                    $"{generated}件のテストデータを生成しました\n処理時間: {elapsed.TotalSeconds:F2}秒",
+                EditorUtility.DisplayDialog("Complete",
+                    $"Generated {generated} test record(s)\nProcessing time: {elapsed.TotalSeconds:F2}s",
                     "OK");
 
                 AssetDatabase.SaveAssets();
@@ -249,7 +249,7 @@ namespace Xeon.XScriptableDB.Editor
             catch (Exception ex)
             {
                 EditorUtility.ClearProgressBar();
-                EditorUtility.DisplayDialog("エラー", $"データ生成に失敗しました: {ex.Message}", "OK");
+                EditorUtility.DisplayDialog("Error", $"Failed to generate data: {ex.Message}", "OK");
             }
         }
 
@@ -258,9 +258,9 @@ namespace Xeon.XScriptableDB.Editor
             if (selectedTable == null)
                 return;
 
-            if (!EditorUtility.DisplayDialog("確認",
-                $"テーブル '{selectedTable.GetType().Name}' の全レコード ({selectedTable.Count}件) を削除しますか？",
-                "削除", "キャンセル"))
+            if (!EditorUtility.DisplayDialog("Confirm",
+                $"Delete all records ({selectedTable.Count}) from table '{selectedTable.GetType().Name}'?",
+                "Delete", "Cancel"))
             {
                 return;
             }
@@ -268,7 +268,7 @@ namespace Xeon.XScriptableDB.Editor
             TestDataGenerator.ClearTable(selectedTable);
             AssetDatabase.SaveAssets();
 
-            EditorUtility.DisplayDialog("完了", "テーブルをクリアしました", "OK");
+            EditorUtility.DisplayDialog("Complete", "Table has been cleared", "OK");
         }
 
         private string EstimateMemoryUsage()

@@ -72,7 +72,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
-            if (GUILayout.Button("更新", EditorStyles.toolbarButton, GUILayout.Width(60)))
+            if (GUILayout.Button("Refresh", EditorStyles.toolbarButton, GUILayout.Width(60)))
             {
                 RefreshBackupList();
                 RefreshTableList();
@@ -80,10 +80,10 @@ namespace Xeon.XScriptableDB.Editor
 
             GUILayout.Space(10);
 
-            EditorGUILayout.LabelField("テーブル:", GUILayout.Width(60));
+            EditorGUILayout.LabelField("Table:", GUILayout.Width(60));
             selectedTableIndex = EditorGUILayout.Popup(selectedTableIndex, tableNames, GUILayout.Width(150));
 
-            if (GUILayout.Button("バックアップ作成", EditorStyles.toolbarButton, GUILayout.Width(100)))
+            if (GUILayout.Button("Create Backup", EditorStyles.toolbarButton, GUILayout.Width(100)))
             {
                 CreateBackupForSelectedTable();
             }
@@ -91,9 +91,9 @@ namespace Xeon.XScriptableDB.Editor
             GUILayout.FlexibleSpace();
 
             GUI.backgroundColor = new Color(1f, 0.5f, 0.5f);
-            if (GUILayout.Button("全削除", EditorStyles.toolbarButton, GUILayout.Width(60)))
+            if (GUILayout.Button("Delete All", EditorStyles.toolbarButton, GUILayout.Width(60)))
             {
-                if (EditorUtility.DisplayDialog("確認", "全てのバックアップを削除しますか？", "削除", "キャンセル"))
+                if (EditorUtility.DisplayDialog("Confirm", "Delete all backups?", "Delete", "Cancel"))
                 {
                     BackupManager.ClearAllBackups();
                     RefreshBackupList();
@@ -111,9 +111,9 @@ namespace Xeon.XScriptableDB.Editor
             var totalSize = BackupManager.GetTotalBackupSize();
             var sizeStr = FormatFileSize(totalSize);
 
-            EditorGUILayout.LabelField($"バックアップ数: {backups.Count}", GUILayout.Width(150));
-            EditorGUILayout.LabelField($"合計サイズ: {sizeStr}", GUILayout.Width(150));
-            EditorGUILayout.LabelField($"自動: {backups.Count(b => b.IsAutoBackup)} / 手動: {backups.Count(b => !b.IsAutoBackup)}");
+            EditorGUILayout.LabelField($"Backups: {backups.Count}", GUILayout.Width(150));
+            EditorGUILayout.LabelField($"Total Size: {sizeStr}", GUILayout.Width(150));
+            EditorGUILayout.LabelField($"Auto: {backups.Count(b => b.IsAutoBackup)} / Manual: {backups.Count(b => !b.IsAutoBackup)}");
 
             EditorGUILayout.EndHorizontal();
         }
@@ -122,11 +122,11 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.BeginHorizontal();
 
-            EditorGUILayout.LabelField("フィルター:", GUILayout.Width(60));
+            EditorGUILayout.LabelField("Filter:", GUILayout.Width(60));
             filterTableName = EditorGUILayout.TextField(filterTableName, GUILayout.Width(150));
 
-            showAutoBackups = GUILayout.Toggle(showAutoBackups, "自動", EditorStyles.toolbarButton, GUILayout.Width(50));
-            showManualBackups = GUILayout.Toggle(showManualBackups, "手動", EditorStyles.toolbarButton, GUILayout.Width(50));
+            showAutoBackups = GUILayout.Toggle(showAutoBackups, "Auto", EditorStyles.toolbarButton, GUILayout.Width(50));
+            showManualBackups = GUILayout.Toggle(showManualBackups, "Manual", EditorStyles.toolbarButton, GUILayout.Width(50));
 
             GUILayout.FlexibleSpace();
 
@@ -145,7 +145,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (filteredBackups.Count == 0)
             {
-                EditorGUILayout.HelpBox("バックアップがありません", MessageType.Info);
+                EditorGUILayout.HelpBox("No backups found", MessageType.Info);
             }
             else
             {
@@ -179,7 +179,7 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUILayout.BeginVertical();
             EditorGUILayout.LabelField(backup.Name, EditorStyles.boldLabel);
             EditorGUILayout.LabelField($"{backup.TableName} | {backup.RecordCount} records | {FormatFileSize(backup.FileSize)}", EditorStyles.miniLabel);
-            EditorGUILayout.LabelField($"作成日時: {backup.CreatedAt}", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField($"Created: {backup.CreatedAt}", EditorStyles.miniLabel);
             EditorGUILayout.EndVertical();
 
             GUILayout.FlexibleSpace();
@@ -187,15 +187,15 @@ namespace Xeon.XScriptableDB.Editor
             // アクションボタン
             EditorGUILayout.BeginVertical(GUILayout.Width(80));
 
-            if (GUILayout.Button("リストア", GUILayout.Width(75)))
+            if (GUILayout.Button("Restore", GUILayout.Width(75)))
             {
                 RestoreBackup(backup);
             }
 
             GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
-            if (GUILayout.Button("削除", GUILayout.Width(75)))
+            if (GUILayout.Button("Delete", GUILayout.Width(75)))
             {
-                if (EditorUtility.DisplayDialog("確認", $"バックアップ '{backup.Name}' を削除しますか？", "削除", "キャンセル"))
+                if (EditorUtility.DisplayDialog("Confirm", $"Delete backup '{backup.Name}'?", "Delete", "Cancel"))
                 {
                     BackupManager.DeleteBackup(backup);
                     RefreshBackupList();
@@ -219,18 +219,18 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (selectedTableIndex < 0 || selectedTableIndex >= availableTables.Count)
             {
-                EditorUtility.DisplayDialog("エラー", "テーブルを選択してください", "OK");
+                EditorUtility.DisplayDialog("Error", "Please select a table", "OK");
                 return;
             }
 
             var table = availableTables[selectedTableIndex];
-            var name = EditorInputDialog.Show("バックアップ名", "バックアップ名を入力してください:", $"{table.GetType().Name}_backup");
+            var name = EditorInputDialog.Show("Backup Name", "Enter backup name:", $"{table.GetType().Name}_backup");
 
             if (!string.IsNullOrEmpty(name))
             {
                 BackupManager.CreateBackup(table, name);
                 RefreshBackupList();
-                EditorUtility.DisplayDialog("完了", "バックアップを作成しました", "OK");
+                EditorUtility.DisplayDialog("Done", "Backup created successfully", "OK");
             }
         }
 
@@ -240,24 +240,24 @@ namespace Xeon.XScriptableDB.Editor
 
             if (targetTable == null)
             {
-                EditorUtility.DisplayDialog("エラー", $"テーブル '{backup.TableName}' が見つかりません", "OK");
+                EditorUtility.DisplayDialog("Error", $"Table '{backup.TableName}' not found", "OK");
                 return;
             }
 
-            if (!EditorUtility.DisplayDialog("確認",
-                $"バックアップ '{backup.Name}' からリストアしますか？\n現在のデータは上書きされます。",
-                "リストア", "キャンセル"))
+            if (!EditorUtility.DisplayDialog("Confirm",
+                $"Restore from backup '{backup.Name}'?\nCurrent data will be overwritten.",
+                "Restore", "Cancel"))
             {
                 return;
             }
 
             if (BackupManager.RestoreBackup(backup, targetTable))
             {
-                EditorUtility.DisplayDialog("完了", "リストアが完了しました", "OK");
+                EditorUtility.DisplayDialog("Done", "Restore completed successfully", "OK");
             }
             else
             {
-                EditorUtility.DisplayDialog("エラー", "リストアに失敗しました", "OK");
+                EditorUtility.DisplayDialog("Error", "Restore failed", "OK");
             }
         }
 

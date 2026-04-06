@@ -23,7 +23,7 @@ namespace Xeon.XScriptableDB.Validation
         {
             if (record == null)
             {
-                return ValidationResult.Error("record", "レコードがnullです。");
+                return ValidationResult.Error("record", "Record is null.");
             }
 
             var result = new ValidationResult();
@@ -79,7 +79,7 @@ namespace Xeon.XScriptableDB.Validation
 
             if (tableAsset == null)
             {
-                result.TableLevelErrors.Add(new ValidationError("table", "テーブルがnullです。"));
+                result.TableLevelErrors.Add(new ValidationError("table", "Table is null."));
                 return result;
             }
 
@@ -168,7 +168,7 @@ namespace Xeon.XScriptableDB.Validation
                 var duplicateKeys = group.Select(x => keySelector?.Invoke(x.Record) ?? x.Index).ToList();
                 var error = new ValidationError(
                     fieldName,
-                    $"{fieldName} の値 '{group.Key}' が重複しています。キー: {string.Join(", ", duplicateKeys)}",
+                    $"The value '{group.Key}' of {fieldName} is duplicated. Keys: {string.Join(", ", duplicateKeys)}",
                     ValidationErrorType.Unique);
                 result.TableLevelErrors.Add(error);
             }
@@ -279,15 +279,15 @@ namespace Xeon.XScriptableDB.Validation
         {
             var opStr = op switch
             {
-                CompareOperator.Equal => "等しい",
-                CompareOperator.NotEqual => "異なる",
-                CompareOperator.LessThan => "より小さい",
-                CompareOperator.LessThanOrEqual => "以下",
-                CompareOperator.GreaterThan => "より大きい",
-                CompareOperator.GreaterThanOrEqual => "以上",
+                CompareOperator.Equal => "equal to",
+                CompareOperator.NotEqual => "not equal to",
+                CompareOperator.LessThan => "less than",
+                CompareOperator.LessThanOrEqual => "less than or equal to",
+                CompareOperator.GreaterThan => "greater than",
+                CompareOperator.GreaterThanOrEqual => "greater than or equal to",
                 _ => "?"
             };
-            return $"{fieldName} は {otherField} と{opStr}必要があります。";
+            return $"{fieldName} must be {opStr} {otherField}.";
         }
     }
 }

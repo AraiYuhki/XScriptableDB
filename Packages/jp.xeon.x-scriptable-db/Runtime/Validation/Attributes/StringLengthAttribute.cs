@@ -36,9 +36,9 @@ namespace Xeon.XScriptableDB.Validation
         protected override string GetDefaultErrorMessage(string fieldName)
         {
             if (MinimumLength > 0)
-                return $"{fieldName} は {MinimumLength} 文字以上 {MaximumLength} 文字以下である必要があります。";
+                return $"{fieldName} must be between {MinimumLength} and {MaximumLength} characters.";
 
-            return $"{fieldName} は {MaximumLength} 文字以下である必要があります。";
+            return $"{fieldName} must be {MaximumLength} characters or fewer.";
         }
     }
 }

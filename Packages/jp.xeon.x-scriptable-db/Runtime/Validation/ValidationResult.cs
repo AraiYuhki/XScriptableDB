@@ -155,10 +155,10 @@ namespace Xeon.XScriptableDB.Validation
         {
             if (IsValid)
             {
-                return $"{TableName}: バリデーション成功";
+                return $"{TableName}: Validation succeeded";
             }
 
-            return $"{TableName}: {ErrorRecordCount}件のレコードでエラー、合計{TotalErrorCount}件のエラー";
+            return $"{TableName}: {ErrorRecordCount} record(s) with errors, {TotalErrorCount} error(s) in total";
         }
 
         /// <summary>

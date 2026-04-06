@@ -28,7 +28,7 @@ namespace Xeon.XScriptableDB.Validation
 
         protected override string GetDefaultErrorMessage(string fieldName)
         {
-            return $"{fieldName} の参照先が存在しません。";
+            return $"The referenced record for {fieldName} does not exist.";
         }
     }
 }

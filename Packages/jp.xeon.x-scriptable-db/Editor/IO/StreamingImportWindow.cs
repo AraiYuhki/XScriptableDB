@@ -19,47 +19,47 @@ namespace Xeon.XScriptableDB.Editor
 
         public static void Open(ScriptableObject table)
         {
-            var window = GetWindow<StreamingImportWindow>("ストリーミングインポート");
+            var window = GetWindow<StreamingImportWindow>("Streaming Import");
             window.targetTable = table;
             window.Show();
         }
 
         private void OnGUI()
         {
-            EditorGUILayout.LabelField("ストリーミングインポート", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Streaming Import", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
             // ターゲットテーブル
             using (new EditorGUI.DisabledGroupScope(isImporting))
             {
-                targetTable = EditorGUILayout.ObjectField("ターゲットテーブル", targetTable, typeof(ScriptableObject), false) as ScriptableObject;
+                targetTable = EditorGUILayout.ObjectField("Target Table", targetTable, typeof(ScriptableObject), false) as ScriptableObject;
 
                 // ファイル選択
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    filePath = EditorGUILayout.TextField("ファイルパス", filePath);
-                    if (GUILayout.Button("参照", GUILayout.Width(60)))
+                    filePath = EditorGUILayout.TextField("File Path", filePath);
+                    if (GUILayout.Button("Browse", GUILayout.Width(60)))
                     {
-                        var path = EditorUtility.OpenFilePanel("CSVファイルを選択", "", "csv");
+                        var path = EditorUtility.OpenFilePanel("Select CSV File", "", "csv");
                         if (!string.IsNullOrEmpty(path))
                             filePath = path;
                     }
                 }
 
                 EditorGUILayout.Space();
-                EditorGUILayout.LabelField("設定", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
 
-                settings.ChunkSize = EditorGUILayout.IntField("チャンクサイズ", settings.ChunkSize);
-                settings.HasHeader = EditorGUILayout.Toggle("ヘッダー行あり", settings.HasHeader);
-                settings.ContinueOnError = EditorGUILayout.Toggle("エラー時に継続", settings.ContinueOnError);
-                settings.MaxErrors = EditorGUILayout.IntField("最大エラー数", settings.MaxErrors);
+                settings.ChunkSize = EditorGUILayout.IntField("Chunk Size", settings.ChunkSize);
+                settings.HasHeader = EditorGUILayout.Toggle("Has Header Row", settings.HasHeader);
+                settings.ContinueOnError = EditorGUILayout.Toggle("Continue on Error", settings.ContinueOnError);
+                settings.MaxErrors = EditorGUILayout.IntField("Max Errors", settings.MaxErrors);
 
-                var delimiterOptions = new[] { "カンマ (,)", "タブ", "セミコロン (;)" };
+                var delimiterOptions = new[] { "Comma (,)", "Tab", "Semicolon (;)" };
                 var delimiterChars = new[] { ',', '\t', ';' };
                 var delimiterIndex = Array.IndexOf(delimiterChars, settings.Delimiter);
                 if (delimiterIndex < 0)
                     delimiterIndex = 0;
-                delimiterIndex = EditorGUILayout.Popup("区切り文字", delimiterIndex, delimiterOptions);
+                delimiterIndex = EditorGUILayout.Popup("Delimiter", delimiterIndex, delimiterOptions);
                 settings.Delimiter = delimiterChars[delimiterIndex];
             }
 
@@ -68,12 +68,12 @@ namespace Xeon.XScriptableDB.Editor
             // 進捗表示
             if (currentProgress != null)
             {
-                EditorGUILayout.LabelField("進捗", EditorStyles.boldLabel);
-                EditorGUILayout.LabelField($"状態: {currentProgress.State}");
+                EditorGUILayout.LabelField("Progress", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField($"State: {currentProgress.State}");
                 EditorGUI.ProgressBar(EditorGUILayout.GetControlRect(GUILayout.Height(20)), currentProgress.Progress, $"{currentProgress.ProcessedLines} / {currentProgress.TotalLines}");
-                EditorGUILayout.LabelField($"チャンク: {currentProgress.CurrentChunk} / {currentProgress.TotalChunks}");
-                EditorGUILayout.LabelField($"成功: {currentProgress.SuccessCount}, エラー: {currentProgress.ErrorCount}");
-                EditorGUILayout.LabelField($"経過時間: {currentProgress.ElapsedTime.TotalSeconds:F1}秒");
+                EditorGUILayout.LabelField($"Chunk: {currentProgress.CurrentChunk} / {currentProgress.TotalChunks}");
+                EditorGUILayout.LabelField($"Success: {currentProgress.SuccessCount}, Errors: {currentProgress.ErrorCount}");
+                EditorGUILayout.LabelField($"Elapsed: {currentProgress.ElapsedTime.TotalSeconds:F1}s");
 
                 if (!string.IsNullOrEmpty(currentProgress.ErrorMessage))
                     EditorGUILayout.HelpBox(currentProgress.ErrorMessage, MessageType.Error);
@@ -81,11 +81,11 @@ namespace Xeon.XScriptableDB.Editor
                 if (currentProgress.Errors.Count > 0)
                 {
                     EditorGUILayout.Space();
-                    EditorGUILayout.LabelField("エラー一覧", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField("Error List", EditorStyles.boldLabel);
                     foreach (var error in currentProgress.Errors.Take(10))
                         EditorGUILayout.LabelField(error, EditorStyles.miniLabel);
                     if (currentProgress.Errors.Count > 10)
-                        EditorGUILayout.LabelField($"... 他 {currentProgress.Errors.Count - 10} 件");
+                        EditorGUILayout.LabelField($"... and {currentProgress.Errors.Count - 10} more");
                 }
             }
 
@@ -96,13 +96,13 @@ namespace Xeon.XScriptableDB.Editor
             {
                 using (new EditorGUI.DisabledGroupScope(isImporting || targetTable == null || string.IsNullOrEmpty(filePath)))
                 {
-                    if (GUILayout.Button("インポート開始"))
+                    if (GUILayout.Button("Start Import"))
                         StartImport();
                 }
 
                 using (new EditorGUI.DisabledGroupScope(!isImporting))
                 {
-                    if (GUILayout.Button("キャンセル"))
+                    if (GUILayout.Button("Cancel"))
                         CancelImport();
                 }
             }
@@ -112,7 +112,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (targetTable is not ITableAsset tableAsset)
             {
-                EditorUtility.DisplayDialog("エラー", "テーブルがITableAssetを実装していません", "OK");
+                EditorUtility.DisplayDialog("Error", "The table does not implement ITableAsset", "OK");
                 return;
             }
 
@@ -127,7 +127,7 @@ namespace Xeon.XScriptableDB.Editor
                     currentProgress = importer.Import(filePath, targetTable, tableAsset.RecordType, settings);
 
                     if (currentProgress.State == StreamingImportState.Completed)
-                        EditorUtility.DisplayDialog("完了", $"インポートが完了しました\n成功: {currentProgress.SuccessCount}件", "OK");
+                        EditorUtility.DisplayDialog("Completed", $"Import finished\nSuccess: {currentProgress.SuccessCount} records", "OK");
                 }
                 finally
                 {

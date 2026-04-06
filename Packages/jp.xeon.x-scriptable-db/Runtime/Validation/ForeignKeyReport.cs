@@ -39,11 +39,11 @@ namespace Xeon.XScriptableDB.Validation
             if (IsValid)
             {
                 return $"{SourceTableName}.{ForeignKeyField} -> {TargetTableName}: " +
-                       $"全 {TotalReferences} 件の参照が有効です。";
+                       $"All {TotalReferences} references are valid.";
             }
 
             return $"{SourceTableName}.{ForeignKeyField} -> {TargetTableName}: " +
-                   $"{InvalidReferenceCount}/{TotalReferences} 件の無効な参照があります。";
+                   $"{InvalidReferenceCount}/{TotalReferences} invalid references found.";
         }
     }
 }

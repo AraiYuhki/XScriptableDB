@@ -13,7 +13,7 @@ namespace Xeon.XScriptableDB.Editor
         [MenuItem("Tools/XScriptableDB/Generate C# from YAML folder")]
         public static void GenerateFromFolder()
         {
-            var folderPath = EditorUtility.OpenFolderPanel("YAMLファイルのあるフォルダを選択", Application.dataPath, "");
+            var folderPath = EditorUtility.OpenFolderPanel("Select folder containing YAML files", Application.dataPath, "");
             if (string.IsNullOrEmpty(folderPath))
                 return;
 
@@ -23,7 +23,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (yamlFiles.Length == 0)
             {
-                EditorUtility.DisplayDialog("エラー", "YAMLファイルが見つかりませんでした。", "OK");
+                EditorUtility.DisplayDialog("Error", "No YAML files were found.", "OK");
                 return;
             }
 
@@ -46,15 +46,15 @@ namespace Xeon.XScriptableDB.Editor
 
             AssetDatabase.Refresh();
             EditorUtility.DisplayDialog(
-                "生成完了",
-                $"成功: {successCount}件\n失敗: {errorCount}件",
+                "Generation Complete",
+                $"Success: {successCount}\nFailed: {errorCount}",
                 "OK");
         }
 
         [MenuItem("Tools/XScriptableDB/Generate C# from YAML file")]
         public static void GenerateFromFile()
         {
-            var filePath = EditorUtility.OpenFilePanel("YAMLファイルを選択", Application.dataPath, "yaml,yml");
+            var filePath = EditorUtility.OpenFilePanel("Select YAML file", Application.dataPath, "yaml,yml");
             if (string.IsNullOrEmpty(filePath))
                 return;
 
@@ -62,12 +62,12 @@ namespace Xeon.XScriptableDB.Editor
             {
                 GenerateFromYaml(filePath);
                 AssetDatabase.Refresh();
-                EditorUtility.DisplayDialog("生成完了", "C#ファイルを生成しました。", "OK");
+                EditorUtility.DisplayDialog("Generation Complete", "C# files were generated.", "OK");
             }
             catch (System.Exception e)
             {
                 Debug.LogError($"Failed to generate from {filePath}: {e.Message}");
-                EditorUtility.DisplayDialog("エラー", $"生成に失敗しました。\n{e.Message}", "OK");
+                EditorUtility.DisplayDialog("Error", $"Generation failed.\n{e.Message}", "OK");
             }
         }
 

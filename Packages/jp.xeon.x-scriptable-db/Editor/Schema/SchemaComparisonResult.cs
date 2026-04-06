@@ -30,7 +30,7 @@ namespace Xeon.XScriptableDB.Editor
 
         public string GetStatusLabel()
         {
-            return IsCompatible ? "互換性あり" : "互換性なし";
+            return IsCompatible ? "Compatible" : "Incompatible";
         }
 
         public SchemaComparisonResult(Type sourceType, Type targetType)

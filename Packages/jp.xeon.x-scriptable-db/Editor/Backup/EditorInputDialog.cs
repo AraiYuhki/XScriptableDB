@@ -46,7 +46,7 @@ namespace Xeon.XScriptableDB.Editor
                 Close();
             }
 
-            if (GUILayout.Button("キャンセル", GUILayout.Width(80)))
+            if (GUILayout.Button("Cancel", GUILayout.Width(80)))
             {
                 onConfirm?.Invoke(null);
                 Close();

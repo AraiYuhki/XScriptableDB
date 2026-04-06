@@ -125,12 +125,12 @@ namespace Xeon.XScriptableDB.Editor
         private void DrawTableListPanel()
         {
             using var _ = new EditorGUILayout.VerticalScope(GUILayout.Width(250));
-            EditorGUILayout.LabelField("テーブル一覧", headerStyle);
+            EditorGUILayout.LabelField("Table List", headerStyle);
 
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
                 searchFilter = EditorGUILayout.TextField(searchFilter, EditorStyles.toolbarSearchField);
-                if (GUILayout.Button("更新", EditorStyles.toolbarButton, GUILayout.Width(40)))
+                if (GUILayout.Button("Refresh", EditorStyles.toolbarButton, GUILayout.Width(40)))
                     RefreshTableList();
             }
 
@@ -146,7 +146,7 @@ namespace Xeon.XScriptableDB.Editor
         private void DrawBulkOperations()
         {
             EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("一括操作", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Bulk Operations", EditorStyles.boldLabel);
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -156,9 +156,9 @@ namespace Xeon.XScriptableDB.Editor
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("全てエクスポート"))
+                if (GUILayout.Button("Export All"))
                     ExportAllTables();
-                if (GUILayout.Button("一括インポート"))
+                if (GUILayout.Button("Import All"))
                     ImportAllTables();
             }
         }
@@ -166,7 +166,7 @@ namespace Xeon.XScriptableDB.Editor
         private void ExportAllTables()
         {
             var folderPath = EditorUtility.SaveFolderPanel(
-                "エクスポート先フォルダを選択",
+                "Select Export Destination Folder",
                 Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                 "Masters");
 
@@ -195,13 +195,13 @@ namespace Xeon.XScriptableDB.Editor
                 }
             }
 
-            EditorUtility.DisplayDialog("エクスポート完了", $"{exportedCount}件のテーブルをエクスポートしました\n{folderPath}", "OK");
+            EditorUtility.DisplayDialog("Export Complete", $"Exported {exportedCount} table(s)\n{folderPath}", "OK");
         }
 
         private void ImportAllTables()
         {
             var folderPath = EditorUtility.OpenFolderPanel(
-                "インポート元フォルダを選択",
+                "Select Import Source Folder",
                 Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                 "Masters");
 
@@ -215,7 +215,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (allFiles.Length == 0)
             {
-                EditorUtility.DisplayDialog("ファイルが見つかりません", "CSV/TSVファイルが見つかりませんでした", "OK");
+                EditorUtility.DisplayDialog("No Files Found", "No CSV/TSV files were found", "OK");
                 return;
             }
 
@@ -254,7 +254,7 @@ namespace Xeon.XScriptableDB.Editor
                 Repaint();
             }
 
-            EditorUtility.DisplayDialog("インポート完了", $"{importedCount}件のテーブルをインポートしました", "OK");
+            EditorUtility.DisplayDialog("Import Complete", $"Imported {importedCount} table(s)", "OK");
         }
 
         private void DrawTableList()
@@ -273,7 +273,7 @@ namespace Xeon.XScriptableDB.Editor
                     if (GUILayout.Button(table.name, style))
                         SelectTable(table);
 
-                    if (GUILayout.Button("選択", GUILayout.Width(40)))
+                    if (GUILayout.Button("Select", GUILayout.Width(40)))
                     {
                         Selection.activeObject = table;
                         EditorGUIUtility.PingObject(table);
@@ -282,7 +282,7 @@ namespace Xeon.XScriptableDB.Editor
             }
 
             if (filteredTables.Count == 0)
-                EditorGUILayout.HelpBox("テーブルが見つかりません", MessageType.Info);
+                EditorGUILayout.HelpBox("No tables found", MessageType.Info);
         }
 
         private void DrawRecordListPanel()
@@ -291,7 +291,7 @@ namespace Xeon.XScriptableDB.Editor
             {
                 if (selectedTable == null || editingClone == null)
                 {
-                    EditorGUILayout.HelpBox("左のリストからテーブルを選択してください", MessageType.Info);
+                    EditorGUILayout.HelpBox("Select a table from the list on the left", MessageType.Info);
                     return;
                 }
 
@@ -319,12 +319,12 @@ namespace Xeon.XScriptableDB.Editor
                 EditorGUILayout.LabelField(title, idDirty ? unsavedStyle : headerStyle);
 
                 if (idDirty)
-                    EditorGUILayout.LabelField("(未保存)", unsavedStyle, GUILayout.Width(60));
+                    EditorGUILayout.LabelField("(Unsaved)", unsavedStyle, GUILayout.Width(60));
                 
                 if (editingClone is not ITableAsset editingTableAsset)
                     return;
                 
-                EditorGUILayout.LabelField($"レコード数: {editingTableAsset.Count}", GUILayout.Width(100));
+                EditorGUILayout.LabelField($"Records: {editingTableAsset.Count}", GUILayout.Width(100));
 
                 var originalTableAsset = selectedTable as ITableAsset;
                 if (originalTableAsset != null)
@@ -334,7 +334,7 @@ namespace Xeon.XScriptableDB.Editor
                 if (editingTableAsset.Count < VirtualScrollThreshold)
                     return;
                 
-                var newUseVirtualScroll = GUILayout.Toggle(useVirtualScroll, "仮想スクロール", GUILayout.Width(100));
+                var newUseVirtualScroll = GUILayout.Toggle(useVirtualScroll, "Virtual Scroll", GUILayout.Width(100));
                 if (newUseVirtualScroll != useVirtualScroll)
                 {
                     useVirtualScroll = newUseVirtualScroll;
@@ -355,20 +355,20 @@ namespace Xeon.XScriptableDB.Editor
 
             var keysString = string.Join(", ", duplicates.Cast<object>().Take(5));
             if (duplicates.Count > 5)
-                keysString += $"... 他{duplicates.Count - 5}件";
+                keysString += $"... and {duplicates.Count - 5} more";
 
-            EditorGUILayout.HelpBox($"重複したPrimaryKeyがあります: {keysString}", MessageType.Warning);
+            EditorGUILayout.HelpBox($"Duplicate PrimaryKeys found: {keysString}", MessageType.Warning);
         }
 
         private void DrawRecordToolbar()
         {
             using var _ = new EditorGUILayout.HorizontalScope(EditorStyles.toolbar);
             
-            if (GUILayout.Button("追加", EditorStyles.toolbarButton, GUILayout.Width(60)))
+            if (GUILayout.Button("Add", EditorStyles.toolbarButton, GUILayout.Width(60)))
                 AddNewRecord();
 
             EditorGUI.BeginDisabledGroup(selectedRecordIndex < 0);
-            if (GUILayout.Button("削除", EditorStyles.toolbarButton, GUILayout.Width(60)))
+            if (GUILayout.Button("Delete", EditorStyles.toolbarButton, GUILayout.Width(60)))
                 DeleteSelectedRecord();
             EditorGUI.EndDisabledGroup();
 
@@ -379,14 +379,14 @@ namespace Xeon.XScriptableDB.Editor
 
             GUILayout.Space(10);
 
-            if (GUILayout.Button("ソート", EditorStyles.toolbarButton, GUILayout.Width(60)))
+            if (GUILayout.Button("Sort", EditorStyles.toolbarButton, GUILayout.Width(60)))
                 SortRecords();
 
             EditorGUI.BeginDisabledGroup(!idDirty);
-            if (GUILayout.Button("リセット", EditorStyles.toolbarButton, GUILayout.Width(60)))
+            if (GUILayout.Button("Reset", EditorStyles.toolbarButton, GUILayout.Width(60)))
                 ResetChanges();
 
-            if (GUILayout.Button("保存", EditorStyles.toolbarButton, GUILayout.Width(60)))
+            if (GUILayout.Button("Save", EditorStyles.toolbarButton, GUILayout.Width(60)))
                 SaveTable();
             EditorGUI.EndDisabledGroup();
         }
@@ -404,12 +404,12 @@ namespace Xeon.XScriptableDB.Editor
                 (FileFormat)EditorGUILayout.EnumPopup(exportFormat, EditorStyles.toolbarPopup, GUILayout.Width(50));
 
             EditorGUI.BeginDisabledGroup(!isImportable);
-            if (GUILayout.Button("インポート", EditorStyles.toolbarButton, GUILayout.Width(80)))
+            if (GUILayout.Button("Import", EditorStyles.toolbarButton, GUILayout.Width(80)))
                 ImportFromFile();
             EditorGUI.EndDisabledGroup();
 
             EditorGUI.BeginDisabledGroup(!isExportable);
-            if (GUILayout.Button("エクスポート", EditorStyles.toolbarButton, GUILayout.Width(80)))
+            if (GUILayout.Button("Export", EditorStyles.toolbarButton, GUILayout.Width(80)))
                 ExportToFile();
 
             // Excel対応エンコーディングオプション
@@ -430,7 +430,7 @@ namespace Xeon.XScriptableDB.Editor
             var filterName = exportFormat == FileFormat.CSV ? "CSV files" : "TSV files";
 
             var filePath = EditorUtility.OpenFilePanelWithFilters(
-                $"インポートするファイルを選択 ({selectedTable.name})",
+                $"Select File to Import ({selectedTable.name})",
                 Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                 new[] { filterName, extension, "All files", "*" });
 
@@ -447,7 +447,7 @@ namespace Xeon.XScriptableDB.Editor
 
                     if (importedRecords.Length == 0)
                     {
-                        EditorUtility.DisplayDialog("警告", "インポートするレコードがありません", "OK");
+                        EditorUtility.DisplayDialog("Warning", "No records to import", "OK");
                         return;
                     }
 
@@ -468,13 +468,13 @@ namespace Xeon.XScriptableDB.Editor
                     serializedTable.Update();
                     virtualizedList?.ClearCache();
                     idDirty = true;
-                    EditorUtility.DisplayDialog("インポート完了", $"{selectedTable.name}をインポートしました（未保存）", "OK");
+                    EditorUtility.DisplayDialog("Import Complete", $"Imported {selectedTable.name} (unsaved)", "OK");
                     Repaint();
                 }
             }
             catch (Exception e)
             {
-                EditorUtility.DisplayDialog("インポートエラー", $"インポート中にエラーが発生しました:\n{e.Message}", "OK");
+                EditorUtility.DisplayDialog("Import Error", $"An error occurred during import:\n{e.Message}", "OK");
                 Debug.LogException(e);
             }
         }
@@ -486,7 +486,7 @@ namespace Xeon.XScriptableDB.Editor
 
             var extension = exportFormat == FileFormat.CSV ? "csv" : "tsv";
             var filePath = EditorUtility.SaveFilePanel(
-                "エクスポート先を選択",
+                "Select Export Destination",
                 Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                 $"{selectedTable.name}.{extension}",
                 extension);
@@ -499,11 +499,11 @@ namespace Xeon.XScriptableDB.Editor
                 // Excel対応の場合はShift-JIS (CP932)を使用
                 var encoding = useExcelEncoding ? Encoding.GetEncoding(932) : Encoding.UTF8;
                 exporter.Export(filePath, encoding);
-                EditorUtility.DisplayDialog("エクスポート完了", $"{selectedTable.name}をエクスポートしました\n{filePath}", "OK");
+                EditorUtility.DisplayDialog("Export Complete", $"Exported {selectedTable.name}\n{filePath}", "OK");
             }
             catch (Exception e)
             {
-                EditorUtility.DisplayDialog("エクスポートエラー", $"エクスポート中にエラーが発生しました:\n{e.Message}", "OK");
+                EditorUtility.DisplayDialog("Export Error", $"An error occurred during export:\n{e.Message}", "OK");
                 Debug.LogException(e);
             }
         }
@@ -646,9 +646,9 @@ namespace Xeon.XScriptableDB.Editor
             if (idDirty && selectedTable != null)
             {
                 var result = EditorUtility.DisplayDialogComplex(
-                    "未保存の変更",
-                    $"{selectedTable.name}に未保存の変更があります。保存しますか？",
-                    "保存", "破棄", "キャンセル");
+                    "Unsaved Changes",
+                    $"{selectedTable.name} has unsaved changes. Do you want to save?",
+                    "Save", "Discard", "Cancel");
 
                 switch (result)
                 {
@@ -787,7 +787,7 @@ namespace Xeon.XScriptableDB.Editor
             if (tableAsset == null)
                 return;
 
-            if (!EditorUtility.DisplayDialog("確認", "選択したレコードを削除しますか？", "削除", "キャンセル"))
+            if (!EditorUtility.DisplayDialog("Confirm", "Delete the selected record?", "Delete", "Cancel"))
                 return;
 
             tableAsset.RemoveRecordAt(selectedRecordIndex);
@@ -825,7 +825,7 @@ namespace Xeon.XScriptableDB.Editor
             if (!idDirty)
                 return;
 
-            if (!EditorUtility.DisplayDialog("確認", "変更を破棄して元に戻しますか？", "破棄", "キャンセル"))
+            if (!EditorUtility.DisplayDialog("Confirm", "Discard changes and revert?", "Discard", "Cancel"))
                 return;
 
             CreateEditingClone(selectedTable);
@@ -846,9 +846,9 @@ namespace Xeon.XScriptableDB.Editor
                 if (duplicates != null && duplicates.Count > 0)
                 {
                     var keysString = string.Join(", ", duplicates.Cast<object>().Take(5));
-                    if (!EditorUtility.DisplayDialog("警告",
-                            $"重複したPrimaryKeyがあります: {keysString}\n保存しますか？",
-                            "保存", "キャンセル"))
+                    if (!EditorUtility.DisplayDialog("Warning",
+                            $"Duplicate PrimaryKeys found: {keysString}\nDo you want to save?",
+                            "Save", "Cancel"))
                         return;
                 }
             }
@@ -859,7 +859,7 @@ namespace Xeon.XScriptableDB.Editor
             // 元のアセットにコピー
             ApplyChangesToOriginal();
 
-            EditorUtility.DisplayDialog("保存完了", $"{selectedTable.name}を保存しました", "OK");
+            EditorUtility.DisplayDialog("Save Complete", $"Saved {selectedTable.name}", "OK");
         }
 
         private void ApplyChangesToOriginal()
@@ -894,9 +894,9 @@ namespace Xeon.XScriptableDB.Editor
             if (idDirty && selectedTable != null)
             {
                 var result = EditorUtility.DisplayDialogComplex(
-                    "未保存の変更",
-                    $"{selectedTable.name}に未保存の変更があります。保存しますか？",
-                    "保存", "破棄", "キャンセル");
+                    "Unsaved Changes",
+                    $"{selectedTable.name} has unsaved changes. Do you want to save?",
+                    "Save", "Discard", "Cancel");
 
                 if (result == 0)
                     ApplyChangesToOriginal();

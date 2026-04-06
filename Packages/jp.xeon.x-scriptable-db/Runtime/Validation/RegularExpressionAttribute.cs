@@ -31,7 +31,7 @@ namespace Xeon.XScriptableDB.Validation
 
         protected override string GetDefaultErrorMessage(string fieldName)
         {
-            return $"{fieldName} の形式が正しくありません。";
+            return $"The format of {fieldName} is invalid.";
         }
     }
 }
