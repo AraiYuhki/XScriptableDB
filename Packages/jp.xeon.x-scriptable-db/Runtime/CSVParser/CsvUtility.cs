@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 
 namespace Xeon.XScriptableDB.IO
 {
@@ -9,46 +10,68 @@ namespace Xeon.XScriptableDB.IO
 
         public static string EscapeQuotedStrings(string csv, Dictionary<string, string> escapedData)
         {
-            var result = csv;
-            var replaceTexts = new List<string>();
-            var startIndex = -1;
+            if (string.IsNullOrEmpty(csv))
+                return csv;
+
+            var result = new StringBuilder(csv.Length);
+            var escapedIndexes = new Dictionary<string, int>();
 
             for (var index = 0; index < csv.Length; index++)
             {
                 var current = csv[index];
-
-                if (startIndex < 0)
-                {
-                    if (current != '"')
-                        continue;
-                    startIndex = index;
-                    continue;
-                }
-
                 if (current != '"')
-                    continue;
-
-                if (index + 1 < csv.Length && csv[index + 1] == '"')
                 {
+                    result.Append(current);
+                    continue;
+                }
+
+                var startIndex = index;
+                index++;
+
+                var foundClose = false;
+                while (index < csv.Length)
+                {
+                    if (csv[index] == '"')
+                    {
+                        if (index + 1 < csv.Length && csv[index + 1] == '"')
+                        {
+                            index += 2;
+                            continue;
+                        }
+
+                        index++;
+                        foundClose = true;
+                        break;
+                    }
+
                     index++;
+                }
+
+                if (!foundClose)
+                {
+                    result.Append(csv[startIndex..index]);
+                    index--;
                     continue;
                 }
 
-                var endIndex = index + 1;
+                var endIndex = index;
                 var target = csv[startIndex..endIndex];
-                var escapeIndex = replaceTexts.IndexOf(target);
-                if (escapeIndex < 0)
+
+                if (!escapedIndexes.TryGetValue(target, out var escapeIndex))
                 {
-                    escapeIndex = escapedData.Count;
-                    replaceTexts.Add(target);
+                    escapeIndex = escapedIndexes.Count;
+                    escapedIndexes[target] = escapeIndex;
                 }
+
                 var replaceText = $"<escaped string>{escapeIndex}</escaped string>";
-                result = result.Replace(target, replaceText);
+                result.Append(replaceText);
                 if (!escapedData.ContainsKey(replaceText))
                     escapedData.Add(replaceText, target);
-                startIndex = -1;
+
+                index--;
             }
-            return result;
+
+            return result.ToString();
         }
     }
 }
