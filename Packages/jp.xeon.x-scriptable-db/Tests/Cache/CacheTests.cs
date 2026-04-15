@@ -6,7 +6,7 @@ using Xeon.XScriptableDB.Cache;
 namespace Xeon.XScriptableDB.Tests.Cache
 {
     /// <summary>
-    /// キャッシュシステムのテスト。
+    /// Tests for the cache system.
     /// </summary>
     public class CacheTests
     {
@@ -72,7 +72,7 @@ namespace Xeon.XScriptableDB.Tests.Cache
             cache.Set("key2", 2);
             cache.Set("key3", 3);
 
-            // key1が最も古い
+            // key1 is the oldest
             cache.Set("key4", 4);
 
             Assert.IsFalse(cache.Contains("key1"));
@@ -89,10 +89,10 @@ namespace Xeon.XScriptableDB.Tests.Cache
             cache.Set("key2", 2);
             cache.Set("key3", 3);
 
-            // key1にアクセスして最新にする
+            // Access key1 to make it the most recently used
             cache.TryGet("key1", out _);
 
-            // key2が最も古くなる
+            // key2 becomes the oldest
             cache.Set("key4", 4);
 
             Assert.IsTrue(cache.Contains("key1"));
@@ -408,7 +408,7 @@ namespace Xeon.XScriptableDB.Tests.Cache
             Assert.AreEqual(0, CacheManager.QueryCache.Count);
             Assert.IsFalse(CacheManager.IsEnabled);
 
-            // テスト後のリセット
+            // Reset after test
             CacheManager.IsEnabled = true;
         }
 
@@ -424,7 +424,7 @@ namespace Xeon.XScriptableDB.Tests.Cache
         [TearDown]
         public void TearDown()
         {
-            // テスト後にキャッシュをリセット
+            // Reset cache after test
             CacheManager.IsEnabled = true;
             CacheManager.Clear();
             CacheManager.ResetStatistics();
@@ -432,7 +432,7 @@ namespace Xeon.XScriptableDB.Tests.Cache
 
         #endregion
 
-        // テスト用のダミー型
+        // Dummy types for testing
         private class TestTable { }
         private class OtherTable { }
     }

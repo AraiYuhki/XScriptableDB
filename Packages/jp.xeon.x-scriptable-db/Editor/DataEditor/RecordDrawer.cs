@@ -6,8 +6,8 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// IXRecordを実装したレコードのカスタムPropertyDrawer。
-    /// PrimaryKeyフィールドを強調表示し、より使いやすいUIを提供する。
+    /// Custom PropertyDrawer for records implementing IXRecord.
+    /// Highlights the PrimaryKey field and provides a more user-friendly UI.
     /// </summary>
     public static class RecordDrawerUtility
     {
@@ -15,12 +15,12 @@ namespace Xeon.XScriptableDB.Editor
         private static GUIStyle primaryKeyLabelStyle;
 
         /// <summary>
-        /// SerializedPropertyからレコードを描画する。
+        /// Draws a record from a SerializedProperty.
         /// </summary>
-        /// <param name="position">描画位置</param>
-        /// <param name="property">プロパティ</param>
-        /// <param name="label">ラベル</param>
-        /// <param name="recordType">レコードの型</param>
+        /// <param name="position">Drawing position</param>
+        /// <param name="property">Property</param>
+        /// <param name="label">Label</param>
+        /// <param name="recordType">Record type</param>
         public static void DrawRecord(Rect position, SerializedProperty property, GUIContent label, Type recordType)
         {
             InitializeStyles();
@@ -63,11 +63,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// レコードの高さを計算する。
+        /// Calculates the height of a record.
         /// </summary>
-        /// <param name="property">プロパティ</param>
-        /// <param name="label">ラベル</param>
-        /// <returns>高さ</returns>
+        /// <param name="property">Property</param>
+        /// <param name="label">Label</param>
+        /// <returns>Height</returns>
         public static float GetRecordHeight(SerializedProperty property, GUIContent label)
         {
             var height = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
@@ -89,11 +89,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// レコードのサマリー文字列を取得する。
+        /// Gets the summary string of a record.
         /// </summary>
-        /// <param name="property">プロパティ</param>
-        /// <param name="recordType">レコードの型</param>
-        /// <returns>サマリー文字列</returns>
+        /// <param name="property">Property</param>
+        /// <param name="recordType">Record type</param>
+        /// <returns>Summary string</returns>
         public static string GetRecordSummary(SerializedProperty property, Type recordType)
         {
             var primaryKeyInfo = FindPrimaryKeyMember(recordType);

@@ -1,7 +1,7 @@
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQLトークン。
+    /// SQL token.
     /// </summary>
     public class Token
     {

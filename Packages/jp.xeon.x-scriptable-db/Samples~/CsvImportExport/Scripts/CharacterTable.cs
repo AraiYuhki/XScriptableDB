@@ -4,8 +4,8 @@ using Xeon.XScriptableDB;
 namespace Xeon.XScriptableDB.Samples.CsvImportExport
 {
     /// <summary>
-    /// キャラクターテーブル。
-    /// CSV/TSVインポート・エクスポートのサンプル用。
+    /// Character table.
+    /// For the CSV/TSV import/export sample.
     /// </summary>
     [CreateAssetMenu(
         fileName = "CharacterTable",

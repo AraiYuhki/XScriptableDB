@@ -4,7 +4,7 @@ using Xeon.XScriptableDB;
 namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
 {
     /// <summary>
-    /// カテゴリテーブル。
+    /// Category table.
     /// </summary>
     [CreateAssetMenu(
         fileName = "CategoryTable",

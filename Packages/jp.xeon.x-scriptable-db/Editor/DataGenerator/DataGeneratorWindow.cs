@@ -8,7 +8,7 @@ using Xeon.XScriptableDB;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// テストデータ生成ウィンドウ。
+    /// Test data generation window.
     /// </summary>
     public class DataGeneratorWindow : EditorWindow
     {
@@ -116,7 +116,7 @@ namespace Xeon.XScriptableDB.Editor
             generateCount = EditorGUILayout.IntField(generateCount, GUILayout.Width(100));
             generateCount = Mathf.Clamp(generateCount, 1, 100000);
 
-            // クイック選択ボタン
+            // Quick selection buttons
             if (GUILayout.Button("10", GUILayout.Width(40)))
                 generateCount = 10;
             if (GUILayout.Button("100", GUILayout.Width(40)))
@@ -214,7 +214,7 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.EndHorizontal();
 
-            // プレビュー情報
+            // Preview information
             EditorGUILayout.Space(10);
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField($"Records after generation: {selectedTable.Count + generateCount}");
@@ -297,10 +297,10 @@ namespace Xeon.XScriptableDB.Editor
             if (type == typeof(bool))
                 return 1;
             if (type == typeof(string))
-                return 50; // 平均的な文字列サイズを仮定
+                return 50; // Assume an average string size
             if (type.IsEnum)
                 return 4;
-            return 8; // デフォルト
+            return 8; // Default
         }
     }
 }

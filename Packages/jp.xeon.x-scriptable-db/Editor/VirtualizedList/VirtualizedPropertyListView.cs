@@ -6,23 +6,23 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SerializedPropertyを表示するための仮想スクロールリストビュー。
+    /// Virtualized scroll list view for displaying SerializedProperty.
     /// </summary>
     public class VirtualizedPropertyListView
     {
-        /// <summary>1行の高さ</summary>
+        /// <summary>Height of a single row</summary>
         public float ItemHeight { get; set; } = 26f;
 
-        /// <summary>展開時の追加高さを計算する関数</summary>
+        /// <summary>Function to calculate additional height when expanded</summary>
         public Func<SerializedProperty, float> CalculateExpandedHeight;
 
-        /// <summary>選択中のインデックス</summary>
+        /// <summary>Currently selected index</summary>
         public int SelectedIndex { get; set; } = -1;
 
-        /// <summary>展開中のインデックス</summary>
+        /// <summary>Currently expanded index</summary>
         public int ExpandedIndex { get; set; } = -1;
 
-        /// <summary>バッファ行数</summary>
+        /// <summary>Number of buffer rows</summary>
         public int BufferCount { get; set; } = 5;
 
         private SerializedProperty arrayProperty;
@@ -30,14 +30,14 @@ namespace Xeon.XScriptableDB.Editor
         private float viewHeight;
         private Dictionary<int, float> cachedExpandedHeights = new();
 
-        /// <summary>サマリー描画コールバック</summary>
+        /// <summary>Summary drawing callback</summary>
         public Action<int, SerializedProperty, Rect> OnDrawSummary;
 
-        /// <summary>選択変更コールバック</summary>
+        /// <summary>Selection change callback</summary>
         public Action<int> OnSelectionChanged;
 
         /// <summary>
-        /// 配列プロパティを設定する。
+        /// Sets the array property.
         /// </summary>
         public void SetProperty(SerializedProperty property)
         {
@@ -46,7 +46,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 展開高さをキャッシュする。
+        /// Caches the expanded height.
         /// </summary>
         public void CacheExpandedHeight(int index, float height)
         {
@@ -54,7 +54,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// リストを描画する。
+        /// Draws the list.
         /// </summary>
         public void Draw(Rect viewRect)
         {
@@ -73,20 +73,20 @@ namespace Xeon.XScriptableDB.Editor
 
             viewHeight = viewRect.height;
 
-            // 総コンテンツ高さを計算
+            // Calculate total content height
             var totalHeight = CalculateTotalHeight(arraySize);
 
-            // スクロールビュー開始
+            // Start scroll view
             var contentRect = new Rect(0, 0, viewRect.width - 16, totalHeight);
 
             using (var scrollScope = new GUI.ScrollViewScope(viewRect, scrollPosition, contentRect))
             {
                 scrollPosition = scrollScope.scrollPosition;
 
-                // 表示範囲を計算
+                // Calculate visible range
                 var (firstVisible, lastVisible) = CalculateVisibleRange(arraySize);
 
-                // 表示範囲のアイテムのみ描画
+                // Draw only items within the visible range
                 DrawVisibleItems(firstVisible, lastVisible, contentRect.width, arraySize);
             }
         }
@@ -176,12 +176,12 @@ namespace Xeon.XScriptableDB.Editor
                 var isExpanded = i == ExpandedIndex;
                 var element = arrayProperty.GetArrayElementAtIndex(i);
 
-                // ヘッダー行の背景
+                // Header row background
                 var headerRect = new Rect(0, currentY, width, ItemHeight);
                 var bgColor = isSelected ? new Color(0.2f, 0.4f, 0.6f, 0.5f) : (i % 2 == 0 ? new Color(0.3f, 0.3f, 0.3f, 0.3f) : Color.clear);
                 EditorGUI.DrawRect(headerRect, bgColor);
 
-                // インデックスと展開ボタン
+                // Index and expand button
                 var indexRect = new Rect(4, currentY + 3, 40, ItemHeight - 6);
                 EditorGUI.LabelField(indexRect, $"[{i}]");
 
@@ -189,7 +189,7 @@ namespace Xeon.XScriptableDB.Editor
                 if (GUI.Button(expandButtonRect, isExpanded ? "v" : ">"))
                     ToggleExpand(i);
 
-                // クリック判定（展開ボタン領域を除外）
+                // Click detection (excluding expand button area)
                 if (Event.current.type == EventType.MouseDown && Event.current.button == 0
                     && headerRect.Contains(Event.current.mousePosition)
                     && !expandButtonRect.Contains(Event.current.mousePosition))
@@ -206,13 +206,13 @@ namespace Xeon.XScriptableDB.Editor
                     Event.current.Use();
                 }
 
-                // サマリー描画
+                // Summary drawing
                 var summaryRect = new Rect(74, currentY, width - 78, ItemHeight);
                 OnDrawSummary?.Invoke(i, element, summaryRect);
 
                 currentY += ItemHeight;
 
-                // 展開されている場合は詳細を描画
+                // Draw detail if expanded
                 if (isExpanded)
                 {
                     float expandedHeight;
@@ -234,7 +234,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 展開/折りたたみを切り替える。
+        /// Toggles expand/collapse.
         /// </summary>
         public void ToggleExpand(int index)
         {
@@ -250,7 +250,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 指定インデックスまでスクロールする。
+        /// Scrolls to the specified index.
         /// </summary>
         public void ScrollToIndex(int index)
         {
@@ -258,7 +258,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// スクロール位置をリセットする。
+        /// Resets the scroll position.
         /// </summary>
         public void ResetScroll()
         {
@@ -266,12 +266,12 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 現在のスクロール位置を取得する。
+        /// Gets the current scroll position.
         /// </summary>
         public Vector2 GetScrollPosition() => scrollPosition;
 
         /// <summary>
-        /// スクロール位置を設定する。
+        /// Sets the scroll position.
         /// </summary>
         public void SetScrollPosition(Vector2 position)
         {
@@ -279,7 +279,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// キャッシュをクリアする。
+        /// Clears the cache.
         /// </summary>
         public void ClearCache()
         {

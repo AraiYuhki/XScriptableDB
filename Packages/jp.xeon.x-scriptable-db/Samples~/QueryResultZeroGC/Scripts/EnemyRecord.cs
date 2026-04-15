@@ -6,8 +6,8 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
 {
     /// <summary>
-    /// 敵データのレコードクラス。
-    /// パフォーマンス計測用に大量データを想定。
+    /// Record class for enemy data.
+    /// Designed for large datasets intended for performance measurement.
     /// </summary>
     [Serializable]
     public class EnemyRecord
@@ -15,37 +15,37 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         [SerializeField, CsvColumn("ID"), PrimaryKey]
         private int id;
 
-        [SerializeField, CsvColumn("名前")]
+        [SerializeField, CsvColumn("Name")]
         private string name;
 
         [SerializeField, CsvColumn("HP")]
         private int hp;
 
-        [SerializeField, CsvColumn("攻撃力")]
+        [SerializeField, CsvColumn("Attack")]
         private int attack;
 
-        [SerializeField, CsvColumn("防御力")]
+        [SerializeField, CsvColumn("Defense")]
         private int defense;
 
-        [SerializeField, CsvColumn("レベル"), SecondaryKey]
+        [SerializeField, CsvColumn("Level"), SecondaryKey]
         private int level;
 
-        [SerializeField, CsvColumn("エリアID"), SecondaryKey]
+        [SerializeField, CsvColumn("AreaID"), SecondaryKey]
         private int areaId;
 
-        [SerializeField, CsvColumn("ボス"), SecondaryKey]
+        [SerializeField, CsvColumn("Boss"), SecondaryKey]
         private bool isBoss;
 
-        [SerializeField, CsvColumn("ドロップ率")]
+        [SerializeField, CsvColumn("DropRate")]
         private float dropRate;
 
         /// <summary>
-        /// 敵ID（主キー）
+        /// Enemy ID (primary key)
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// 敵名
+        /// Enemy name
         /// </summary>
         public string Name => name;
 
@@ -55,32 +55,32 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         public int Hp => hp;
 
         /// <summary>
-        /// 攻撃力
+        /// Attack power
         /// </summary>
         public int Attack => attack;
 
         /// <summary>
-        /// 防御力
+        /// Defense power
         /// </summary>
         public int Defense => defense;
 
         /// <summary>
-        /// レベル
+        /// Level
         /// </summary>
         public int Level => level;
 
         /// <summary>
-        /// 出現エリアID
+        /// Spawn area ID
         /// </summary>
         public int AreaId => areaId;
 
         /// <summary>
-        /// ボスフラグ
+        /// Boss flag
         /// </summary>
         public bool IsBoss => isBoss;
 
         /// <summary>
-        /// ドロップ率
+        /// Drop rate
         /// </summary>
         public float DropRate => dropRate;
 

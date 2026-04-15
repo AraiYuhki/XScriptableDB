@@ -6,8 +6,8 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
 {
     /// <summary>
-    /// QueryResult (Zero GC) サンプルのロジック部分。
-    /// GUIから呼び出されることを想定。
+    /// Logic for the QueryResult (Zero GC) sample.
+    /// Intended to be called from a GUI.
     /// </summary>
     public class QueryResultZeroGCSample : MonoBehaviour
     {
@@ -15,15 +15,15 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         private EnemyTable enemyTable;
 
         /// <summary>
-        /// Zero GCパターンでレベル範囲検索を実行する。
+        /// Executes a level range search using the Zero GC pattern.
         /// </summary>
-        /// <param name="minLevel">最小レベル</param>
-        /// <param name="maxLevel">最大レベル</param>
-        /// <returns>検索結果の件数</returns>
+        /// <param name="minLevel">Minimum level</param>
+        /// <param name="maxLevel">Maximum level</param>
+        /// <returns>Number of results</returns>
         public int SearchByLevelRangeZeroGC(int minLevel, int maxLevel)
         {
-            // QueryBySecondaryKeyでGC Alloc 0のQueryResultを取得
-            // ※ レベル範囲検索にはWhereを使用（IEnumerable<T>を返す）
+            // Get a zero-GC-alloc QueryResult with QueryBySecondaryKey
+            // Note: Where is used for level range search (returns IEnumerable<T>)
             int count = 0;
             foreach (var enemy in enemyTable.Where(e =>
                 e.Level >= minLevel && e.Level <= maxLevel))
@@ -35,14 +35,14 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         }
 
         /// <summary>
-        /// 通常のLINQパターンでレベル範囲検索を実行する（比較用）。
+        /// Executes a level range search using the normal LINQ pattern (for comparison).
         /// </summary>
-        /// <param name="minLevel">最小レベル</param>
-        /// <param name="maxLevel">最大レベル</param>
-        /// <returns>検索結果の件数</returns>
+        /// <param name="minLevel">Minimum level</param>
+        /// <param name="maxLevel">Maximum level</param>
+        /// <returns>Number of results</returns>
         public int SearchByLevelRangeLinq(int minLevel, int maxLevel)
         {
-            // GCアロケーションが発生するパターン
+            // Pattern that causes GC allocation
             var results = enemyTable.All
                 .Where(e => e.Level >= minLevel && e.Level <= maxLevel)
                 .ToList();
@@ -51,10 +51,10 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         }
 
         /// <summary>
-        /// SecondaryKeyを使用したエリア検索（最速）。
+        /// Area search using SecondaryKey (fastest).
         /// </summary>
-        /// <param name="areaId">エリアID</param>
-        /// <returns>検索結果の件数</returns>
+        /// <param name="areaId">Area ID</param>
+        /// <returns>Number of results</returns>
         public int SearchByAreaSecondaryKey(int areaId)
         {
             var results = enemyTable.FindAllBySecondaryKeyAsArray("areaId", areaId);
@@ -62,25 +62,25 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         }
 
         /// <summary>
-        /// ボス敵のみを検索する。
+        /// Searches for boss enemies only.
         /// </summary>
-        /// <returns>ボス敵のリスト</returns>
+        /// <returns>List of boss enemies</returns>
         public List<EnemyRecord> GetBossEnemiesZeroGC()
         {
-            // SecondaryKeyを利用
+            // Using SecondaryKey
             var bosses = enemyTable.FindAllBySecondaryKey("isBoss", true);
             return bosses.ToList();
         }
 
         /// <summary>
-        /// 複合条件検索。
+        /// Multi-condition search.
         /// </summary>
-        /// <param name="areaId">エリアID</param>
-        /// <param name="minLevel">最小レベル</param>
-        /// <returns>検索結果の件数</returns>
+        /// <param name="areaId">Area ID</param>
+        /// <param name="minLevel">Minimum level</param>
+        /// <returns>Number of results</returns>
         public int SearchComplexZeroGC(int areaId, int minLevel)
         {
-            // SecondaryKeyで絞り込んでからWhereで追加フィルタ
+            // Narrow down by SecondaryKey then apply additional filter with Where
             var areaEnemies = enemyTable.FindAllBySecondaryKey("areaId", areaId);
 
             int count = 0;
@@ -94,10 +94,10 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         }
 
         /// <summary>
-        /// パフォーマンスベンチマークを実行する。
+        /// Runs a performance benchmark.
         /// </summary>
-        /// <param name="iterations">繰り返し回数</param>
-        /// <returns>比較結果</returns>
+        /// <param name="iterations">Number of iterations</param>
+        /// <returns>Comparison result</returns>
         public ComparisonResult RunBenchmark(int iterations = 1000)
         {
             int minLevel = 10;
@@ -106,17 +106,17 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
             return PerformanceProfiler.Compare(
                 "Zero GC (QueryResult)",
                 () => SearchByLevelRangeZeroGC(minLevel, maxLevel),
-                "通常LINQ (ToList)",
+                "Normal LINQ (ToList)",
                 () => SearchByLevelRangeLinq(minLevel, maxLevel),
                 iterations
             );
         }
 
         /// <summary>
-        /// 3種類の検索方式を比較するベンチマークを実行する。
+        /// Runs a benchmark comparing three search methods.
         /// </summary>
-        /// <param name="iterations">繰り返し回数</param>
-        /// <returns>各方式の計測結果</returns>
+        /// <param name="iterations">Number of iterations</param>
+        /// <returns>Measurement results for each method</returns>
         public Dictionary<string, ProfileResult> RunFullBenchmark(int iterations = 1000)
         {
             int minLevel = 10;
@@ -128,7 +128,7 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
                 ["Zero GC (QueryResult)"] = PerformanceProfiler.Measure(
                     () => SearchByLevelRangeZeroGC(minLevel, maxLevel), iterations),
 
-                ["通常LINQ (ToList)"] = PerformanceProfiler.Measure(
+                ["Normal LINQ (ToList)"] = PerformanceProfiler.Measure(
                     () => SearchByLevelRangeLinq(minLevel, maxLevel), iterations),
 
                 ["SecondaryKey"] = PerformanceProfiler.Measure(
@@ -139,12 +139,12 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         }
 
         /// <summary>
-        /// 検索結果のプレビューを取得する（先頭N件）。
+        /// Gets a preview of search results (first N records).
         /// </summary>
-        /// <param name="minLevel">最小レベル</param>
-        /// <param name="maxLevel">最大レベル</param>
-        /// <param name="limit">取得件数上限</param>
-        /// <returns>プレビュー用のレコードリスト</returns>
+        /// <param name="minLevel">Minimum level</param>
+        /// <param name="maxLevel">Maximum level</param>
+        /// <param name="limit">Maximum number of records to retrieve</param>
+        /// <returns>List of preview records</returns>
         public List<EnemyRecord> GetPreview(int minLevel, int maxLevel, int limit = 10)
         {
             var preview = new List<EnemyRecord>(limit);
@@ -161,17 +161,17 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         }
 
         /// <summary>
-        /// 現在のテーブルのレコード数を取得する。
+        /// Gets the number of records in the current table.
         /// </summary>
         public int RecordCount => enemyTable?.Count ?? 0;
 
         /// <summary>
-        /// 現在のGCメモリ使用量を取得する。
+        /// Gets the current GC memory usage.
         /// </summary>
         public long CurrentMemoryUsage => GC.GetTotalMemory(false);
 
         /// <summary>
-        /// GCを強制実行する。
+        /// Forces a GC collection.
         /// </summary>
         public void ForceGC()
         {

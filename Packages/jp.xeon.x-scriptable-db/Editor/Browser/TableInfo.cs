@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// テーブル情報。
+    /// Table information.
     /// </summary>
     public class TableInfo
     {

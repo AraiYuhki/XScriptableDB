@@ -6,7 +6,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// SchemaComparer のテスト。
+    /// Tests for SchemaComparer.
     /// </summary>
     public class SchemaComparerTests
     {
@@ -30,7 +30,7 @@ namespace Xeon.XScriptableDB.Tests
             public string Name;
             public int Value;
             public bool Active;
-            public string NewField; // 追加されたフィールド
+            public string NewField; // Added field
         }
 
         [Serializable]
@@ -39,7 +39,7 @@ namespace Xeon.XScriptableDB.Tests
             [PrimaryKey]
             public int Id;
             public string Name;
-            // Value フィールドが削除
+            // Value field removed
             public bool Active;
         }
 
@@ -49,16 +49,16 @@ namespace Xeon.XScriptableDB.Tests
             [PrimaryKey]
             public int Id;
             public string Name;
-            public float Value; // int -> float に変更
+            public float Value; // Changed from int -> float
             public bool Active;
         }
 
         [Serializable]
         private class PrimaryKeyChangedRecord
         {
-            public int Id; // PrimaryKey属性が削除
+            public int Id; // PrimaryKey attribute removed
             [PrimaryKey]
-            public string Name; // Nameが新しいPrimaryKey
+            public string Name; // Name is the new PrimaryKey
             public int Value;
             public bool Active;
         }
@@ -69,7 +69,7 @@ namespace Xeon.XScriptableDB.Tests
             [PrimaryKey]
             public int Id;
             [SecondaryKey]
-            public string Name; // SecondaryKey追加
+            public string Name; // SecondaryKey added
             public int Value;
             public bool Active;
         }
@@ -81,9 +81,9 @@ namespace Xeon.XScriptableDB.Tests
             public int Id;
             public string Name;
             public double Value; // int -> double
-            // Active削除
-            public string Category; // 新規フィールド
-            public int Level; // 新規フィールド
+            // Active removed
+            public string Category; // New field
+            public int Level; // New field
         }
 
         #endregion
@@ -110,7 +110,7 @@ namespace Xeon.XScriptableDB.Tests
 
             var addedDiff = result.Differences.First(d => d.Type == SchemaDifferenceType.FieldAdded);
             Assert.That(addedDiff.FieldName, Is.EqualTo("NewField"));
-            Assert.That(result.IsCompatible, Is.True); // フィールド追加は互換性あり
+            Assert.That(result.IsCompatible, Is.True); // Adding a field is compatible
         }
 
         [Test]
@@ -123,7 +123,7 @@ namespace Xeon.XScriptableDB.Tests
 
             var removedDiff = result.Differences.First(d => d.Type == SchemaDifferenceType.FieldRemoved);
             Assert.That(removedDiff.FieldName, Is.EqualTo("Value"));
-            Assert.That(result.IsCompatible, Is.False); // フィールド削除は非互換
+            Assert.That(result.IsCompatible, Is.False); // Removing a field is incompatible
         }
 
         [Test]
@@ -148,7 +148,7 @@ namespace Xeon.XScriptableDB.Tests
             Assert.That(result.HasDifferences, Is.True);
 
             var keyChanges = result.Differences.Where(d => d.Type == SchemaDifferenceType.PrimaryKeyChanged).ToList();
-            Assert.That(keyChanges.Count, Is.EqualTo(2)); // Id削除、Name追加
+            Assert.That(keyChanges.Count, Is.EqualTo(2)); // Id removed, Name added
         }
 
         [Test]

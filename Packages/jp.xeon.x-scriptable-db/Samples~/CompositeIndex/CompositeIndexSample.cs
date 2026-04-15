@@ -4,7 +4,7 @@ using Xeon.XScriptableDB;
 namespace XScriptableDB.Samples.CompositeIndex
 {
     /// <summary>
-    /// 複合SecondaryKeyの使い方を示すサンプル。
+    /// Sample demonstrating how to use composite SecondaryKeys.
     /// </summary>
     public class CompositeIndexSample : MonoBehaviour
     {
@@ -15,7 +15,7 @@ namespace XScriptableDB.Samples.CompositeIndex
         {
             if (productTable == null)
             {
-                Debug.LogError("ProductTableが設定されていません");
+                Debug.LogError("ProductTable is not set");
                 return;
             }
 
@@ -25,75 +25,75 @@ namespace XScriptableDB.Samples.CompositeIndex
         }
 
         /// <summary>
-        /// 複合SecondaryKeyによる検索のデモ。
+        /// Demo of composite SecondaryKey search.
         /// </summary>
         private void DemoCompositeSecondaryKey()
         {
-            Debug.Log("=== 複合SecondaryKey検索 ===");
+            Debug.Log("=== Composite SecondaryKey Search ===");
 
-            // カテゴリ + サブカテゴリで検索（O(1)）
+            // Search by category + subcategory (O(1))
             var electronicsMouse = productTable.FindByCategory("Electronics", "Mouse");
-            Debug.Log($"Electronics/Mouse: {electronicsMouse.Length}件");
+            Debug.Log($"Electronics/Mouse: {electronicsMouse.Length} results");
             foreach (var product in electronicsMouse)
             {
                 Debug.Log($"  {product}");
             }
 
-            // 別の組み合わせ
+            // Different combination
             var clothingTops = productTable.FindByCategory("Clothing", "Tops");
-            Debug.Log($"Clothing/Tops: {clothingTops.Length}件");
+            Debug.Log($"Clothing/Tops: {clothingTops.Length} results");
             foreach (var product in clothingTops)
             {
                 Debug.Log($"  {product}");
             }
 
-            // 直接メソッドを使用する場合
+            // Using the method directly
             var outdoorBags = productTable.FindAllBySecondaryKeyAsArray(
                 "CategorySubCategory", "Outdoor", "Bags");
-            Debug.Log($"Outdoor/Bags: {outdoorBags.Length}件");
+            Debug.Log($"Outdoor/Bags: {outdoorBags.Length} results");
         }
 
         /// <summary>
-        /// 単一SecondaryKeyによる検索のデモ。
+        /// Demo of single SecondaryKey search.
         /// </summary>
         private void DemoSingleSecondaryKey()
         {
-            Debug.Log("=== 単一SecondaryKey検索 ===");
+            Debug.Log("=== Single SecondaryKey Search ===");
 
-            // ブランドで検索（O(1)）
+            // Search by brand (O(1))
             var techBrandProducts = productTable.FindByBrand("TechBrand");
-            Debug.Log($"TechBrand製品: {techBrandProducts.Length}件");
+            Debug.Log($"TechBrand products: {techBrandProducts.Length} results");
             foreach (var product in techBrandProducts)
             {
                 Debug.Log($"  {product}");
             }
 
             var outdoorGearProducts = productTable.FindByBrand("OutdoorGear");
-            Debug.Log($"OutdoorGear製品: {outdoorGearProducts.Length}件");
+            Debug.Log($"OutdoorGear products: {outdoorGearProducts.Length} results");
         }
 
         /// <summary>
-        /// 複合キーと単一キーの使い分けのデモ。
+        /// Demo showing when to use composite vs single keys.
         /// </summary>
         private void DemoComparison()
         {
-            Debug.Log("=== 使い分けの例 ===");
+            Debug.Log("=== Usage Comparison ===");
 
-            // 複合キー: 特定のカテゴリ内のサブカテゴリを絞り込む場合に最適
-            Debug.Log("複合キー: 「Electronics」カテゴリの「Keyboard」を検索");
+            // Composite key: best for narrowing down subcategories within a specific category
+            Debug.Log("Composite key: Search for 'Keyboard' in 'Electronics' category");
             var keyboards = productTable.FindByCategory("Electronics", "Keyboard");
-            Debug.Log($"  結果: {keyboards.Length}件（O(1)で取得）");
+            Debug.Log($"  Result: {keyboards.Length} results (retrieved in O(1))");
 
-            // 単一キー: 特定の属性で横断的に検索する場合に最適
-            Debug.Log("単一キー: 「TechBrand」の全製品を検索");
+            // Single key: best for cross-cutting searches on a specific attribute
+            Debug.Log("Single key: Search all products from 'TechBrand'");
             var techProducts = productTable.FindByBrand("TechBrand");
-            Debug.Log($"  結果: {techProducts.Length}件（O(1)で取得）");
+            Debug.Log($"  Result: {techProducts.Length} results (retrieved in O(1))");
 
-            // 複合キーを使わない場合との比較
-            Debug.Log("参考: Where()で同じ検索をした場合（O(n)）");
+            // Comparison without using composite key
+            Debug.Log("Reference: Same search using Where() (O(n))");
             var count = productTable.Count(
                 p => p.Category == "Electronics" && p.SubCategory == "Keyboard");
-            Debug.Log($"  結果: {count}件（全件スキャンが必要）");
+            Debug.Log($"  Result: {count} results (requires full scan)");
         }
     }
 }

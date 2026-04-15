@@ -8,7 +8,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// MigrationExecutor のテスト。
+    /// Tests for MigrationExecutor.
     /// </summary>
     public class MigrationExecutorTests
     {
@@ -345,7 +345,7 @@ namespace Xeon.XScriptableDB.Tests
             var result = MigrationExecutor.Execute(migration, table);
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(table.GetRecords()[0].Value, Is.EqualTo(1)); // IdがValueにコピーされる
+            Assert.That(table.GetRecords()[0].Value, Is.EqualTo(1)); // Id is copied to Value
         }
 
         [Test]

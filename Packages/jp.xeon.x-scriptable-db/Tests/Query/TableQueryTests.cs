@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// TableQuery 拡張メソッドのテスト。
+    /// Tests for TableQuery extension methods.
     /// </summary>
     public class TableQueryTests
     {
@@ -28,7 +28,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// テスト用のTableAsset実装。
+        /// TableAsset implementation for testing.
         /// </summary>
         private class TestTableAsset : TableAsset<TestRecord, int>
         {

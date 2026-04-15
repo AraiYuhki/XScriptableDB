@@ -10,17 +10,17 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// CSVファイルからテーブルにインポートするクラス。
+    /// Class that imports from CSV files into tables.
     /// </summary>
     public static class TableImporter
     {
         /// <summary>
-        /// ファイルをパースしてレコード配列を取得する。
+        /// Parses a file and returns an array of records.
         /// </summary>
-        /// <typeparam name="T">レコードの型</typeparam>
-        /// <param name="filePath">ファイルパス</param>
-        /// <param name="encoding">エンコーディング（nullの場合はUTF-8）</param>
-        /// <returns>パースされたレコード配列</returns>
+        /// <typeparam name="T">The record type</typeparam>
+        /// <param name="filePath">The file path</param>
+        /// <param name="encoding">The encoding (defaults to UTF-8 if null)</param>
+        /// <returns>Array of parsed records</returns>
         public static T[] ParseFile<T>(string filePath, Encoding encoding = null) where T : CsvData, new()
         {
             if (!File.Exists(filePath))
@@ -33,12 +33,12 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// ファイルをパースしてオブジェクト配列を取得する（非ジェネリック版）。
+        /// Parses a file and returns an array of objects (non-generic version).
         /// </summary>
-        /// <param name="filePath">ファイルパス</param>
-        /// <param name="recordType">レコードの型</param>
-        /// <param name="encoding">エンコーディング</param>
-        /// <returns>パースされたレコード配列</returns>
+        /// <param name="filePath">The file path</param>
+        /// <param name="recordType">The record type</param>
+        /// <param name="encoding">The encoding</param>
+        /// <returns>Array of parsed records</returns>
         public static object[] ParseFile(string filePath, Type recordType, Encoding encoding = null)
         {
             if (!File.Exists(filePath))
@@ -47,7 +47,7 @@ namespace Xeon.XScriptableDB.Editor
             encoding ??= Encoding.UTF8;
             var content = File.ReadAllText(filePath, encoding);
 
-            // CsvParser.ParseRecord<T>(string)をリフレクションで呼び出す
+            // Call CsvParser.ParseRecord<T>(string) via reflection
             var parseMethod = typeof(CsvParser).GetMethod(
                 "ParseRecord",
                 BindingFlags.Public | BindingFlags.Static,
@@ -61,7 +61,7 @@ namespace Xeon.XScriptableDB.Editor
             var genericMethod = parseMethod.MakeGenericMethod(recordType);
             var result = genericMethod.Invoke(null, new object[] { content });
 
-            // List<T>をobject[]に変換
+            // Convert List<T> to object[]
             if (result is System.Collections.IList list)
             {
                 var array = new object[list.Count];
@@ -74,11 +74,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// プレビュー付きでインポートする。
+        /// Imports with a preview.
         /// </summary>
-        /// <param name="targetTable">インポート先のテーブル</param>
-        /// <param name="settings">インポート設定</param>
-        /// <returns>インポートがキャンセルされた場合はfalse</returns>
+        /// <param name="targetTable">The destination table for import</param>
+        /// <param name="settings">Import settings</param>
+        /// <returns>false if the import was cancelled</returns>
         public static bool ImportWithPreview(ScriptableObject targetTable, ImportSettings settings)
         {
             if (targetTable == null)
@@ -93,7 +93,7 @@ namespace Xeon.XScriptableDB.Editor
 
             try
             {
-                // ファイルをパース
+                // Parse the file
                 var importedRecords = ParseFile(settings.FilePath, tableAsset.RecordType, settings.Encoding);
 
                 if (importedRecords.Length == 0)
@@ -102,16 +102,16 @@ namespace Xeon.XScriptableDB.Editor
                     return false;
                 }
 
-                // 差分を計算
+                // Calculate the diff
                 var diffResult = DiffCalculator.Calculate(tableAsset, importedRecords);
 
                 if (settings.ShowPreview)
                 {
-                    // プレビューウィンドウを表示
+                    // Show the preview window
                     DiffViewerWindow.Open(diffResult, targetTable, importedRecords);
-                    return true; // ユーザーがDiffViewerで適用を判断
+                    return true; // User decides whether to apply in DiffViewer
                 }
-                // プレビューなしで直接適用
+                // Apply directly without preview
                 return ApplyImport(targetTable, tableAsset, importedRecords);
             }
             catch (Exception e)
@@ -123,7 +123,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// インポートを適用する。
+        /// Applies the import.
         /// </summary>
         private static bool ApplyImport(ScriptableObject targetTable, ITableAsset tableAsset, object[] importedRecords)
         {
@@ -145,10 +145,10 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// ファイルの区切り文字を自動判定する。
+        /// Auto-detects the delimiter character of a file.
         /// </summary>
-        /// <param name="filePath">ファイルパス</param>
-        /// <returns>区切り文字</returns>
+        /// <param name="filePath">The file path</param>
+        /// <returns>The delimiter character</returns>
         public static char DetectDelimiter(string filePath)
         {
             if (!File.Exists(filePath))
@@ -160,7 +160,7 @@ namespace Xeon.XScriptableDB.Editor
             if (string.IsNullOrEmpty(firstLine))
                 return ',';
 
-            // タブとカンマの数を数える
+            // Count the number of tabs and commas
             var tabCount = 0;
             var commaCount = 0;
 
@@ -174,10 +174,10 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// ファイルのエンコーディングを自動判定する。
+        /// Auto-detects the encoding of a file.
         /// </summary>
-        /// <param name="filePath">ファイルパス</param>
-        /// <returns>エンコーディング</returns>
+        /// <param name="filePath">The file path</param>
+        /// <returns>The encoding</returns>
         public static Encoding DetectEncoding(string filePath)
         {
             if (!File.Exists(filePath))
@@ -185,7 +185,7 @@ namespace Xeon.XScriptableDB.Editor
 
             var bytes = File.ReadAllBytes(filePath);
 
-            // BOMをチェック
+            // Check for BOM
             if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
                 return Encoding.UTF8;
 
@@ -195,11 +195,11 @@ namespace Xeon.XScriptableDB.Editor
             if (bytes.Length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF)
                 return Encoding.BigEndianUnicode;
 
-            // BOMがない場合、UTF-8として妥当かチェック
+            // If no BOM, check whether it is valid UTF-8
             if (IsValidUtf8(bytes))
                 return Encoding.UTF8;
 
-            // Shift-JISを試す
+            // Fall back to Shift-JIS
             return Encoding.GetEncoding(932);
         }
 

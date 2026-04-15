@@ -6,10 +6,10 @@ using UnityEngine;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// レコードのPrimaryKeyにアクセスするためのヘルパークラス。
-    /// リフレクションを使用してPrimaryKey属性が付いたメンバーを検出し、値を取得する。
+    /// Helper class for accessing the PrimaryKey of a record.
+    /// Uses reflection to detect members marked with the PrimaryKey attribute and retrieve their values.
     /// </summary>
-    /// <typeparam name="T">レコードの型</typeparam>
+    /// <typeparam name="T">Type of the record</typeparam>
     public class PrimaryKeyAccessor<T>
     {
         private const BindingFlags MemberFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
@@ -19,17 +19,17 @@ namespace Xeon.XScriptableDB
         private readonly Func<T, object> getValue;
 
         /// <summary>
-        /// PrimaryKeyの型を取得する。
+        /// Type of the PrimaryKey.
         /// </summary>
         public Type KeyType => keyType;
 
         /// <summary>
-        /// PrimaryKeyが見つかったかどうか。
+        /// Whether a PrimaryKey was found.
         /// </summary>
         public bool HasPrimaryKey => primaryKeyMember != null;
 
         /// <summary>
-        /// PrimaryKeyのメンバー名を取得する。
+        /// Member name of the PrimaryKey.
         /// </summary>
         public string MemberName => primaryKeyMember?.Name;
 
@@ -49,10 +49,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// レコードからPrimaryKey値を取得する。
+        /// Retrieves the PrimaryKey value from a record.
         /// </summary>
-        /// <param name="record">レコード</param>
-        /// <returns>PrimaryKey値</returns>
+        /// <param name="record">The record</param>
+        /// <returns>PrimaryKey value</returns>
         public object GetKey(T record)
         {
             if (record == null)
@@ -69,11 +69,11 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 型安全にPrimaryKey値を取得する。
+        /// Retrieves the PrimaryKey value from a record in a type-safe manner.
         /// </summary>
-        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
-        /// <param name="record">レコード</param>
-        /// <returns>PrimaryKey値</returns>
+        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
+        /// <param name="record">The record</param>
+        /// <returns>PrimaryKey value</returns>
         public TKey GetKey<TKey>(T record)
         {
             var value = GetKey(record);
@@ -83,9 +83,9 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// レコードのComparerを作成する。
+        /// Creates a Comparer for records.
         /// </summary>
-        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
         /// <returns>Comparer</returns>
         public IComparer<T> CreateComparer<TKey>() where TKey : IComparable<TKey>
         {

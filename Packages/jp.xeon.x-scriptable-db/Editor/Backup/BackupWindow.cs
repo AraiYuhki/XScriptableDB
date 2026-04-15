@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// バックアップ管理ウィンドウ。
+    /// Backup management window.
     /// </summary>
     public class BackupWindow : EditorWindow
     {
@@ -169,13 +169,13 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.BeginHorizontal();
 
-            // アイコン
+            // Icon
             var icon = backup.IsAutoBackup
                 ? EditorGUIUtility.IconContent("d_Refresh")
                 : EditorGUIUtility.IconContent("d_SaveAs");
             GUILayout.Label(icon, GUILayout.Width(20), GUILayout.Height(20));
 
-            // 情報
+            // Info
             EditorGUILayout.BeginVertical();
             EditorGUILayout.LabelField(backup.Name, EditorStyles.boldLabel);
             EditorGUILayout.LabelField($"{backup.TableName} | {backup.RecordCount} records | {FormatFileSize(backup.FileSize)}", EditorStyles.miniLabel);
@@ -184,7 +184,7 @@ namespace Xeon.XScriptableDB.Editor
 
             GUILayout.FlexibleSpace();
 
-            // アクションボタン
+            // Action buttons
             EditorGUILayout.BeginVertical(GUILayout.Width(80));
 
             if (GUILayout.Button("Restore", GUILayout.Width(75)))

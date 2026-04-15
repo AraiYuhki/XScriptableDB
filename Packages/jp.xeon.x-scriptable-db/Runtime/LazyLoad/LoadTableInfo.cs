@@ -3,7 +3,7 @@ using System;
 namespace Xeon.XScriptableDB.LazyLoad
 {
     /// <summary>
-    /// ロード済みテーブルの情報。
+    /// Information about a loaded table.
     /// </summary>
     public struct LoadedTableInfo
     {

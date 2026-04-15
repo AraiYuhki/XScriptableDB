@@ -1,7 +1,7 @@
 namespace Xeon.XScriptableDB.Samples.Validation
 {
     /// <summary>
-    /// スキルの属性タイプ。
+    /// Skill element type.
     /// </summary>
     public enum ElementType
     {

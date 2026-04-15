@@ -7,10 +7,10 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Xeon.XScriptableDB.LazyLoad
 {
     /// <summary>
-    /// テーブルの遅延ロード参照。
-    /// Addressablesを使用してオンデマンドでテーブルを読み込む。
+    /// Lazy-load reference for a table.
+    /// Loads the table on demand using Addressables.
     /// </summary>
-    /// <typeparam name="T">テーブルの型</typeparam>
+    /// <typeparam name="T">Type of the table</typeparam>
     [Serializable]
     public class LazyTableReference<T> where T : ScriptableObject, ITableAsset
     {
@@ -22,21 +22,21 @@ namespace Xeon.XScriptableDB.LazyLoad
         private int referenceCount;
         private bool isLoading;
 
-        /// <summary>アセット参照</summary>
+        /// <summary>Asset reference</summary>
         public AssetReference AssetReference => assetReference;
 
-        /// <summary>ロード済みかどうか</summary>
+        /// <summary>Whether the asset is loaded</summary>
         public bool IsLoaded => loadedAsset != null;
 
-        /// <summary>ロード中かどうか</summary>
+        /// <summary>Whether the asset is loading</summary>
         public bool IsLoading => isLoading;
 
-        /// <summary>参照カウント</summary>
+        /// <summary>Reference count</summary>
         public int ReferenceCount => referenceCount;
 
         /// <summary>
-        /// ロード済みのアセットを取得する。
-        /// ロードされていない場合はnullを返す。
+        /// Returns the loaded asset.
+        /// Returns null if not yet loaded.
         /// </summary>
         public T Asset => loadedAsset;
 
@@ -50,10 +50,10 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// 同期的にテーブルを取得する。
-        /// まだロードされていない場合は同期ロードを行う。
+        /// Synchronously retrieves the table.
+        /// Performs a synchronous load if not yet loaded.
         /// </summary>
-        /// <returns>テーブルアセット</returns>
+        /// <returns>Table asset</returns>
         public T GetOrLoad()
         {
             if (loadedAsset != null)
@@ -68,7 +68,7 @@ namespace Xeon.XScriptableDB.LazyLoad
                 return null;
             }
 
-            // 同期ロード
+            // Synchronous load
             handle = assetReference.LoadAssetAsync<T>();
             loadedAsset = handle.WaitForCompletion();
             referenceCount = 1;
@@ -77,9 +77,9 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// 非同期でテーブルを読み込む。
+        /// Asynchronously loads the table.
         /// </summary>
-        /// <returns>テーブルアセット</returns>
+        /// <returns>Table asset</returns>
         public async Task<T> LoadAsync()
         {
             if (loadedAsset != null)
@@ -90,7 +90,7 @@ namespace Xeon.XScriptableDB.LazyLoad
 
             if (isLoading)
             {
-                // 既にロード中の場合は完了を待つ
+                // Already loading — wait for completion
                 await handle.Task;
                 referenceCount++;
                 return loadedAsset;
@@ -118,8 +118,8 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// 参照を解放する。
-        /// 参照カウントが0になるとアンロードされる。
+        /// Releases the reference.
+        /// The asset is unloaded when the reference count reaches zero.
         /// </summary>
         public void Release()
         {
@@ -134,7 +134,7 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// 強制的にアンロードする。
+        /// Force-unloads the asset.
         /// </summary>
         public void Unload()
         {

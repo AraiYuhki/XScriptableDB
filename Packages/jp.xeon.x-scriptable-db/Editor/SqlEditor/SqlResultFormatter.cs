@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQL実行結果のフォーマットと値取得を行うユーティリティクラス。
+    /// Utility class for formatting SQL execution results and retrieving values.
     /// </summary>
     public static class SqlResultFormatter
     {
@@ -14,20 +14,20 @@ namespace Xeon.XScriptableDB.Editor
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         /// <summary>
-        /// レコードからカラム名のリストを取得する。
+        /// Gets the list of column names from a record.
         /// </summary>
-        /// <param name="record">レコード</param>
-        /// <returns>カラム名のリスト</returns>
+        /// <param name="record">The record</param>
+        /// <returns>List of column names</returns>
         public static List<string> GetColumnNamesFromRecord(object record)
         {
             if (record == null)
                 return new List<string>();
 
-            // ResultRowの場合はValuesのキーを使用
+            // For ResultRow, use the Values dictionary keys
             if (record is ResultRow resultRow)
                 return resultRow.Values.Keys.ToList();
 
-            // JoinedRecordの場合は全テーブルのフィールドを取得
+            // For JoinedRecord, retrieve fields from all tables
             if (record is JoinedRecord joinedRecord)
             {
                 var names = new List<string>();
@@ -50,7 +50,7 @@ namespace Xeon.XScriptableDB.Editor
                 return names;
             }
 
-            // 通常のレコードの場合
+            // For a normal record
             var type = record.GetType();
             return type.GetFields(FieldBindingFlags)
                 .Select(f => f.Name)
@@ -58,18 +58,18 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// レコードから指定したフィールドの値を取得する。
+        /// Gets the value of the specified field from a record.
         /// </summary>
-        /// <param name="record">レコード</param>
-        /// <param name="recordType">レコードの型（ResultRow/JoinedRecord以外の場合に使用）</param>
-        /// <param name="fieldName">フィールド名</param>
-        /// <returns>フィールドの値</returns>
+        /// <param name="record">The record</param>
+        /// <param name="recordType">The record type (used when it is not a ResultRow or JoinedRecord)</param>
+        /// <param name="fieldName">The field name</param>
+        /// <returns>The field value</returns>
         public static object GetFieldValue(object record, Type recordType, string fieldName)
         {
             if (record == null)
                 return null;
 
-            // ResultRowの場合はValuesディクショナリから取得
+            // For ResultRow, retrieve from the Values dictionary
             if (record is ResultRow resultRow)
             {
                 if (resultRow.Values.TryGetValue(fieldName, out var value))
@@ -77,7 +77,7 @@ namespace Xeon.XScriptableDB.Editor
                 return null;
             }
 
-            // JoinedRecordの場合
+            // For JoinedRecord
             if (record is JoinedRecord joinedRecord)
                 return GetJoinedFieldValue(joinedRecord, fieldName);
 
@@ -88,11 +88,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// JoinedRecordからフィールド値を取得する。
+        /// Gets field values from a JoinedRecord.
         /// </summary>
         private static object GetJoinedFieldValue(JoinedRecord joinedRecord, string fieldName)
         {
-            // テーブルエイリアス付きの場合（例: "t.Id"）
+            // When a table alias is included (e.g., "t.Id")
             if (fieldName.Contains('.'))
             {
                 var parts = fieldName.Split('.');
@@ -106,7 +106,7 @@ namespace Xeon.XScriptableDB.Editor
                 return null;
             }
 
-            // テーブルエイリアスがない場合は全テーブルから検索
+            // When no table alias is present, search across all tables
             foreach (var kvp in joinedRecord.TableRecords)
             {
                 var tableRecord = kvp.Value;
@@ -121,7 +121,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 型情報を使用してフィールド値を取得する。
+        /// Gets a field value using type information.
         /// </summary>
         private static object GetFieldValueFromType(object record, Type recordType, string fieldName)
         {
@@ -132,7 +132,7 @@ namespace Xeon.XScriptableDB.Editor
             if (field != null)
                 return field.GetValue(record);
 
-            // 大文字小文字を無視して検索
+            // Search ignoring case
             field = recordType.GetFields(FieldBindingFlags)
                 .FirstOrDefault(f => f.Name.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
             if (field != null)
@@ -146,7 +146,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 指定した型にフィールドが存在するかチェックする。
+        /// Checks whether a field exists in the specified type.
         /// </summary>
         private static bool HasField(Type recordType, string fieldName)
         {
@@ -170,10 +170,10 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 値を表示用の文字列にフォーマットする。
+        /// Formats a value into a display string.
         /// </summary>
-        /// <param name="value">値</param>
-        /// <returns>表示用文字列</returns>
+        /// <param name="value">The value</param>
+        /// <returns>Display string</returns>
         public static string FormatValue(object value)
         {
             if (value == null)

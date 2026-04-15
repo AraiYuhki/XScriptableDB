@@ -10,7 +10,7 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// ストリーミングインポートの進捗状態。
+    /// Progress state of a streaming import.
     /// </summary>
     public enum StreamingImportState
     {
@@ -24,8 +24,8 @@ namespace Xeon.XScriptableDB.Editor
     }
 
     /// <summary>
-    /// 大量データのストリーミングインポートを行うクラス。
-    /// チャンク単位でデータを読み込み、メモリ使用量を抑えながらインポートする。
+    /// Class that performs streaming import of large amounts of data.
+    /// Reads data in chunks to import while keeping memory usage low.
     /// </summary>
     public class StreamingImporter
     {
@@ -33,7 +33,7 @@ namespace Xeon.XScriptableDB.Editor
         private bool isCancelled;
 
         /// <summary>
-        /// インポートをキャンセルする。
+        /// Cancels the import.
         /// </summary>
         public void Cancel()
         {
@@ -41,13 +41,13 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// ストリーミングインポートを実行する。
+        /// Executes a streaming import.
         /// </summary>
-        /// <typeparam name="T">レコードの型</typeparam>
-        /// <param name="filePath">インポートするファイルのパス</param>
-        /// <param name="targetTable">インポート先のテーブル</param>
-        /// <param name="settings">インポート設定</param>
-        /// <returns>インポート結果</returns>
+        /// <typeparam name="T">The record type</typeparam>
+        /// <param name="filePath">The path to the file to import</param>
+        /// <param name="targetTable">The destination table for import</param>
+        /// <param name="settings">Import settings</param>
+        /// <returns>The import result</returns>
         public StreamingImportProgress Import<T>(
             string filePath,
             ScriptableObject targetTable,
@@ -76,7 +76,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// ストリーミングインポートを実行する（非ジェネリック版）。
+        /// Executes a streaming import (non-generic version).
         /// </summary>
         public StreamingImportProgress Import(
             string filePath,
@@ -106,7 +106,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 進捗状態を初期化する。
+        /// Initializes the progress state.
         /// </summary>
         private void InitializeProgress(string filePath, StreamingImportSettings settings)
         {
@@ -122,7 +122,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// ファイルを読み込み処理する（ジェネリック版）。
+        /// Reads and processes a file (generic version).
         /// </summary>
         private void ReadAndProcessFile<T>(
             string filePath,
@@ -142,7 +142,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// ファイルを読み込み処理する（非ジェネリック版）。
+        /// Reads and processes a file (non-generic version).
         /// </summary>
         private void ReadAndProcessFileNonGeneric(
             string filePath,
@@ -163,7 +163,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// ヘッダー行を読み込む。
+        /// Reads the header row.
         /// </summary>
         private string[] ReadHeader(StreamReader reader, StreamingImportSettings settings, ref int lineNumber)
         {
@@ -179,7 +179,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 全ての行を処理する（ジェネリック版）。
+        /// Processes all lines (generic version).
         /// </summary>
         private void ProcessAllLines<T>(
             StreamReader reader,
@@ -214,7 +214,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 全ての行を処理する（非ジェネリック版）。
+        /// Processes all lines (non-generic version).
         /// </summary>
         private void ProcessAllLinesNonGeneric(
             StreamReader reader,
@@ -250,7 +250,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// エラー数が上限を超えたか判定し、超えた場合は状態を更新する。
+        /// Determines whether the error count has exceeded the limit and updates the state if so.
         /// </summary>
         private bool ShouldAbortDueToErrors(StreamingImportSettings settings)
         {
@@ -263,7 +263,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 残りのチャンクを処理する（ジェネリック版）。
+        /// Processes the remaining chunk (generic version).
         /// </summary>
         private void ProcessRemainingChunk<T>(
             List<string> chunkLines,
@@ -279,7 +279,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 残りのチャンクを処理する（非ジェネリック版）。
+        /// Processes the remaining chunk (non-generic version).
         /// </summary>
         private void ProcessRemainingChunkNonGeneric(
             List<string> chunkLines,
@@ -296,7 +296,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// インポートを完了する（ジェネリック版）。
+        /// Finalizes the import (generic version).
         /// </summary>
         private void FinalizeImport<T>(
             ScriptableObject targetTable,
@@ -323,7 +323,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// インポートを完了する（非ジェネリック版）。
+        /// Finalizes the import (non-generic version).
         /// </summary>
         private void FinalizeImportNonGeneric(
             ScriptableObject targetTable,
@@ -351,7 +351,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 致命的なエラーを処理する。
+        /// Handles a fatal error.
         /// </summary>
         private void HandleFatalError(Exception e)
         {
@@ -362,7 +362,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 進捗状態を完了する。
+        /// Finalizes the progress state.
         /// </summary>
         private void FinalizeProgress(StreamingImportSettings settings)
         {

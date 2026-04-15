@@ -11,7 +11,7 @@ using Debug = UnityEngine.Debug;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// ベンチマーク実行ウィンドウ。
+    /// Benchmark execution window.
     /// </summary>
     public class BenchmarkWindow : EditorWindow
     {
@@ -22,7 +22,7 @@ namespace Xeon.XScriptableDB.Editor
             window.Show();
         }
 
-        // テスト用レコードクラス
+        // Record class for testing
         [Serializable]
         private class TestRecord : CsvData
         {
@@ -56,14 +56,14 @@ namespace Xeon.XScriptableDB.Editor
 
             using (new EditorGUI.DisabledGroupScope(isRunning))
             {
-                // 設定
+                // Settings
                 EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
                 dataSize = EditorGUILayout.IntSlider("Data Size", dataSize, 100, 100000);
                 iterations = EditorGUILayout.IntSlider("Iterations", iterations, 10, 10000);
 
                 EditorGUILayout.Space();
 
-                // ベンチマーク実行ボタン
+                // Benchmark run buttons
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     if (GUILayout.Button("Run All Benchmarks"))
@@ -108,12 +108,12 @@ namespace Xeon.XScriptableDB.Editor
             if (results.Count <= 0)
                 return;
 
-            // 結果表示
+            // Result display
             EditorGUILayout.LabelField($"Results ({results.Count})", EditorStyles.boldLabel);
             using var scroll = new EditorGUILayout.ScrollViewScope(scrollPosition);
             scrollPosition = scroll.scrollPosition;
 
-            // ヘッダー
+            // Header
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
                 GUILayout.Label("Test Name", GUILayout.Width(200));
@@ -283,7 +283,7 @@ namespace Xeon.XScriptableDB.Editor
             var records = GenerateRecords(dataSize);
             var targetId = dataSize / 2;
 
-            // 線形検索
+            // Linear search
             AddResult(RunBenchmark("Linear Search", records.Length, iterations, () =>
             {
                 var result = records.FirstOrDefault(r => r.id == targetId);
@@ -291,7 +291,7 @@ namespace Xeon.XScriptableDB.Editor
             if (cancelRequested)
                 return;
 
-            // バイナリサーチ
+            // Binary search
             var sorted = records.OrderBy(r => r.id).ToArray();
             AddResult(RunBenchmark("Binary Search", records.Length, iterations, () =>
             {
@@ -300,7 +300,7 @@ namespace Xeon.XScriptableDB.Editor
             if (cancelRequested)
                 return;
 
-            // ハッシュ検索
+            // Hash lookup
             var dict = records.ToDictionary(r => r.id);
             AddResult(RunBenchmark("Hash Lookup", records.Length, iterations, () =>
             {
@@ -309,7 +309,7 @@ namespace Xeon.XScriptableDB.Editor
             if (cancelRequested)
                 return;
 
-            // グループ検索
+            // Group lookup
             var groupIndex = records.GroupBy(r => r.category)
                 .ToDictionary(g => g.Key, g => g.ToArray());
             AddResult(RunBenchmark("Group Lookup", records.Length, iterations, () =>
@@ -319,7 +319,7 @@ namespace Xeon.XScriptableDB.Editor
             if (cancelRequested)
                 return;
 
-            // フィルタリング
+            // Filtering
             AddResult(RunBenchmark("Filter (LINQ)", records.Length, iterations / 10, () =>
             {
                 var result = records.Where(r => r.value > 500).ToArray();
@@ -351,7 +351,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             var records = GenerateRecords(Math.Min(dataSize, 10000));
 
-            // CSV出力
+            // CSV export
             var csv = "";
             AddResult(RunBenchmark("CSV Export", records.Length, 10, () =>
             {
@@ -360,7 +360,7 @@ namespace Xeon.XScriptableDB.Editor
             if (cancelRequested)
                 return;
 
-            // CSVパース
+            // CSV parse
             if (!string.IsNullOrEmpty(csv))
             {
                 AddResult(RunBenchmark("CSV Parse", records.Length, 10, () =>
@@ -372,7 +372,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private void RunMemoryBenchmarksInternal()
         {
-            // レコード生成のメモリ使用量
+            // Memory usage for record generation
             currentBenchmarkName = "Record Generation";
             GC.Collect();
             var before = GC.GetTotalMemory(true);
@@ -395,7 +395,7 @@ namespace Xeon.XScriptableDB.Editor
             if (cancelRequested)
                 return;
 
-            // Dictionary作成のメモリ使用量
+            // Memory usage for dictionary creation
             currentBenchmarkName = "Dictionary Creation";
             GC.Collect();
             before = GC.GetTotalMemory(true);
@@ -418,7 +418,7 @@ namespace Xeon.XScriptableDB.Editor
             if (cancelRequested)
                 return;
 
-            // グループインデックス作成のメモリ使用量
+            // Memory usage for group index creation
             currentBenchmarkName = "Group Index Creation";
             GC.Collect();
             before = GC.GetTotalMemory(true);
@@ -469,7 +469,7 @@ namespace Xeon.XScriptableDB.Editor
 
             try
             {
-                // ウォームアップ
+                // Warm-up
                 action();
 
                 var sw = Stopwatch.StartNew();

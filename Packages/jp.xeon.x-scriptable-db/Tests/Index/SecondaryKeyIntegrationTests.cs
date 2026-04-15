@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// SecondaryKey機能の統合テスト。
-    /// TableAssetとIndexBuilderの連携をテストする。
+    /// Integration tests for SecondaryKey functionality.
+    /// Tests the cooperation between TableAsset and IndexBuilder.
     /// </summary>
     public class SecondaryKeyIntegrationTests
     {

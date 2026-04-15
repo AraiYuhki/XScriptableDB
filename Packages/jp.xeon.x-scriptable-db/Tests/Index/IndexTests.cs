@@ -5,7 +5,7 @@ using System.Linq;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// IndexBuilder, IndexData, SecondaryKeyAttribute のテスト。
+    /// Tests for IndexBuilder, IndexData, and SecondaryKeyAttribute.
     /// </summary>
     public class IndexTests
     {

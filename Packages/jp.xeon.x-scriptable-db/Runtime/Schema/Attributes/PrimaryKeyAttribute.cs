@@ -3,30 +3,30 @@ using System;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// フィールドまたはプロパティをPrimaryKeyとしてマークする属性。
-    /// XTableAssetはこの属性を使用してレコードのソートと検索を行う。
+    /// Attribute to mark a field or property as a PrimaryKey.
+    /// XTableAsset uses this attribute to sort and look up records.
     /// </summary>
     /// <remarks>
-    /// 1つのレコードクラスには1つのPrimaryKeyのみ指定可能。
-    /// 複数指定された場合は最初に見つかったものが使用される。
+    /// Only one PrimaryKey may be specified per record class.
+    /// If multiple are specified, the first one found is used.
     /// </remarks>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
     public class PrimaryKeyAttribute : Attribute
     {
         /// <summary>
-        /// PrimaryKeyの順序（将来の複合キー対応用）。
+        /// Order of the PrimaryKey (reserved for future composite key support).
         /// </summary>
         public int Order { get; set; } = 0;
 
         /// <summary>
-        /// PrimaryKeyAttribute を作成する。
+        /// Creates a PrimaryKeyAttribute.
         /// </summary>
         public PrimaryKeyAttribute() { }
 
         /// <summary>
-        /// 順序を指定して PrimaryKeyAttribute を作成する。
+        /// Creates a PrimaryKeyAttribute with a specified order.
         /// </summary>
-        /// <param name="order">複合キー時の順序</param>
+        /// <param name="order">Order within a composite key</param>
         public PrimaryKeyAttribute(int order)
         {
             Order = order;

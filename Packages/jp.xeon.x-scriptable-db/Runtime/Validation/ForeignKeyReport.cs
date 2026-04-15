@@ -3,36 +3,36 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// 外部キー参照レポート。
+    /// Foreign key reference report.
     /// </summary>
     public class ForeignKeyReport
     {
-        /// <summary>ソーステーブル名</summary>
+        /// <summary>Source table name</summary>
         public string SourceTableName { get; set; }
 
-        /// <summary>ターゲットテーブル名</summary>
+        /// <summary>Target table name</summary>
         public string TargetTableName { get; set; }
 
-        /// <summary>外部キーフィールド名</summary>
+        /// <summary>Foreign key field name</summary>
         public string ForeignKeyField { get; set; }
 
-        /// <summary>総参照数</summary>
+        /// <summary>Total number of references</summary>
         public int TotalReferences { get; set; }
 
-        /// <summary>無効な参照値リスト</summary>
+        /// <summary>List of invalid reference values</summary>
         public List<object> InvalidReferences { get; } = new();
 
-        /// <summary>エラーメッセージリスト</summary>
+        /// <summary>List of error messages</summary>
         public List<string> Errors { get; } = new();
 
-        /// <summary>有効かどうか</summary>
+        /// <summary>Whether the report is valid</summary>
         public bool IsValid => InvalidReferences.Count == 0 && Errors.Count == 0;
 
-        /// <summary>無効な参照数</summary>
+        /// <summary>Number of invalid references</summary>
         public int InvalidReferenceCount => InvalidReferences.Count;
 
         /// <summary>
-        /// サマリーを取得する。
+        /// Returns a summary string.
         /// </summary>
         public string GetSummary()
         {

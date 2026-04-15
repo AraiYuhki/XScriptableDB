@@ -10,12 +10,12 @@ using Debug = UnityEngine.Debug;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// パフォーマンスベンチマークテスト。
+    /// Performance benchmark tests.
     /// </summary>
     [TestFixture]
     public class BenchmarkTests
     {
-        // テスト用のレコード
+        // Test record
         [Serializable]
         public class BenchmarkRecord : CsvData
         {
@@ -70,7 +70,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// レコード生成のベンチマーク。
+        /// Benchmark for record generation.
         /// </summary>
         [Test]
         public void Benchmark_RecordGeneration()
@@ -89,7 +89,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// 線形検索のベンチマーク。
+        /// Benchmark for linear search.
         /// </summary>
         [Test]
         public void Benchmark_LinearSearch()
@@ -101,7 +101,7 @@ namespace Xeon.XScriptableDB.Tests
                 var records = GenerateRecords(size);
                 var targetId = size / 2;
 
-                // ウォームアップ
+                // Warm-up
                 var _ = records.FirstOrDefault(r => r.id == targetId);
 
                 var sw = Stopwatch.StartNew();
@@ -120,7 +120,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// バイナリサーチのベンチマーク。
+        /// Benchmark for binary search.
         /// </summary>
         [Test]
         public void Benchmark_BinarySearch()
@@ -133,7 +133,7 @@ namespace Xeon.XScriptableDB.Tests
                 var sortedRecords = records.OrderBy(r => r.id).ToArray();
                 var targetId = size / 2;
 
-                // ウォームアップ
+                // Warm-up
                 BinarySearchById(sortedRecords, targetId);
 
                 var sw = Stopwatch.StartNew();
@@ -173,7 +173,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// ハッシュ検索のベンチマーク（SecondaryKey相当）。
+        /// Benchmark for hash lookup (equivalent to SecondaryKey).
         /// </summary>
         [Test]
         public void Benchmark_HashLookup()
@@ -186,7 +186,7 @@ namespace Xeon.XScriptableDB.Tests
                 var dictionary = records.ToDictionary(r => r.id);
                 var targetId = size / 2;
 
-                // ウォームアップ
+                // Warm-up
                 dictionary.TryGetValue(targetId, out _);
 
                 var sw = Stopwatch.StartNew();
@@ -205,7 +205,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// グループ検索のベンチマーク。
+        /// Benchmark for group search.
         /// </summary>
         [Test]
         public void Benchmark_GroupSearch()
@@ -219,7 +219,7 @@ namespace Xeon.XScriptableDB.Tests
                     .ToDictionary(g => g.Key, g => g.ToArray());
                 var targetCategory = 50;
 
-                // ウォームアップ
+                // Warm-up
                 groupIndex.TryGetValue(targetCategory, out _);
 
                 var sw = Stopwatch.StartNew();
@@ -238,7 +238,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// ソートのベンチマーク。
+        /// Benchmark for sorting.
         /// </summary>
         [Test]
         public void Benchmark_Sorting()
@@ -259,7 +259,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// フィルタリングのベンチマーク。
+        /// Benchmark for filtering.
         /// </summary>
         [Test]
         public void Benchmark_Filtering()
@@ -270,7 +270,7 @@ namespace Xeon.XScriptableDB.Tests
             {
                 var records = GenerateRecords(size);
 
-                // ウォームアップ
+                // Warm-up
                 var _ = records.Where(r => r.value > 500).ToArray();
 
                 var sw = Stopwatch.StartNew();
@@ -289,7 +289,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// メモリ割り当てのベンチマーク。
+        /// Benchmark for memory allocation.
         /// </summary>
         [Test]
         public void Benchmark_MemoryAllocation()
@@ -310,7 +310,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// バッチ追加のベンチマーク。
+        /// Benchmark for batch add.
         /// </summary>
         [Test]
         public void Benchmark_BatchAdd()
@@ -322,7 +322,7 @@ namespace Xeon.XScriptableDB.Tests
                 var records = GenerateRecords(size);
                 var list = new List<BenchmarkRecord>();
 
-                // 個別追加
+                // Individual add
                 var sw1 = Stopwatch.StartNew();
                 foreach (var record in records)
                     list.Add(record);
@@ -330,7 +330,7 @@ namespace Xeon.XScriptableDB.Tests
 
                 list.Clear();
 
-                // 一括追加
+                // Bulk add
                 var sw2 = Stopwatch.StartNew();
                 list.AddRange(records);
                 sw2.Stop();
@@ -340,7 +340,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// CSV解析のベンチマーク。
+        /// Benchmark for CSV parsing.
         /// </summary>
         [Test]
         public void Benchmark_CsvParsing()
@@ -352,7 +352,7 @@ namespace Xeon.XScriptableDB.Tests
                 var records = GenerateRecords(size);
                 var csv = CsvParser.ToCSV(records);
 
-                // ウォームアップ
+                // Warm-up
                 CsvParser.Parse<BenchmarkRecord>(csv);
 
                 var sw = Stopwatch.StartNew();
@@ -371,7 +371,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// CSV出力のベンチマーク。
+        /// Benchmark for CSV export.
         /// </summary>
         [Test]
         public void Benchmark_CsvExport()
@@ -382,7 +382,7 @@ namespace Xeon.XScriptableDB.Tests
             {
                 var records = GenerateRecords(size);
 
-                // ウォームアップ
+                // Warm-up
                 CsvParser.ToCSV(records);
 
                 var sw = Stopwatch.StartNew();
@@ -401,17 +401,17 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// QueryResultのベンチマーク（GC Alloc確認）。
+        /// Benchmark for QueryResult (checking GC allocations).
         /// </summary>
         [Test]
         public void Benchmark_QueryResultIteration()
         {
             var records = GenerateRecords(LargeDataset).ToArray();
 
-            // ウォームアップ
+            // Warm-up
             IterateWithQueryResult(records);
 
-            // GC確認
+            // GC check
             GC.Collect();
             var beforeGC = GC.GetTotalMemory(true);
 
@@ -444,7 +444,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// 比較サマリーの出力。
+        /// Output comparison summary.
         /// </summary>
         [Test]
         public void Benchmark_Summary()

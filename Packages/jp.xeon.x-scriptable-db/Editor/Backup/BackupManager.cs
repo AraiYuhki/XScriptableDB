@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// バックアップ管理クラス。
+    /// Backup management class.
     /// </summary>
     public static class BackupManager
     {
@@ -19,7 +19,7 @@ namespace Xeon.XScriptableDB.Editor
         private static string ManifestPath => Path.Combine(BackupFolder, ManifestFileName);
 
         /// <summary>
-        /// テーブルのバックアップを作成する。
+        /// Creates a backup of the table.
         /// </summary>
         public static BackupInfo CreateBackup(ITableAsset table, string name = null, string description = null, bool isAuto = false)
         {
@@ -42,7 +42,7 @@ namespace Xeon.XScriptableDB.Editor
                 IsAutoBackup = isAuto
             };
 
-            // バックアップファイルの作成
+            // Create the backup file
             var fileName = $"{backupInfo.Name}_{backupId}.json";
             var filePath = Path.Combine(BackupFolder, fileName);
 
@@ -52,11 +52,11 @@ namespace Xeon.XScriptableDB.Editor
             backupInfo.FilePath = filePath;
             backupInfo.FileSize = new FileInfo(filePath).Length;
 
-            // マニフェストの更新
+            // Update the manifest
             manifest.Backups.Insert(0, backupInfo);
             manifest.LastBackupAt = timestamp.ToString("yyyy-MM-dd HH:mm:ss");
 
-            // 古いバックアップの削除
+            // Delete old backups
             CleanupOldBackups(manifest);
 
             SaveManifest(manifest);
@@ -66,7 +66,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// バックアップからリストアする。
+        /// Restores from a backup.
         /// </summary>
         public static bool RestoreBackup(BackupInfo backupInfo, ITableAsset targetTable)
         {
@@ -95,7 +95,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// バックアップを削除する。
+        /// Deletes a backup.
         /// </summary>
         public static bool DeleteBackup(BackupInfo backupInfo)
         {
@@ -116,7 +116,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 全バックアップ情報を取得する。
+        /// Gets all backup information.
         /// </summary>
         public static List<BackupInfo> GetAllBackups()
         {
@@ -125,7 +125,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 特定テーブルのバックアップを取得する。
+        /// Gets backups for a specific table.
         /// </summary>
         public static List<BackupInfo> GetBackupsForTable(string tableName)
         {
@@ -134,7 +134,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 自動バックアップを実行する。
+        /// Runs an automatic backup.
         /// </summary>
         public static void RunAutoBackup(ITableAsset table)
         {
@@ -146,7 +146,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// バックアップフォルダのサイズを取得する。
+        /// Gets the total size of the backup folder.
         /// </summary>
         public static long GetTotalBackupSize()
         {
@@ -158,7 +158,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 全バックアップを削除する。
+        /// Deletes all backups.
         /// </summary>
         public static void ClearAllBackups()
         {
@@ -205,7 +205,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private static void CleanupOldBackups(BackupManifest manifest)
         {
-            // 自動バックアップの数を制限
+            // Limit the number of automatic backups
             var autoBackups = manifest.Backups.Where(b => b.IsAutoBackup).ToList();
             while (autoBackups.Count > manifest.MaxBackupCount)
             {
@@ -243,13 +243,13 @@ namespace Xeon.XScriptableDB.Editor
             var wrapper = JsonUtility.FromJson<TableBackupWrapper>(json);
             var recordType = table.RecordType;
 
-            // 既存レコードをクリア
+            // Clear existing records
             while (table.Count > 0)
             {
                 table.RemoveRecordAt(0);
             }
 
-            // バックアップからレコードを復元
+            // Restore records from backup
             foreach (var recordJson in wrapper.RecordsJson)
             {
                 var record = JsonUtility.FromJson(recordJson, recordType);

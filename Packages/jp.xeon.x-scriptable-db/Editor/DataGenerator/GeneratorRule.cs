@@ -1,15 +1,15 @@
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// データ生成ルール。
+    /// Data generation rules.
     /// </summary>
     public enum GeneratorRule
     {
-        Sequential,     // 連番
-        Random,         // ランダム
-        RandomRange,    // 範囲指定ランダム
-        RandomChoice,   // 選択肢からランダム
-        Pattern,        // パターン文字列
-        Fixed           // 固定値
+        Sequential,     // Sequential numbering
+        Random,         // Random value
+        RandomRange,    // Random value within a specified range
+        RandomChoice,   // Random choice from a list of options
+        Pattern,        // Pattern string
+        Fixed           // Fixed value
     }
 }

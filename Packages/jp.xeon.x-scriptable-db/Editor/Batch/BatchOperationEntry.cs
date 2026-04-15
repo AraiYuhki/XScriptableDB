@@ -1,20 +1,20 @@
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// 非ジェネリックのバッチ操作エントリ。
+    /// Non-generic batch operation entry.
     /// </summary>
     public class BatchOperationEntry
     {
-        /// <summary>操作の種類</summary>
+        /// <summary>Type of operation</summary>
         public BatchOperationType Type { get; set; }
 
-        /// <summary>対象レコード</summary>
+        /// <summary>Target record</summary>
         public object Record { get; set; }
 
-        /// <summary>操作結果</summary>
+        /// <summary>Operation result</summary>
         public BatchOperationResult Result { get; set; } = BatchOperationResult.Success;
 
-        /// <summary>エラーメッセージ</summary>
+        /// <summary>Error message</summary>
         public string ErrorMessage { get; set; }
     }
 }

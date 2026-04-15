@@ -4,35 +4,35 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// バッチ処理の結果。
+    /// Batch processing result.
     /// </summary>
     public class BatchProcessResult
     {
-        /// <summary>成功したかどうか</summary>
+        /// <summary>Whether the operation succeeded</summary>
         public bool Success { get; set; }
 
-        /// <summary>追加された件数</summary>
+        /// <summary>Number of added records</summary>
         public int AddedCount { get; set; }
 
-        /// <summary>更新された件数</summary>
+        /// <summary>Number of updated records</summary>
         public int UpdatedCount { get; set; }
 
-        /// <summary>削除された件数</summary>
+        /// <summary>Number of deleted records</summary>
         public int DeletedCount { get; set; }
 
-        /// <summary>スキップされた件数</summary>
+        /// <summary>Number of skipped records</summary>
         public int SkippedCount { get; set; }
 
-        /// <summary>失敗した件数</summary>
+        /// <summary>Number of failed records</summary>
         public int FailedCount { get; set; }
 
-        /// <summary>合計処理件数</summary>
+        /// <summary>Total number of processed records</summary>
         public int TotalCount => AddedCount + UpdatedCount + DeletedCount + SkippedCount + FailedCount;
 
-        /// <summary>エラーリスト</summary>
+        /// <summary>Error list</summary>
         public List<string> Errors { get; } = new();
 
-        /// <summary>処理時間</summary>
+        /// <summary>Processing time</summary>
         public TimeSpan ElapsedTime { get; set; }
     }
 }

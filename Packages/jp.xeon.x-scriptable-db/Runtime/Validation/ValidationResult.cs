@@ -4,7 +4,7 @@ using System.Linq;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// バリデーションエラーの種類。
+    /// Type of validation error.
     /// </summary>
     public enum ValidationErrorType
     {
@@ -19,20 +19,20 @@ namespace Xeon.XScriptableDB.Validation
     }
 
     /// <summary>
-    /// バリデーションエラー。
+    /// Validation error.
     /// </summary>
     public class ValidationError
     {
-        /// <summary>フィールド名</summary>
+        /// <summary>Field name</summary>
         public string FieldName { get; set; }
 
-        /// <summary>エラーメッセージ</summary>
+        /// <summary>Error message</summary>
         public string Message { get; set; }
 
-        /// <summary>エラーの種類</summary>
+        /// <summary>Error type</summary>
         public ValidationErrorType ErrorType { get; set; }
 
-        /// <summary>レコードのキー（特定のレコードに関連する場合）</summary>
+        /// <summary>Record key (when the error is associated with a specific record)</summary>
         public object RecordKey { get; set; }
 
         public ValidationError(string fieldName, string message, ValidationErrorType errorType = ValidationErrorType.Custom)
@@ -50,21 +50,21 @@ namespace Xeon.XScriptableDB.Validation
     }
 
     /// <summary>
-    /// バリデーション結果。
+    /// Validation result.
     /// </summary>
     public class ValidationResult
     {
-        /// <summary>バリデーションが成功したか</summary>
+        /// <summary>Whether validation succeeded</summary>
         public bool IsValid => Errors.Count == 0;
 
-        /// <summary>エラーリスト</summary>
+        /// <summary>Error list</summary>
         public List<ValidationError> Errors { get; } = new();
 
-        /// <summary>成功結果のシングルトン</summary>
+        /// <summary>Singleton representing a successful result</summary>
         public static ValidationResult Success { get; } = new();
 
         /// <summary>
-        /// エラー結果を作成する。
+        /// Creates an error result.
         /// </summary>
         public static ValidationResult Error(string fieldName, string message, ValidationErrorType errorType = ValidationErrorType.Custom)
         {
@@ -74,7 +74,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// エラーを追加する。
+        /// Adds an error.
         /// </summary>
         public void AddError(string fieldName, string message, ValidationErrorType errorType = ValidationErrorType.Custom)
         {
@@ -82,7 +82,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// エラーを追加する。
+        /// Adds an error.
         /// </summary>
         public void AddError(ValidationError error)
         {
@@ -90,7 +90,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// 他の結果をマージする。
+        /// Merges another result into this one.
         /// </summary>
         public void Merge(ValidationResult other)
         {
@@ -101,7 +101,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// エラーメッセージを結合して取得する。
+        /// Returns all error messages joined into a single string.
         /// </summary>
         public string GetCombinedErrorMessage(string separator = "\n")
         {
@@ -109,7 +109,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// 指定フィールドのエラーを取得する。
+        /// Returns all errors for the specified field.
         /// </summary>
         public IEnumerable<ValidationError> GetErrorsForField(string fieldName)
         {
@@ -117,7 +117,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// 指定種類のエラーを取得する。
+        /// Returns all errors of the specified type.
         /// </summary>
         public IEnumerable<ValidationError> GetErrorsByType(ValidationErrorType errorType)
         {
@@ -126,30 +126,30 @@ namespace Xeon.XScriptableDB.Validation
     }
 
     /// <summary>
-    /// テーブル全体のバリデーション結果。
+    /// Validation result for an entire table.
     /// </summary>
     public class TableValidationResult
     {
-        /// <summary>テーブル名</summary>
+        /// <summary>Table name</summary>
         public string TableName { get; set; }
 
-        /// <summary>バリデーションが成功したか</summary>
+        /// <summary>Whether validation succeeded</summary>
         public bool IsValid => RecordResults.All(r => r.IsValid) && TableLevelErrors.Count == 0;
 
-        /// <summary>レコード単位の結果</summary>
+        /// <summary>Per-record validation results</summary>
         public List<RecordValidationResult> RecordResults { get; } = new();
 
-        /// <summary>テーブルレベルのエラー（一意性制約違反など）</summary>
+        /// <summary>Table-level errors (e.g. uniqueness constraint violations)</summary>
         public List<ValidationError> TableLevelErrors { get; } = new();
 
-        /// <summary>エラーがあるレコード数</summary>
+        /// <summary>Number of records with errors</summary>
         public int ErrorRecordCount => RecordResults.Count(r => !r.IsValid);
 
-        /// <summary>総エラー数</summary>
+        /// <summary>Total number of errors</summary>
         public int TotalErrorCount => RecordResults.Sum(r => r.Errors.Count) + TableLevelErrors.Count;
 
         /// <summary>
-        /// サマリーを取得する。
+        /// Returns a summary string.
         /// </summary>
         public string GetSummary()
         {
@@ -162,7 +162,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// 全エラーを取得する。
+        /// Returns all errors.
         /// </summary>
         public IEnumerable<ValidationError> GetAllErrors()
         {
@@ -182,24 +182,24 @@ namespace Xeon.XScriptableDB.Validation
     }
 
     /// <summary>
-    /// レコード単位のバリデーション結果。
+    /// Validation result for a single record.
     /// </summary>
     public class RecordValidationResult
     {
-        /// <summary>レコードのキー</summary>
+        /// <summary>Record key</summary>
         public object RecordKey { get; set; }
 
-        /// <summary>レコードのインデックス</summary>
+        /// <summary>Record index</summary>
         public int RecordIndex { get; set; }
 
-        /// <summary>バリデーションが成功したか</summary>
+        /// <summary>Whether validation succeeded</summary>
         public bool IsValid => Errors.Count == 0;
 
-        /// <summary>エラーリスト</summary>
+        /// <summary>Error list</summary>
         public List<ValidationError> Errors { get; } = new();
 
         /// <summary>
-        /// エラーを追加する。
+        /// Adds an error.
         /// </summary>
         public void AddError(string fieldName, string message, ValidationErrorType errorType = ValidationErrorType.Custom)
         {
@@ -210,7 +210,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// バリデーション結果をマージする。
+        /// Merges a validation result into this record result.
         /// </summary>
         public void Merge(ValidationResult result)
         {

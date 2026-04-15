@@ -7,7 +7,7 @@ using System.Reflection;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQLフィールドアクセスと型変換を行うクラス。
+    /// Class that handles SQL field access and type conversion.
     /// </summary>
     public class SqlFieldAccessor
     {
@@ -15,7 +15,7 @@ namespace Xeon.XScriptableDB.Editor
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         /// <summary>
-        /// フィールドの値を取得する。
+        /// Gets the value of a field.
         /// </summary>
         public object GetFieldValue(object record, Type recordType, string fieldName)
         {
@@ -41,7 +41,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// フィールドの値を設定する。
+        /// Sets the value of a field.
         /// </summary>
         public void SetFieldValue(object record, Type recordType, string fieldName, object value)
         {
@@ -74,7 +74,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 指定した型にフィールドまたはプロパティが存在するかチェックする。
+        /// Checks whether a field or property exists in the specified type.
         /// </summary>
         public bool HasField(Type recordType, string fieldName)
         {
@@ -100,7 +100,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 値を指定された型に変換する。
+        /// Converts a value to the specified type.
         /// </summary>
         public object ConvertValue(object value, Type targetType)
         {
@@ -139,7 +139,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 値が数値型かチェックする。
+        /// Checks whether a value is a numeric type.
         /// </summary>
         public bool IsNumeric(object value)
         {
@@ -148,7 +148,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 型が数値型かチェックする。
+        /// Checks whether a type is a numeric type.
         /// </summary>
         public bool IsNumericType(Type type)
         {
@@ -161,7 +161,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 2つの値が等しいかチェックする。
+        /// Checks whether two values are equal.
         /// </summary>
         public bool AreEqual(object a, object b)
         {
@@ -183,7 +183,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 2つの値を比較する。
+        /// Compares two values.
         /// </summary>
         public int Compare(object a, object b)
         {
@@ -202,7 +202,7 @@ namespace Xeon.XScriptableDB.Editor
                 }
                 catch
                 {
-                    // 型が異なる場合は文字列として比較
+                    // If types differ, compare as strings
                 }
             }
 
@@ -210,7 +210,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 式の名前を取得する。
+        /// Gets the name of an expression.
         /// </summary>
         public string GetExpressionName(SqlExpression expr)
         {
@@ -225,7 +225,7 @@ namespace Xeon.XScriptableDB.Editor
     }
 
     /// <summary>
-    /// オブジェクト比較用のComparer。
+    /// Comparer for object comparison.
     /// </summary>
     public class ObjectComparer : IComparer<object>
     {
@@ -243,7 +243,7 @@ namespace Xeon.XScriptableDB.Editor
                 }
                 catch
                 {
-                    // 型が異なる場合
+                    // If types differ
                 }
             }
 

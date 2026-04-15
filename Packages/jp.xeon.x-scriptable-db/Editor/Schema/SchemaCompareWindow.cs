@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// スキーマ比較ウィンドウ。
+    /// Schema comparison window.
     /// </summary>
     public class SchemaCompareWindow : EditorWindow
     {
@@ -100,7 +100,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.BeginHorizontal();
 
-            // ソーステーブル選択
+            // Source table selection
             EditorGUILayout.BeginVertical(GUILayout.Width(position.width / 2 - 10));
             EditorGUILayout.LabelField("Source", EditorStyles.boldLabel);
 
@@ -114,7 +114,7 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.EndVertical();
 
-            // ターゲットテーブル選択
+            // Target table selection
             EditorGUILayout.BeginVertical(GUILayout.Width(position.width / 2 - 10));
             EditorGUILayout.LabelField("Target", EditorStyles.boldLabel);
 
@@ -137,10 +137,10 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.BeginHorizontal();
 
-            // ソーススキーマ表示
+            // Display source schema
             DrawSourceSchemaView();
 
-            // ターゲットスキーマ表示
+            // Display target schema
             DrawTargetSchemaView();
 
             EditorGUILayout.EndHorizontal();
@@ -229,7 +229,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.Space(10);
 
-            // サマリー
+            // Summary
             EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
             EditorGUILayout.BeginVertical();
 
@@ -251,7 +251,7 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndHorizontal();
 
-            // フィルター
+            // Filter
             EditorGUILayout.Space(5);
             EditorGUILayout.BeginHorizontal();
             showAddedFields = GUILayout.Toggle(showAddedFields, "Added", EditorStyles.toolbarButton);
@@ -261,7 +261,7 @@ namespace Xeon.XScriptableDB.Editor
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
-            // 差分リスト
+            // Difference list
             EditorGUILayout.Space(5);
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 

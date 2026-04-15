@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// フィールド生成設定。
+    /// Field generation configuration.
     /// </summary>
     [Serializable]
     public class FieldGeneratorConfig

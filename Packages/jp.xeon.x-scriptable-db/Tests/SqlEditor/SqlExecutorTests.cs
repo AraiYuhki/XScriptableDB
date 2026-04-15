@@ -8,7 +8,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// SqlExecutor のテスト。
+    /// Tests for SqlExecutor.
     /// </summary>
     public class SqlExecutorTests
     {
@@ -37,7 +37,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// テスト用のモックTableAsset。
+        /// Mock TableAsset for testing.
         /// </summary>
         private class MockTableAsset<T> : ITableAsset where T : new()
         {
@@ -78,14 +78,14 @@ namespace Xeon.XScriptableDB.Tests
             testTable = new MockTableAsset<TestRecord>();
             categoryTable = new MockTableAsset<CategoryRecord>();
 
-            // テストデータを追加
+            // Add test data
             testTable.AddRecord(new TestRecord { Id = 1, Name = "Alice", Value = 100, Active = true, CategoryId = 1 });
             testTable.AddRecord(new TestRecord { Id = 2, Name = "Bob", Value = 200, Active = true, CategoryId = 1 });
             testTable.AddRecord(new TestRecord { Id = 3, Name = "Charlie", Value = 150, Active = false, CategoryId = 2 });
             testTable.AddRecord(new TestRecord { Id = 4, Name = "Diana", Value = 300, Active = true, CategoryId = 2 });
             testTable.AddRecord(new TestRecord { Id = 5, Name = "Eve", Value = 50, Active = false, CategoryId = 3 });
 
-            // カテゴリデータを追加
+            // Add category data
             categoryTable.AddRecord(new CategoryRecord { Id = 1, CategoryName = "Electronics" });
             categoryTable.AddRecord(new CategoryRecord { Id = 2, CategoryName = "Clothing" });
             categoryTable.AddRecord(new CategoryRecord { Id = 3, CategoryName = "Books" });
@@ -234,7 +234,7 @@ namespace Xeon.XScriptableDB.Tests
             Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.AffectedCount, Is.EqualTo(1));
 
-            // 確認
+            // Verify
             var checkResult = executor.Execute("SELECT * FROM TestTable WHERE Id = 1");
             Assert.That(((TestRecord)checkResult.Records[0]).Value, Is.EqualTo(999));
         }
@@ -397,19 +397,19 @@ namespace Xeon.XScriptableDB.Tests
             var result = executor.Execute("SELECT * FROM TestTable t INNER JOIN Categories c ON t.CategoryId = c.Id");
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Records.Count, Is.EqualTo(5)); // 全レコードがカテゴリとマッチ
+            Assert.That(result.Records.Count, Is.EqualTo(5)); // All records match a category
         }
 
         [Test]
         public void Execute_LeftJoin_ReturnsAllLeftRecords()
         {
-            // カテゴリ4が存在しないレコードを追加
+            // Add a record that belongs to non-existent category 4
             testTable.AddRecord(new TestRecord { Id = 6, Name = "Frank", Value = 400, Active = true, CategoryId = 99 });
 
             var result = executor.Execute("SELECT * FROM TestTable t LEFT JOIN Categories c ON t.CategoryId = c.Id");
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Records.Count, Is.EqualTo(6)); // Frankも含まれる
+            Assert.That(result.Records.Count, Is.EqualTo(6)); // Frank is also included
         }
 
         [Test]
@@ -499,7 +499,7 @@ namespace Xeon.XScriptableDB.Tests
             var result = executor.Execute("SELECT CategoryId, COUNT(*) FROM TestTable GROUP BY CategoryId");
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Records.Count, Is.EqualTo(3)); // 3つのカテゴリ
+            Assert.That(result.Records.Count, Is.EqualTo(3)); // 3 categories
         }
 
         [Test]
@@ -517,7 +517,7 @@ namespace Xeon.XScriptableDB.Tests
             var result = executor.Execute("SELECT CategoryId, COUNT(*) FROM TestTable GROUP BY CategoryId HAVING COUNT(*) > 1");
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Records.Count, Is.EqualTo(2)); // CategoryId 1 と 2 のみ (各2レコード)
+            Assert.That(result.Records.Count, Is.EqualTo(2)); // Only CategoryId 1 and 2 (2 records each)
         }
 
         #endregion
@@ -530,7 +530,7 @@ namespace Xeon.XScriptableDB.Tests
             var result = executor.Execute("SELECT DISTINCT CategoryId FROM TestTable");
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Records.Count, Is.EqualTo(3)); // 3つのユニークなカテゴリ
+            Assert.That(result.Records.Count, Is.EqualTo(3)); // 3 unique categories
         }
 
         [Test]
@@ -539,7 +539,7 @@ namespace Xeon.XScriptableDB.Tests
             var result = executor.Execute("SELECT DISTINCT Active FROM TestTable");
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Records.Count, Is.EqualTo(2)); // true と false
+            Assert.That(result.Records.Count, Is.EqualTo(2)); // true and false
         }
 
         #endregion
@@ -607,7 +607,7 @@ namespace Xeon.XScriptableDB.Tests
             Assert.That(result.IsSuccess, Is.True);
             var row = result.Records[0] as ResultRow;
             Assert.That(row, Is.Not.Null);
-            Assert.That(Convert.ToInt32(row.Values["NameLength"]), Is.EqualTo(5)); // "Alice" = 5文字
+            Assert.That(Convert.ToInt32(row.Values["NameLength"]), Is.EqualTo(5)); // "Alice" = 5 characters
         }
 
         [Test]
@@ -633,12 +633,12 @@ namespace Xeon.XScriptableDB.Tests
             Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Records.Count, Is.EqualTo(5));
 
-            // Diana (Value=300) は High
+            // Diana (Value=300) is High
             var dianaRow = result.Records.Cast<ResultRow>().FirstOrDefault(r => Convert.ToInt32(r.Values["Id"]) == 4);
             Assert.That(dianaRow, Is.Not.Null);
             Assert.That(dianaRow.Values["Level"], Is.EqualTo("High"));
 
-            // Alice (Value=100) は Low
+            // Alice (Value=100) is Low
             var aliceRow = result.Records.Cast<ResultRow>().FirstOrDefault(r => Convert.ToInt32(r.Values["Id"]) == 1);
             Assert.That(aliceRow, Is.Not.Null);
             Assert.That(aliceRow.Values["Level"], Is.EqualTo("Low"));
@@ -651,15 +651,15 @@ namespace Xeon.XScriptableDB.Tests
 
             Assert.That(result.IsSuccess, Is.True);
 
-            // Eve (Value=50) は Low
+            // Eve (Value=50) is Low
             var eveRow = result.Records.Cast<ResultRow>().FirstOrDefault(r => Convert.ToInt32(r.Values["Id"]) == 5);
             Assert.That(eveRow.Values["Level"], Is.EqualTo("Low"));
 
-            // Alice (Value=100), Charlie (Value=150) は Medium
+            // Alice (Value=100), Charlie (Value=150) are Medium
             var aliceRow = result.Records.Cast<ResultRow>().FirstOrDefault(r => Convert.ToInt32(r.Values["Id"]) == 1);
             Assert.That(aliceRow.Values["Level"], Is.EqualTo("Medium"));
 
-            // Bob (Value=200), Diana (Value=300) は High
+            // Bob (Value=200), Diana (Value=300) are High
             var bobRow = result.Records.Cast<ResultRow>().FirstOrDefault(r => Convert.ToInt32(r.Values["Id"]) == 2);
             Assert.That(bobRow.Values["Level"], Is.EqualTo("High"));
         }
@@ -671,11 +671,11 @@ namespace Xeon.XScriptableDB.Tests
 
             Assert.That(result.IsSuccess, Is.True);
 
-            // Alice (Active=true)
+            // Alice (Active=true) is Active
             var aliceRow = result.Records.Cast<ResultRow>().FirstOrDefault(r => Convert.ToInt32(r.Values["Id"]) == 1);
             Assert.That(aliceRow.Values["Status"], Is.EqualTo("Active"));
 
-            // Charlie (Active=false)
+            // Charlie (Active=false) is Inactive
             var charlieRow = result.Records.Cast<ResultRow>().FirstOrDefault(r => Convert.ToInt32(r.Values["Id"]) == 3);
             Assert.That(charlieRow.Values["Status"], Is.EqualTo("Inactive"));
         }
@@ -687,13 +687,13 @@ namespace Xeon.XScriptableDB.Tests
         [Test]
         public void Execute_RightJoin_ReturnsAllRightRecords()
         {
-            // カテゴリ4を追加（どのテストレコードにも属さない）
+            // Add category 4 (not belonging to any test record)
             categoryTable.AddRecord(new CategoryRecord { Id = 4, CategoryName = "Sports" });
 
             var result = executor.Execute("SELECT * FROM TestTable t RIGHT JOIN Categories c ON t.CategoryId = c.Id");
 
             Assert.That(result.IsSuccess, Is.True);
-            // カテゴリ1,2,3はマッチするレコードあり、カテゴリ4はNULL
+            // Categories 1, 2, 3 have matching records; category 4 is NULL
             Assert.That(result.Records.Count, Is.EqualTo(6)); // 5 + 1(Sports with null)
         }
 
@@ -787,11 +787,11 @@ namespace Xeon.XScriptableDB.Tests
         [Test]
         public void Execute_SubqueryInWhere_FiltersCorrectly()
         {
-            // Valueが平均より大きいレコードを取得するサブクエリ
+            // Subquery to get records with Value greater than the average
             var result = executor.Execute("SELECT * FROM TestTable WHERE Value > (SELECT AVG(Value) FROM TestTable)");
 
             Assert.That(result.IsSuccess, Is.True);
-            // 平均は160、それより大きいのは Bob(200), Diana(300)
+            // Average is 160; Bob(200) and Diana(300) are greater
             Assert.That(result.Records.Count, Is.EqualTo(2));
         }
 
@@ -801,7 +801,7 @@ namespace Xeon.XScriptableDB.Tests
             var result = executor.Execute("SELECT * FROM TestTable WHERE CategoryId IN (SELECT Id FROM Categories WHERE Id < 3)");
 
             Assert.That(result.IsSuccess, Is.True);
-            // CategoryId 1, 2 のレコード: Alice, Bob, Charlie, Diana
+            // Records with CategoryId 1, 2: Alice, Bob, Charlie, Diana
             Assert.That(result.Records.Count, Is.EqualTo(4));
         }
 
@@ -816,7 +816,7 @@ namespace Xeon.XScriptableDB.Tests
 
             Assert.That(result.IsSuccess, Is.True);
             var row = result.Records[0] as ResultRow;
-            Assert.That(row.Values.Values.First(), Is.EqualTo(3)); // Alice, Bob, Diana
+            Assert.That(row.Values.Values.First(), Is.EqualTo(3)); // Alice, Bob, Diana are active
         }
 
         [Test]
@@ -826,7 +826,7 @@ namespace Xeon.XScriptableDB.Tests
 
             Assert.That(result.IsSuccess, Is.True);
             var row = result.Records[0] as ResultRow;
-            Assert.That(Convert.ToDouble(row.Values.Values.First()), Is.EqualTo(300.0)); // Alice(100) + Bob(200)
+            Assert.That(Convert.ToDouble(row.Values.Values.First()), Is.EqualTo(300.0)); // Alice(100) + Bob(200) = 300
         }
 
         [Test]
@@ -836,7 +836,7 @@ namespace Xeon.XScriptableDB.Tests
 
             Assert.That(result.IsSuccess, Is.True);
             var row = result.Records[0] as ResultRow;
-            Assert.That(Convert.ToDouble(row.Values.Values.First()), Is.EqualTo(225.0)); // (150 + 300) / 2
+            Assert.That(Convert.ToDouble(row.Values.Values.First()), Is.EqualTo(225.0)); // (150 + 300) / 2 = 225
         }
 
         #endregion
@@ -849,7 +849,7 @@ namespace Xeon.XScriptableDB.Tests
             var result = executor.Execute("SELECT c.CategoryName, COUNT(*) AS ItemCount FROM TestTable t INNER JOIN Categories c ON t.CategoryId = c.Id GROUP BY c.CategoryName");
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Records.Count, Is.EqualTo(3)); // 3つのカテゴリ
+            Assert.That(result.Records.Count, Is.EqualTo(3)); // 3 categories
         }
 
         [Test]
@@ -858,7 +858,7 @@ namespace Xeon.XScriptableDB.Tests
             var result = executor.Execute("SELECT c.CategoryName, COUNT(*) AS ItemCount FROM TestTable t INNER JOIN Categories c ON t.CategoryId = c.Id GROUP BY c.CategoryName HAVING COUNT(*) > 1");
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Records.Count, Is.EqualTo(2)); // Electronics(2), Clothing(2)
+            Assert.That(result.Records.Count, Is.EqualTo(2)); // Electronics(2) and Clothing(2)
         }
 
         [Test]

@@ -3,12 +3,12 @@ using System;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// 必須フィールドを指定する属性。
+    /// Attribute to mark a field as required.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class RequiredAttribute : ValidationAttribute
     {
-        /// <summary>空文字列を許可するか（デフォルト: false）</summary>
+        /// <summary>Whether to allow empty strings (default: false)</summary>
         public bool AllowEmptyString { get; set; } = false;
 
         public override ValidationResult Validate(object value, string fieldName)

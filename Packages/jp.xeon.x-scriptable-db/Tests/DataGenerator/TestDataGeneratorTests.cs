@@ -8,7 +8,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// TestDataGenerator のテスト。
+    /// Tests for TestDataGenerator.
     /// </summary>
     public class TestDataGeneratorTests
     {
@@ -204,7 +204,7 @@ namespace Xeon.XScriptableDB.Tests
 
             var records = table.GetRecords();
             Assert.That(records.Count, Is.EqualTo(5));
-            // 2回目の生成は既存の最大ID+1から始まる
+            // The second generation starts from max existing ID + 1
             Assert.That(records[3].Id, Is.EqualTo(4));
             Assert.That(records[4].Id, Is.EqualTo(5));
         }
@@ -534,7 +534,7 @@ namespace Xeon.XScriptableDB.Tests
             TestDataGenerator.Generate(table, 10);
 
             var records = table.GetRecords();
-            // すべてbool値であることを確認（trueまたはfalse）
+            // Verify all values are bool (true or false)
             foreach (var record in records)
             {
                 Assert.That(record.Active, Is.TypeOf<bool>());

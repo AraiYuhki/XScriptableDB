@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// 簡易入力ダイアログ。
+    /// Simple input dialog.
     /// </summary>
     public class EditorInputDialog : EditorWindow
     {

@@ -1,7 +1,7 @@
 ﻿namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// スキーマ差分の詳細。
+    /// Details of a schema difference.
     /// </summary>
     public class SchemaDifference
     {

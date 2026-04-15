@@ -7,7 +7,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// BackupManager のテスト。
+    /// Tests for BackupManager.
     /// </summary>
     public class BackupManagerTests
     {
@@ -240,7 +240,7 @@ namespace Xeon.XScriptableDB.Tests
         [Test]
         public void GetBackupsForTable_FiltersByTableName()
         {
-            // この機能は内部でマニフェストからフィルタリングするだけ
+            // This function simply filters from the manifest internally
             var backups = BackupManager.GetBackupsForTable("TestTable");
 
             Assert.That(backups, Is.Not.Null);

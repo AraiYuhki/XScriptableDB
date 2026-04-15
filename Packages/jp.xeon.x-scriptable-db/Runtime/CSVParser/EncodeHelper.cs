@@ -6,21 +6,21 @@ namespace Xeon.XScriptableDB.IO
     internal static class EncodeHelper
     {
         /// <summary>
-        /// 日本語文字コードを取得する
+        /// Detects the Japanese character encoding of a file.
         /// <see href="https://qiita.com/nekotadon/items/c1478b5655755018c67c"/>
         /// </summary>
         /// <param name="bytes"></param>
-        /// <param name="file">ファイルパス</param>
-        /// <param name="maxSize">最大読み取りバイト数</param>
+        /// <param name="file">File path</param>
+        /// <param name="maxSize">Maximum number of bytes to read</param>
         /// <returns></returns>
-        internal static Encoding GetJpEncoding(string file, long maxSize = 50 * 1024)//ファイルパス、最大読み取りバイト数
+        internal static Encoding GetJpEncoding(string file, long maxSize = 50 * 1024)// file path, maximum bytes to read
         {
             try
             {
                 if (!File.Exists(file)) return null;
                 if (new FileInfo(file).Length == 0) return null;
 
-                //バイナリ読み込み
+                // Read binary data
                 byte[] bytes = null;
                 var readAll = false;
                 using (var fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
@@ -39,7 +39,7 @@ namespace Xeon.XScriptableDB.IO
                         fs.Read(bytes, 0, (int)maxSize);
                     }
                 }
-                //判定
+                // Detect encoding
                 return GetJpEncoding(bytes, readAll);
             }
             catch
@@ -49,17 +49,17 @@ namespace Xeon.XScriptableDB.IO
         }
 
         /// <summary>
-        /// バイト列から日本語文字コード（UTF-8, Shift-JIS, EUC-JP, ISO-2022-JP）を判定する。
-        /// BOM判定を行った後、各エンコーディングのバイトパターンと日本語らしさのスコアで判定する。
+        /// Detects the Japanese character encoding (UTF-8, Shift-JIS, EUC-JP, ISO-2022-JP) from a byte array.
+        /// Checks for a BOM first, then evaluates each encoding's byte patterns and Japanese-likelihood score.
         /// </summary>
-        /// <param name="bytes">判定対象のバイト列</param>
-        /// <param name="readAll">ファイル全体を読み取った場合はtrue</param>
-        /// <returns>検出されたエンコーディング。判定できない場合はnull</returns>
+        /// <param name="bytes">Byte array to analyze</param>
+        /// <param name="readAll">True if the entire file was read</param>
+        /// <returns>The detected encoding, or null if it cannot be determined</returns>
         private static Encoding GetJpEncoding(byte[] bytes, bool readAll = false)
         {
             var len = bytes.Length;
 
-            //BOM判定
+            // BOM detection
             if (len >= 2 && bytes[0] == 0xfe && bytes[1] == 0xff)//UTF-16BE
                 return Encoding.BigEndianUnicode;
 
@@ -78,34 +78,34 @@ namespace Xeon.XScriptableDB.IO
             else if (len >= 4 && bytes[0] == 0xff && bytes[1] == 0xfe && bytes[2] == 0x00 && bytes[3] == 0x00)//UTF-32LE
                 return new UTF32Encoding(false, true);
 
-            //文字コード判定と日本語の文章らしさをまとめて確認
+            // Check encoding validity and Japanese-likelihood score simultaneously
 
-            //Shift_JIS判定用
-            var sjis = true;         //すべてのバイトがShift_JISで使用するバイト範囲かどうか
-            var sjis_2ndbyte = false;//次回の判定がShift_JISの2バイト目の判定かどうか
-            var sjis_kana = false;   //かな判定用
-            var sjis_kanji = false;  //常用漢字判定用
-            var counter_sjis = 0;     //Shift_JISらしさ
+            // For Shift_JIS detection
+            var sjis = true;         // Whether all bytes fall within the Shift_JIS byte range
+            var sjis_2ndbyte = false;// Whether the next byte to check is the second byte of a Shift_JIS multi-byte sequence
+            var sjis_kana = false;   // For kana detection
+            var sjis_kanji = false;  // For common kanji detection
+            var counter_sjis = 0;     // Shift_JIS likelihood score
 
-            //UTF-8判定用
-            var utf8 = true;            //すべてのバイトがUTF-8で使用するバイト範囲かどうか
-            var utf8_multibyte = false; //次回の判定がUTF-8の2バイト目以降の判定かどうか
-            var utf8_kana_kanji = false;//かな・常用漢字判定用
-            var counter_utf8 = 0;        //UTF-8らしさ
+            // For UTF-8 detection
+            var utf8 = true;            // Whether all bytes fall within the UTF-8 byte range
+            var utf8_multibyte = false; // Whether the next byte is a continuation byte of a UTF-8 multi-byte sequence
+            var utf8_kana_kanji = false;// For kana/common kanji detection
+            var counter_utf8 = 0;        // UTF-8 likelihood score
             var counter_utf8_multibyte = 0;
 
-            //EUC-JP判定用
-            var eucjp = true;            //すべてのバイトがEUC-JPで使用するバイト範囲かどうか
-            var eucjp_multibyte = false; //次回の判定がEUC-JPの2バイト目以降の判定かどうか
-            var eucjp_kana_kanji = false;//かな・常用漢字判定用
-            var counter_eucjp = 0;        //EUC-JPらしさ
+            // For EUC-JP detection
+            var eucjp = true;            // Whether all bytes fall within the EUC-JP byte range
+            var eucjp_multibyte = false; // Whether the next byte is a continuation byte of an EUC-JP multi-byte sequence
+            var eucjp_kana_kanji = false;// For kana/common kanji detection
+            var counter_eucjp = 0;        // EUC-JP likelihood score
             var counter_eucjp_multibyte = 0;
 
             for (var i = 0; i < len; i++)
             {
                 var b = bytes[i];
 
-                //Shift_JIS判定
+                // Shift_JIS detection
                 if (sjis)
                 {
                     if (!sjis_2ndbyte)
@@ -113,48 +113,48 @@ namespace Xeon.XScriptableDB.IO
                         if (b == 0x0D                   //CR
                             || b == 0x0A                //LF
                             || b == 0x09                //tab
-                            || (0x20 <= b && b <= 0x7E))//ASCII文字
+                            || (0x20 <= b && b <= 0x7E))// ASCII character
                         {
                             counter_sjis++;
                         }
-                        else if ((0x81 <= b && b <= 0x9F) || (0xE0 <= b && b <= 0xFC))//Shift_JISの2バイト文字の1バイト目の場合
+                        else if ((0x81 <= b && b <= 0x9F) || (0xE0 <= b && b <= 0xFC))// First byte of a Shift_JIS 2-byte character
                         {
-                            //2バイト目の判定を行う
+                            // Prepare to check the second byte
                             sjis_2ndbyte = true;
 
-                            if (0x82 <= b && b <= 0x83)//Shift_JISのかな
+                            if (0x82 <= b && b <= 0x83)// Shift_JIS kana
                             {
                                 sjis_kana = true;
                             }
-                            else if ((0x88 <= b && b <= 0x9F) || (0xE0 <= b && b <= 0xE3) || b == 0xE6 || b == 0xE7)//Shift_JISの常用漢字
+                            else if ((0x88 <= b && b <= 0x9F) || (0xE0 <= b && b <= 0xE3) || b == 0xE6 || b == 0xE7)// Shift_JIS common kanji
                             {
                                 sjis_kanji = true;
                             }
                         }
-                        else if (0xA1 <= b && b <= 0xDF)//Shift_JISの1バイト文字の場合(半角カナ)
+                        else if (0xA1 <= b && b <= 0xDF)// Shift_JIS single-byte character (half-width kana)
                         {
                             ;
                         }
-                        else if (0x00 <= b && b <= 0x7F)//ASCIIコード
+                        else if (0x00 <= b && b <= 0x7F)// ASCII code
                         {
                             ;
                         }
                         else
                         {
-                            //Shift_JISでない
+                            // Not Shift_JIS
                             counter_sjis = 0;
                             sjis = false;
                         }
                     }
                     else
                     {
-                        if ((0x40 <= b && b <= 0x7E) || (0x80 <= b && b <= 0xFC))//Shift_JISの2バイト文字の2バイト目の場合
+                        if ((0x40 <= b && b <= 0x7E) || (0x80 <= b && b <= 0xFC))// Second byte of a Shift_JIS 2-byte character
                         {
-                            if (sjis_kana && 0x40 <= b && b <= 0xF1)//Shift_JISのかな
+                            if (sjis_kana && 0x40 <= b && b <= 0xF1)// Shift_JIS kana
                             {
                                 counter_sjis += 2;
                             }
-                            else if (sjis_kanji && 0x40 <= b && b <= 0xFC && b != 0x7F)//Shift_JISの常用漢字
+                            else if (sjis_kanji && 0x40 <= b && b <= 0xFC && b != 0x7F)// Shift_JIS common kanji
                             {
                                 counter_sjis += 2;
                             }
@@ -163,14 +163,14 @@ namespace Xeon.XScriptableDB.IO
                         }
                         else
                         {
-                            //Shift_JISでない
+                            // Not Shift_JIS
                             counter_sjis = 0;
                             sjis = false;
                         }
                     }
                 }
 
-                //UTF-8判定
+                // UTF-8 detection
                 if (utf8)
                 {
                     if (!utf8_multibyte)
@@ -178,37 +178,37 @@ namespace Xeon.XScriptableDB.IO
                         if (b == 0x0D                   //CR
                             || b == 0x0A                //LF
                             || b == 0x09                //tab
-                            || (0x20 <= b && b <= 0x7E))//ASCII文字
+                            || (0x20 <= b && b <= 0x7E))// ASCII character
                         {
                             counter_utf8++;
                         }
-                        else if (0xC2 <= b && b <= 0xDF)//2バイト文字の場合
+                        else if (0xC2 <= b && b <= 0xDF)// 2-byte character
                         {
                             utf8_multibyte = true;
                             counter_utf8_multibyte = 1;
                         }
-                        else if (0xE0 <= b && b <= 0xEF)//3バイト文字の場合
+                        else if (0xE0 <= b && b <= 0xEF)// 3-byte character
                         {
                             utf8_multibyte = true;
                             counter_utf8_multibyte = 2;
 
                             if (b == 0xE3 || (0xE4 <= b && b <= 0xE9))
                             {
-                                utf8_kana_kanji = true;//かな・常用漢字
+                                utf8_kana_kanji = true;// kana/common kanji
                             }
                         }
-                        else if (0xF0 <= b && b <= 0xF3)//4バイト文字の場合
+                        else if (0xF0 <= b && b <= 0xF3)// 4-byte character
                         {
                             utf8_multibyte = true;
                             counter_utf8_multibyte = 3;
                         }
-                        else if (0x00 <= b && b <= 0x7F)//ASCIIコード
+                        else if (0x00 <= b && b <= 0x7F)// ASCII code
                         {
                             ;
                         }
                         else
                         {
-                            //UTF-8でない
+                            // Not UTF-8
                             counter_utf8 = 0;
                             utf8 = false;
                         }
@@ -221,7 +221,7 @@ namespace Xeon.XScriptableDB.IO
 
                             if (b < 0x80 || 0xBF < b)
                             {
-                                //UTF-8でない
+                                // Not UTF-8
                                 counter_utf8 = 0;
                                 utf8 = false;
                             }
@@ -238,7 +238,7 @@ namespace Xeon.XScriptableDB.IO
                     }
                 }
 
-                //EUC-JP判定
+                // EUC-JP detection
                 if (eucjp)
                 {
                     if (!eucjp_multibyte)
@@ -246,11 +246,11 @@ namespace Xeon.XScriptableDB.IO
                         if (b == 0x0D                   //CR
                             || b == 0x0A                //LF
                             || b == 0x09                //tab
-                            || (0x20 <= b && b <= 0x7E))//ASCII文字
+                            || (0x20 <= b && b <= 0x7E))// ASCII character
                         {
                             counter_eucjp++;
                         }
-                        else if (b == 0x8E || (0xA1 <= b && b <= 0xA8) || b == 0xAD || (0xB0 <= b && b <= 0xFE))//2バイト文字の場合
+                        else if (b == 0x8E || (0xA1 <= b && b <= 0xA8) || b == 0xAD || (0xB0 <= b && b <= 0xFE))// 2-byte character
                         {
                             eucjp_multibyte = true;
                             counter_eucjp_multibyte = 1;
@@ -260,18 +260,18 @@ namespace Xeon.XScriptableDB.IO
                                 eucjp_kana_kanji = true;
                             }
                         }
-                        else if (b == 0x8F)//3バイト文字の場合
+                        else if (b == 0x8F)// 3-byte character
                         {
                             eucjp_multibyte = true;
                             counter_eucjp_multibyte = 2;
                         }
-                        else if (0x00 <= b && b <= 0x7F)//ASCIIコード
+                        else if (0x00 <= b && b <= 0x7F)// ASCII code
                         {
                             ;
                         }
                         else
                         {
-                            //EUC-JPでない
+                            // Not EUC-JP
                             counter_eucjp = 0;
                             eucjp = false;
                         }
@@ -284,7 +284,7 @@ namespace Xeon.XScriptableDB.IO
 
                             if (b < 0xA1 || 0xFE < b)
                             {
-                                //EUC-JPでない
+                                // Not EUC-JP
                                 counter_eucjp = 0;
                                 eucjp = false;
                             }
@@ -301,7 +301,7 @@ namespace Xeon.XScriptableDB.IO
                     }
                 }
 
-                //ISO-2022-JP
+                // ISO-2022-JP detection
                 if (b == 0x1B)
                 {
                     if ((i + 2 < len && bytes[i + 1] == 0x24 && bytes[i + 2] == 0x40)                                                                           //1B-24-40
@@ -316,12 +316,12 @@ namespace Xeon.XScriptableDB.IO
                         || (i + 5 < len && bytes[i + 1] == 0x26 && bytes[i + 2] == 0x40 && bytes[i + 3] == 0x1B && bytes[i + 4] == 0x24 && bytes[i + 5] == 0x42)//1B-26-40-1B-24-42
                     )
                     {
-                        return Encoding.GetEncoding(50220);//iso-2022-jp
+                        return Encoding.GetEncoding(50220);// iso-2022-jp
                     }
                 }
             }
 
-            // すべて読み取った場合で、最後が多バイト文字の途中で終わっている場合は判定NG
+            // If the entire file was read and it ends mid-way through a multi-byte character, detection fails
             if (readAll)
             {
                 if (sjis && sjis_2ndbyte)
@@ -342,7 +342,7 @@ namespace Xeon.XScriptableDB.IO
 
             if (sjis || utf8 || eucjp)
             {
-                //日本語らしさの最大値確認
+                // Find the highest Japanese-likelihood score
                 int max_value = counter_eucjp;
                 if (counter_sjis > max_value)
                 {
@@ -353,13 +353,13 @@ namespace Xeon.XScriptableDB.IO
                     max_value = counter_utf8;
                 }
 
-                //文字コード判定
+                // Determine the encoding
                 if (max_value == counter_utf8)
-                    return new UTF8Encoding(false, true);//utf8
+                    return new UTF8Encoding(false, true);// utf8
                 if (max_value == counter_sjis)
-                    return Encoding.GetEncoding(932);//ShiftJIS
+                    return Encoding.GetEncoding(932);// ShiftJIS
                 else
-                    return Encoding.GetEncoding(51932);//EUC-JP
+                    return Encoding.GetEncoding(51932);// EUC-JP
             }
             else
             {

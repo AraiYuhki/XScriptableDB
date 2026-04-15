@@ -3,20 +3,20 @@ using System;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// バッチ処理の設定。
+    /// Batch processing settings.
     /// </summary>
     public class BatchProcessSettings
     {
-        /// <summary>エラー時に継続するか</summary>
+        /// <summary>Whether to continue on error</summary>
         public bool ContinueOnError { get; set; } = true;
 
-        /// <summary>自動ソートを行うか</summary>
+        /// <summary>Whether to auto-sort</summary>
         public bool AutoSort { get; set; } = true;
 
-        /// <summary>重複キーを許可するか</summary>
+        /// <summary>Whether to allow duplicate keys</summary>
         public bool AllowDuplicateKeys { get; set; } = false;
 
-        /// <summary>進捗コールバック</summary>
+        /// <summary>Progress callback</summary>
         public Action<int, int> OnProgress { get; set; }
     }
 }

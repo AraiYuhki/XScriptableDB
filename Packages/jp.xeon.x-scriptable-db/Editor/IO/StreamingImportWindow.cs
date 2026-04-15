@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// ストリーミングインポートのウィンドウ。
+    /// Window for streaming import.
     /// </summary>
     public class StreamingImportWindow : EditorWindow
     {
@@ -29,12 +29,12 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUILayout.LabelField("Streaming Import", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
-            // ターゲットテーブル
+            // Target table
             using (new EditorGUI.DisabledGroupScope(isImporting))
             {
                 targetTable = EditorGUILayout.ObjectField("Target Table", targetTable, typeof(ScriptableObject), false) as ScriptableObject;
 
-                // ファイル選択
+                // File selection
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     filePath = EditorGUILayout.TextField("File Path", filePath);
@@ -65,7 +65,7 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.Space();
 
-            // 進捗表示
+            // Progress display
             if (currentProgress != null)
             {
                 EditorGUILayout.LabelField("Progress", EditorStyles.boldLabel);
@@ -91,7 +91,7 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.Space();
 
-            // ボタン
+            // Buttons
             using (new EditorGUILayout.HorizontalScope())
             {
                 using (new EditorGUI.DisabledGroupScope(isImporting || targetTable == null || string.IsNullOrEmpty(filePath)))

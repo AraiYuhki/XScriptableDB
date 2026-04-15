@@ -1,7 +1,7 @@
 namespace Xeon.XScriptableDB.Performance
 {
     /// <summary>
-    /// プロファイル統計。
+    /// Profile statistics.
     /// </summary>
     public struct ProfileStatistics
     {

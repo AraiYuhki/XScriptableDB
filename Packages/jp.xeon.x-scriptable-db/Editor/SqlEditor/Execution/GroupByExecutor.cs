@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQL GROUP BY処理を実行するクラス。
+    /// Class that executes SQL GROUP BY processing.
     /// </summary>
     public class GroupByExecutor
     {
@@ -25,7 +25,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// レコードをGROUP BYキーでグループ化する。
+        /// Groups records by the GROUP BY key.
         /// </summary>
         public Dictionary<string, AggregateGroup> GroupRecordsByKey(
             List<object> records,
@@ -56,7 +56,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// HAVING句でグループをフィルタリングする。
+        /// Filters groups with a HAVING clause.
         /// </summary>
         public List<AggregateGroup> ApplyHavingFilter(
             Dictionary<string, AggregateGroup> groups,
@@ -74,7 +74,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// GROUP BY結果からResultRowリストを構築する。
+        /// Builds a list of ResultRows from the GROUP BY result.
         /// </summary>
         public List<ResultRow> BuildGroupByResultRows(
             List<AggregateGroup> groups,
@@ -94,7 +94,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// GROUP BY結果のカラム名リストを構築する。
+        /// Builds the column name list for the GROUP BY result.
         /// </summary>
         public List<string> BuildGroupByColumnNames(List<SelectColumn> columns, List<FieldInfo> wildcardFields)
         {
@@ -117,7 +117,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// ワイルドカードがある場合のフィールドリストを取得する。
+        /// Gets the field list when a wildcard is present.
         /// </summary>
         public List<FieldInfo> GetWildcardFieldsIfNeeded(List<SelectColumn> columns, Type recordType)
         {
@@ -126,7 +126,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// ResultRowリストにソートとページネーションを適用する。
+        /// Applies sorting and pagination to a list of ResultRows.
         /// </summary>
         public List<ResultRow> ApplySortAndPagination(
             List<ResultRow> rows,
@@ -149,7 +149,7 @@ namespace Xeon.XScriptableDB.Editor
         #region Joined GROUP BY
 
         /// <summary>
-        /// JoinedRecordをGROUP BYキーでグループ化する。
+        /// Groups JoinedRecords by the GROUP BY key.
         /// </summary>
         public Dictionary<string, (Dictionary<string, object> keyValues, List<JoinedRecord> records)> GroupJoinedRecordsByKey(
             List<JoinedRecord> joinedRecords,
@@ -180,7 +180,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// HAVING句でJOINグループをフィルタリングする。
+        /// Filters JOIN groups with a HAVING clause.
         /// </summary>
         public List<(Dictionary<string, object> keyValues, List<JoinedRecord> records)> ApplyJoinedHavingFilter(
             Dictionary<string, (Dictionary<string, object> keyValues, List<JoinedRecord> records)> groups,
@@ -198,7 +198,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// JOIN GROUP BY結果からResultRowリストを構築する。
+        /// Builds a list of ResultRows from the JOIN GROUP BY result.
         /// </summary>
         public List<ResultRow> BuildJoinedGroupByResultRows(
             List<(Dictionary<string, object> keyValues, List<JoinedRecord> records)> groups,
@@ -217,7 +217,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// JOIN GROUP BY結果のカラム名リストを構築する。
+        /// Builds the column name list for the JOIN GROUP BY result.
         /// </summary>
         public List<string> BuildJoinedGroupByColumnNames(List<SelectColumn> columns)
         {

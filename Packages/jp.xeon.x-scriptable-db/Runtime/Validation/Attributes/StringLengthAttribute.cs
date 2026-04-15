@@ -3,15 +3,15 @@ using System;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// 文字列の長さを指定する属性。
+    /// Attribute to specify the length of a string.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class StringLengthAttribute : ValidationAttribute
     {
-        /// <summary>最小長</summary>
+        /// <summary>Minimum length</summary>
         public int MinimumLength { get; set; } = 0;
 
-        /// <summary>最大長</summary>
+        /// <summary>Maximum length</summary>
         public int MaximumLength { get; }
 
         public StringLengthAttribute(int maximumLength)

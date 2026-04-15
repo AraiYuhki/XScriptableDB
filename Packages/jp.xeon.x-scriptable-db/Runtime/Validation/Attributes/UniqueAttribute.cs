@@ -3,15 +3,15 @@ using System;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// 一意性制約を指定する属性。
+    /// Attribute that specifies a uniqueness constraint.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class UniqueAttribute : ValidationAttribute
     {
         public override ValidationResult Validate(object value, string fieldName)
         {
-            // 一意性の検証はレコード単体では行えないため、
-            // RecordValidatorで全レコードを対象に検証する
+            // Uniqueness cannot be validated on a single record,
+            // so RecordValidator validates it across all records
             return ValidationResult.Success;
         }
 

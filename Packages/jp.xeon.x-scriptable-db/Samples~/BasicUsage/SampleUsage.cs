@@ -5,7 +5,7 @@ using Xeon.XScriptableDB;
 namespace XScriptableDB.Samples
 {
     /// <summary>
-    /// XScriptableDBの基本的な使い方のサンプル。
+    /// Sample demonstrating basic usage of XScriptableDB.
     /// </summary>
     public class SampleUsage : MonoBehaviour
     {
@@ -16,35 +16,35 @@ namespace XScriptableDB.Samples
         {
             if (itemTable == null)
             {
-                Debug.LogError("ItemTableが設定されていません");
+                Debug.LogError("ItemTable is not set");
                 return;
             }
 
             // ========================================
-            // 基本的な検索
+            // Basic search
             // ========================================
 
-            // PrimaryKeyで検索（O(log n)）
-            Debug.Log("=== PrimaryKey検索 ===");
+            // Search by PrimaryKey (O(log n))
+            Debug.Log("=== PrimaryKey Search ===");
             var item = itemTable.FindByKey(1001);
             if (item != null)
             {
                 Debug.Log($"Found: {item}");
             }
 
-            // TryFindByKeyで安全に検索
+            // Safe search with TryFindByKey
             if (itemTable.TryFindByKey(1002, out var item2))
             {
                 Debug.Log($"Found with TryFindByKey: {item2}");
             }
 
             // ========================================
-            // SecondaryKeyによる検索
+            // Search by SecondaryKey
             // ========================================
 
-            Debug.Log("=== SecondaryKey検索 ===");
+            Debug.Log("=== SecondaryKey Search ===");
 
-            // カテゴリで検索（O(1)）
+            // Search by category (O(1))
             var weapons = itemTable.FindAllBySecondaryKeyAsArray("Category", "Weapon");
             Debug.Log($"Weapons count: {weapons.Length}");
             foreach (var weapon in weapons)
@@ -52,17 +52,17 @@ namespace XScriptableDB.Samples
                 Debug.Log($"  - {weapon}");
             }
 
-            // レアリティで検索
+            // Search by rarity
             var rareItems = itemTable.FindAllBySecondaryKeyAsArray("Rarity", 3);
             Debug.Log($"Rarity 3 items: {rareItems.Length}");
 
             // ========================================
-            // QueryResultを使用した検索（GC Alloc 0）
+            // Search using QueryResult (GC Alloc 0)
             // ========================================
 
-            Debug.Log("=== QueryResult検索（GC Alloc 0）===");
+            Debug.Log("=== QueryResult Search (GC Alloc 0) ===");
 
-            // QueryBySecondaryKeyでGC Alloc 0のQueryResultを取得
+            // Get a zero-GC-alloc QueryResult with QueryBySecondaryKey
             var result = itemTable.QueryBySecondaryKey("Category", "Weapon");
             Debug.Log($"Weapons via QueryResult: {result.Count}");
             foreach (var weaponItem in result)
@@ -70,7 +70,7 @@ namespace XScriptableDB.Samples
                 Debug.Log($"  - {weaponItem.Name}: {weaponItem.Price}G");
             }
 
-            // Where()で条件検索（IEnumerable<T>を返す）
+            // Conditional search with Where() (returns IEnumerable<T>)
             var expensiveItems = itemTable.Where(r => r.Price > 500);
             Debug.Log("Items with price > 500:");
             foreach (var expensiveItem in expensiveItems)
@@ -79,10 +79,10 @@ namespace XScriptableDB.Samples
             }
 
             // ========================================
-            // 拡張メソッド
+            // Extension methods
             // ========================================
 
-            Debug.Log("=== 拡張メソッド ===");
+            Debug.Log("=== Extension Methods ===");
 
             // FirstOrDefault
             var firstWeapon = itemTable.FirstOrDefault(r => r.Category == "Weapon");
@@ -104,12 +104,12 @@ namespace XScriptableDB.Samples
             Debug.Log($"All items have price > 0: {allHavePrice}");
 
             // ========================================
-            // テーブルの便利メソッド（カスタム実装）
+            // Table convenience methods (custom implementation)
             // ========================================
 
-            Debug.Log("=== カスタムメソッド ===");
+            Debug.Log("=== Custom Methods ===");
 
-            // ItemTableに実装した便利メソッド
+            // Convenience methods implemented in ItemTable
             var armors = itemTable.GetItemsByCategory("Armor");
             Debug.Log($"Armors: {armors.Length}");
 

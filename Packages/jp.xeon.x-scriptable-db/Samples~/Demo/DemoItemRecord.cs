@@ -5,7 +5,7 @@ using Xeon.XScriptableDB;
 namespace XScriptableDB.Samples.Demo
 {
     /// <summary>
-    /// デモ用のアイテムレコード。
+    /// Demo item record.
     /// </summary>
     [Serializable]
     public class DemoItemRecord
@@ -25,7 +25,7 @@ namespace XScriptableDB.Samples.Demo
         [SerializeField]
         private int price;
 
-        // 複合インデックス: Category + Rarity
+        // Composite index: Category + Rarity
         [SecondaryKey("CategoryRarity", 0)]
         public string CategoryForIndex => category;
 

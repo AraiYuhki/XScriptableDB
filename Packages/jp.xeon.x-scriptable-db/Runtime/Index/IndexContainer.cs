@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// テーブルの全SecondaryKeyインデックスを保持するコンテナ。
+    /// Container that holds all SecondaryKey indexes for a table.
     /// </summary>
     [Serializable]
     public class IndexContainer
@@ -14,15 +14,15 @@ namespace Xeon.XScriptableDB
         private List<IndexData> indices = new();
 
         /// <summary>
-        /// インデックス数。
+        /// Number of indexes.
         /// </summary>
         public int Count => indices.Count;
 
         /// <summary>
-        /// 名前でインデックスを取得する。
+        /// Returns the index with the specified name.
         /// </summary>
-        /// <param name="name">インデックス名</param>
-        /// <returns>インデックスデータ、見つからない場合はnull</returns>
+        /// <param name="name">Index name</param>
+        /// <returns>Index data, or null if not found</returns>
         public IndexData GetIndex(string name)
         {
             foreach (var index in indices)
@@ -34,9 +34,9 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// インデックスを追加または更新する。
+        /// Adds or updates an index.
         /// </summary>
-        /// <param name="indexData">追加するインデックスデータ</param>
+        /// <param name="indexData">Index data to add</param>
         public void SetIndex(IndexData indexData)
         {
             for (var i = 0; i < indices.Count; i++)
@@ -51,10 +51,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 指定した名前のインデックスを削除する。
+        /// Removes the index with the specified name.
         /// </summary>
-        /// <param name="name">削除するインデックス名</param>
-        /// <returns>削除に成功した場合はtrue</returns>
+        /// <param name="name">Name of the index to remove</param>
+        /// <returns>True if removal succeeded</returns>
         public bool RemoveIndex(string name)
         {
             for (var i = 0; i < indices.Count; i++)
@@ -69,7 +69,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 全インデックスをクリアする。
+        /// Clears all indexes.
         /// </summary>
         public void Clear()
         {
@@ -77,7 +77,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 全インデックスを取得する。
+        /// Returns all indexes.
         /// </summary>
         public IReadOnlyList<IndexData> GetAllIndices() => indices;
     }

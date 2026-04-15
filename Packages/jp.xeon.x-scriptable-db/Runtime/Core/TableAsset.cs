@@ -10,11 +10,11 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// テーブルアセット基底クラス。
-    /// PrimaryKeyでソートされたレコード配列を管理し、二分探索による高速検索を提供する。
+    /// Base class for table assets.
+    /// Manages a record array sorted by PrimaryKey and provides fast lookup via binary search.
     /// </summary>
-    /// <typeparam name="T">レコードの型</typeparam>
-    /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+    /// <typeparam name="T">Record type</typeparam>
+    /// <typeparam name="TKey">PrimaryKey type</typeparam>
     public abstract class TableAsset<T, TKey> : ScriptableObject, ITable<T>, ITableAsset, IImportable, IExportable
         where T : class, new()
         where TKey : IComparable<TKey>
@@ -29,37 +29,37 @@ namespace Xeon.XScriptableDB
         private bool isSorted;
 
         /// <summary>
-        /// 全レコードへの読み取り専用アクセス。
+        /// Read-only access to all records.
         /// </summary>
         public IReadOnlyList<T> All => records;
 
         /// <summary>
-        /// 内部レコード配列への直接アクセス（クエリ用）。
+        /// Direct access to the internal record array (for queries).
         /// </summary>
         internal T[] RecordsInternal => records;
 
         /// <summary>
-        /// レコード数。
+        /// Number of records.
         /// </summary>
         public int Count => records.Length;
 
         /// <summary>
-        /// ITableAsset用：全レコードを取得する。
+        /// For ITableAsset: returns all records.
         /// </summary>
         IEnumerable ITableAsset.Records => records;
 
         /// <summary>
-        /// ITableAsset用：レコードの型。
+        /// For ITableAsset: the record type.
         /// </summary>
         Type ITableAsset.RecordType => typeof(T);
 
         /// <summary>
-        /// ITableAsset用：PrimaryKeyの型。
+        /// For ITableAsset: the PrimaryKey type.
         /// </summary>
         Type ITableAsset.KeyType => typeof(TKey);
 
         /// <summary>
-        /// PrimaryKeyアクセサ。
+        /// PrimaryKey accessor.
         /// </summary>
         protected PrimaryKeyAccessor<T> KeyAccessor
         {
@@ -71,7 +71,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// SecondaryKeyインデックスコンテナ。
+        /// SecondaryKey index container.
         /// </summary>
         public IndexContainer SecondaryIndices => secondaryIndices;
 
@@ -81,7 +81,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// レコードがPrimaryKeyでソートされていることを保証する。
+        /// Ensures that records are sorted by PrimaryKey.
         /// </summary>
         public void EnsureSorted()
         {
@@ -96,10 +96,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// PrimaryKeyでレコードを検索する（二分探索）。
+        /// Searches for a record by PrimaryKey (binary search).
         /// </summary>
-        /// <param name="key">検索するPrimaryKey</param>
-        /// <returns>見つかったレコード、見つからない場合はnull</returns>
+        /// <param name="key">The PrimaryKey to search for</param>
+        /// <returns>The matching record, or null if not found</returns>
         public T FindByKey(TKey key)
         {
             EnsureSorted();
@@ -115,11 +115,11 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// PrimaryKeyでレコードを検索する（二分探索）。
+        /// Searches for a record by PrimaryKey (binary search).
         /// </summary>
-        /// <param name="key">検索するPrimaryKey</param>
-        /// <param name="record">見つかったレコード</param>
-        /// <returns>見つかった場合はtrue</returns>
+        /// <param name="key">The PrimaryKey to search for</param>
+        /// <param name="record">The found record</param>
+        /// <returns>True if found</returns>
         public bool TryFindByKey(TKey key, out T record)
         {
             record = FindByKey(key);
@@ -127,10 +127,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 指定したインデックスのレコードを取得する。
+        /// Gets the record at the specified index.
         /// </summary>
-        /// <param name="index">インデックス</param>
-        /// <returns>レコード</returns>
+        /// <param name="index">Index</param>
+        /// <returns>Record</returns>
         public T this[int index]
         {
             get
@@ -142,10 +142,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 二分探索でレコードのインデックスを検索する。
+        /// Searches for the index of a record using binary search.
         /// </summary>
-        /// <param name="key">検索するPrimaryKey</param>
-        /// <returns>見つかった場合はインデックス、見つからない場合は負の値</returns>
+        /// <param name="key">The PrimaryKey to search for</param>
+        /// <returns>The index if found, or a negative value if not found</returns>
         protected int BinarySearch(TKey key)
         {
             if (records == null || records.Length == 0)
@@ -172,11 +172,11 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 指定した範囲のキーを持つレコードを取得する。
+        /// Gets records whose keys fall within the specified range.
         /// </summary>
-        /// <param name="minKey">最小キー（含む）</param>
-        /// <param name="maxKey">最大キー（含む）</param>
-        /// <returns>範囲内のレコード</returns>
+        /// <param name="minKey">Minimum key (inclusive)</param>
+        /// <param name="maxKey">Maximum key (inclusive)</param>
+        /// <returns>Records within the range</returns>
         public IEnumerable<T> FindInRange(TKey minKey, TKey maxKey)
         {
             EnsureSorted();
@@ -198,7 +198,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 指定したキー以上の最初のインデックスを取得する。
+        /// Gets the first index whose key is greater than or equal to the specified key.
         /// </summary>
         private int FindLowerBound(TKey key)
         {
@@ -222,12 +222,12 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// SecondaryKeyでレコードを検索する（O(1)）。
+        /// Searches for a record by SecondaryKey (O(1)).
         /// </summary>
-        /// <typeparam name="TSecondaryKey">SecondaryKeyの型</typeparam>
-        /// <param name="indexName">インデックス名</param>
-        /// <param name="key">検索するキー</param>
-        /// <returns>見つかったレコード、見つからない場合はnull</returns>
+        /// <typeparam name="TSecondaryKey">SecondaryKey type</typeparam>
+        /// <param name="indexName">Index name</param>
+        /// <param name="key">The key to search for</param>
+        /// <returns>The matching record, or null if not found</returns>
         public T FindBySecondaryKey<TSecondaryKey>(string indexName, TSecondaryKey key)
         {
             var index = secondaryIndices.GetIndex(indexName);
@@ -245,13 +245,13 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// SecondaryKeyでレコードを検索する（O(1)）。
+        /// Searches for a record by SecondaryKey (O(1)).
         /// </summary>
-        /// <typeparam name="TSecondaryKey">SecondaryKeyの型</typeparam>
-        /// <param name="indexName">インデックス名</param>
-        /// <param name="key">検索するキー</param>
-        /// <param name="record">見つかったレコード</param>
-        /// <returns>見つかった場合はtrue</returns>
+        /// <typeparam name="TSecondaryKey">SecondaryKey type</typeparam>
+        /// <param name="indexName">Index name</param>
+        /// <param name="key">The key to search for</param>
+        /// <param name="record">The found record</param>
+        /// <returns>True if found</returns>
         public bool TryFindBySecondaryKey<TSecondaryKey>(string indexName, TSecondaryKey key, out T record)
         {
             record = FindBySecondaryKey(indexName, key);
@@ -259,12 +259,12 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// SecondaryKeyで複数のレコードを検索する（O(1)）。
+        /// Searches for multiple records by SecondaryKey (O(1)).
         /// </summary>
-        /// <typeparam name="TSecondaryKey">SecondaryKeyの型</typeparam>
-        /// <param name="indexName">インデックス名</param>
-        /// <param name="key">検索するキー</param>
-        /// <returns>見つかったレコードの列挙</returns>
+        /// <typeparam name="TSecondaryKey">SecondaryKey type</typeparam>
+        /// <param name="indexName">Index name</param>
+        /// <param name="key">The key to search for</param>
+        /// <returns>Enumeration of matching records</returns>
         public IEnumerable<T> FindAllBySecondaryKey<TSecondaryKey>(string indexName, TSecondaryKey key)
         {
             var index = secondaryIndices.GetIndex(indexName);
@@ -283,12 +283,12 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// SecondaryKeyで複数のレコードを検索し、配列として返す（O(1)）。
+        /// Searches for multiple records by SecondaryKey and returns them as an array (O(1)).
         /// </summary>
-        /// <typeparam name="TSecondaryKey">SecondaryKeyの型</typeparam>
-        /// <param name="indexName">インデックス名</param>
-        /// <param name="key">検索するキー</param>
-        /// <returns>見つかったレコードの配列</returns>
+        /// <typeparam name="TSecondaryKey">SecondaryKey type</typeparam>
+        /// <param name="indexName">Index name</param>
+        /// <param name="key">The key to search for</param>
+        /// <returns>Array of matching records</returns>
         public T[] FindAllBySecondaryKeyAsArray<TSecondaryKey>(string indexName, TSecondaryKey key)
         {
             var index = secondaryIndices.GetIndex(indexName);
@@ -313,15 +313,15 @@ namespace Xeon.XScriptableDB
         }
 
         // ========================================
-        // 複合SecondaryKey検索メソッド
+        // Composite SecondaryKey search methods
         // ========================================
 
         /// <summary>
-        /// 複合SecondaryKeyでレコードを検索する（O(1)）。
+        /// Searches for a record by composite SecondaryKey (O(1)).
         /// </summary>
-        /// <param name="indexName">インデックス名</param>
-        /// <param name="keyParts">検索するキー値の配列</param>
-        /// <returns>見つかったレコード、見つからない場合はnull</returns>
+        /// <param name="indexName">Index name</param>
+        /// <param name="keyParts">Array of key values to search for</param>
+        /// <returns>The matching record, or null if not found</returns>
         public T FindBySecondaryKey(string indexName, params object[] keyParts)
         {
             var index = secondaryIndices.GetIndex(indexName);
@@ -340,12 +340,12 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 複合SecondaryKeyでレコードを検索する（O(1)）。
+        /// Searches for a record by composite SecondaryKey (O(1)).
         /// </summary>
-        /// <param name="indexName">インデックス名</param>
-        /// <param name="record">見つかったレコード</param>
-        /// <param name="keyParts">検索するキー値の配列</param>
-        /// <returns>見つかった場合はtrue</returns>
+        /// <param name="indexName">Index name</param>
+        /// <param name="record">The found record</param>
+        /// <param name="keyParts">Array of key values to search for</param>
+        /// <returns>True if found</returns>
         public bool TryFindBySecondaryKey(string indexName, out T record, params object[] keyParts)
         {
             record = FindBySecondaryKey(indexName, keyParts);
@@ -353,11 +353,11 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 複合SecondaryKeyで複数のレコードを検索する（O(1)）。
+        /// Searches for multiple records by composite SecondaryKey (O(1)).
         /// </summary>
-        /// <param name="indexName">インデックス名</param>
-        /// <param name="keyParts">検索するキー値の配列</param>
-        /// <returns>見つかったレコードの列挙</returns>
+        /// <param name="indexName">Index name</param>
+        /// <param name="keyParts">Array of key values to search for</param>
+        /// <returns>Enumeration of matching records</returns>
         public IEnumerable<T> FindAllBySecondaryKey(string indexName, params object[] keyParts)
         {
             var index = secondaryIndices.GetIndex(indexName);
@@ -377,11 +377,11 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 複合SecondaryKeyで複数のレコードを検索し、配列として返す（O(1)）。
+        /// Searches for multiple records by composite SecondaryKey and returns them as an array (O(1)).
         /// </summary>
-        /// <param name="indexName">インデックス名</param>
-        /// <param name="keyParts">検索するキー値の配列</param>
-        /// <returns>見つかったレコードの配列</returns>
+        /// <param name="indexName">Index name</param>
+        /// <param name="keyParts">Array of key values to search for</param>
+        /// <returns>Array of matching records</returns>
         public T[] FindAllBySecondaryKeyAsArray(string indexName, params object[] keyParts)
         {
             var index = secondaryIndices.GetIndex(indexName);
@@ -407,7 +407,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 2つのキーを使った複合SecondaryKey検索（型安全版）。
+        /// Composite SecondaryKey search using two keys (type-safe overload).
         /// </summary>
         public T FindBySecondaryKey<TKey1, TKey2>(string indexName, TKey1 key1, TKey2 key2)
         {
@@ -415,7 +415,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 3つのキーを使った複合SecondaryKey検索（型安全版）。
+        /// Composite SecondaryKey search using three keys (type-safe overload).
         /// </summary>
         public T FindBySecondaryKey<TKey1, TKey2, TKey3>(string indexName, TKey1 key1, TKey2 key2, TKey3 key3)
         {
@@ -423,7 +423,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 2つのキーを使った複合SecondaryKey検索で複数レコードを取得（型安全版）。
+        /// Composite SecondaryKey multi-record search using two keys (type-safe overload).
         /// </summary>
         public T[] FindAllBySecondaryKeyAsArray<TKey1, TKey2>(string indexName, TKey1 key1, TKey2 key2)
         {
@@ -431,7 +431,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 3つのキーを使った複合SecondaryKey検索で複数レコードを取得（型安全版）。
+        /// Composite SecondaryKey multi-record search using three keys (type-safe overload).
         /// </summary>
         public T[] FindAllBySecondaryKeyAsArray<TKey1, TKey2, TKey3>(string indexName, TKey1 key1, TKey2 key2, TKey3 key3)
         {
@@ -439,9 +439,9 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// CSVファイルからレコードをインポートする。
+        /// Imports records from a CSV file.
         /// </summary>
-        /// <param name="filePath">CSVファイルのパス</param>
+        /// <param name="filePath">Path to the CSV file</param>
         public void Import(string filePath)
         {
 #if UNITY_EDITOR
@@ -474,10 +474,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// レコードをCSVファイルにエクスポートする。
+        /// Exports records to a CSV file.
         /// </summary>
-        /// <param name="filePath">出力先のファイルパス</param>
-        /// <param name="encoding">エンコーディング（省略時はUTF-8）</param>
+        /// <param name="filePath">Output file path</param>
+        /// <param name="encoding">Encoding (defaults to UTF-8)</param>
         public void Export(string filePath, Encoding encoding = null)
         {
             if (string.IsNullOrEmpty(filePath))
@@ -504,9 +504,9 @@ namespace Xeon.XScriptableDB
 
 #if UNITY_EDITOR
         /// <summary>
-        /// Editorでレコードを設定する。
+        /// Sets records in the Editor.
         /// </summary>
-        /// <param name="newRecords">新しいレコード配列</param>
+        /// <param name="newRecords">New record array</param>
         public void SetRecords(T[] newRecords)
         {
             records = newRecords ?? Array.Empty<T>();
@@ -516,9 +516,9 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Editorでレコードを追加する。
+        /// Adds a record in the Editor.
         /// </summary>
-        /// <param name="record">追加するレコード</param>
+        /// <param name="record">Record to add</param>
         public void AddRecord(T record)
         {
             if (record == null)
@@ -534,9 +534,9 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Editorでレコードを削除する。
+        /// Removes a record at the specified index in the Editor.
         /// </summary>
-        /// <param name="index">削除するインデックス</param>
+        /// <param name="index">Index of the record to remove</param>
         public void RemoveRecordAt(int index)
         {
             if (index < 0 || index >= records.Length)
@@ -552,9 +552,9 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// PrimaryKeyの重複をチェックする。
+        /// Checks for duplicate PrimaryKeys.
         /// </summary>
-        /// <returns>重複しているキーのリスト</returns>
+        /// <returns>List of duplicate keys</returns>
         public List<TKey> FindDuplicateKeys()
         {
             var duplicates = new List<TKey>();
@@ -571,12 +571,12 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 内部のレコード配列を取得する（Editor専用）。
+        /// Gets the internal record array (Editor only).
         /// </summary>
         public T[] GetRecordsForEditor() => records;
 
         /// <summary>
-        /// SecondaryKeyインデックスを再構築する（Editor専用）。
+        /// Rebuilds the SecondaryKey indexes (Editor only).
         /// </summary>
         public void RebuildSecondaryIndices()
         {
@@ -585,12 +585,12 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// ITableAsset用：新しい空のレコードを作成する。
+        /// For ITableAsset: creates a new empty record.
         /// </summary>
         object ITableAsset.CreateNewRecord() => new T();
 
         /// <summary>
-        /// ITableAsset用：レコードを追加する。
+        /// For ITableAsset: adds a record.
         /// </summary>
         void ITableAsset.AddRecordObject(object record)
         {
@@ -599,7 +599,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// ITableAsset用：PrimaryKeyの重複をチェックする。
+        /// For ITableAsset: checks for duplicate PrimaryKeys.
         /// </summary>
         IList ITableAsset.FindDuplicateKeysAsObjects()
         {

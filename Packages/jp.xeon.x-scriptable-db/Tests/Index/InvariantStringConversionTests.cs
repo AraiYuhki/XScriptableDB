@@ -6,7 +6,7 @@ using System.Threading;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// カルチャ非依存の文字列変換と、float/doubleのラウンドトリップ精度のテスト。
+    /// Tests for culture-invariant string conversion and float/double round-trip precision.
     /// </summary>
     public class InvariantStringConversionTests
     {

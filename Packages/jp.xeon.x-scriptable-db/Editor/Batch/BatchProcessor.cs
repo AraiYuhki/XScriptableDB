@@ -6,11 +6,11 @@ using UnityEditor;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// テーブルに対するバッチ処理を行うクラス。
-    /// TableAsset&lt;TRecord, TKey&gt;のジェネリック引数順序に対応。
+    /// Class that performs batch operations on a table.
+    /// Supports the generic argument order of TableAsset&lt;TRecord, TKey&gt;.
     /// </summary>
-    /// <typeparam name="TRecord">レコードの型</typeparam>
-    /// <typeparam name="TKey">キーの型</typeparam>
+    /// <typeparam name="TRecord">Record type</typeparam>
+    /// <typeparam name="TKey">Key type</typeparam>
     public class BatchProcessor<TRecord, TKey>
         where TRecord : class, new()
         where TKey : IComparable<TKey>
@@ -19,10 +19,10 @@ namespace Xeon.XScriptableDB.Editor
         private readonly Func<TRecord, TKey> keySelector;
 
         /// <summary>
-        /// コンストラクタ。
+        /// Constructor.
         /// </summary>
-        /// <param name="table">対象テーブル</param>
-        /// <param name="keySelector">キー選択関数</param>
+        /// <param name="table">Target table</param>
+        /// <param name="keySelector">Key selector function</param>
         public BatchProcessor(TableAsset<TRecord, TKey> table, Func<TRecord, TKey> keySelector)
         {
             this.table = table ?? throw new ArgumentNullException(nameof(table));
@@ -30,11 +30,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// バッチ操作を実行する。
+        /// Executes batch operations.
         /// </summary>
-        /// <param name="operations">操作リスト</param>
-        /// <param name="settings">処理設定</param>
-        /// <returns>処理結果</returns>
+        /// <param name="operations">List of operations</param>
+        /// <param name="settings">Processing settings</param>
+        /// <returns>Processing result</returns>
         public BatchProcessResult Execute(
             IEnumerable<BatchOperationEntry<TRecord>> operations,
             BatchProcessSettings settings = null)
@@ -47,7 +47,7 @@ namespace Xeon.XScriptableDB.Editor
             var current = 0;
             var total = opList.Count;
 
-            // 現在のレコードをDictionaryにコピー
+            // Copy current records into a dictionary
             var recordDict = new Dictionary<TKey, TRecord>();
             foreach (var record in table.All)
             {
@@ -79,7 +79,7 @@ namespace Xeon.XScriptableDB.Editor
                 settings.OnProgress?.Invoke(current, total);
             }
 
-            // 結果を反映
+            // Apply results
             var newRecords = recordDict.Values.ToArray();
             table.SetRecords(newRecords);
 
@@ -194,11 +194,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 複数のレコードを一括追加する。
+        /// Adds multiple records in bulk.
         /// </summary>
-        /// <param name="records">追加するレコード</param>
-        /// <param name="settings">処理設定</param>
-        /// <returns>処理結果</returns>
+        /// <param name="records">Records to add</param>
+        /// <param name="settings">Processing settings</param>
+        /// <returns>Processing result</returns>
         public BatchProcessResult AddRange(IEnumerable<TRecord> records, BatchProcessSettings settings = null)
         {
             var operations = records.Select(r => BatchOperationEntry<TRecord>.CreateAdd(r));
@@ -206,11 +206,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 複数のレコードを一括更新する。
+        /// Updates multiple records in bulk.
         /// </summary>
-        /// <param name="records">更新するレコード</param>
-        /// <param name="settings">処理設定</param>
-        /// <returns>処理結果</returns>
+        /// <param name="records">Records to update</param>
+        /// <param name="settings">Processing settings</param>
+        /// <returns>Processing result</returns>
         public BatchProcessResult UpdateRange(IEnumerable<TRecord> records, BatchProcessSettings settings = null)
         {
             var operations = records.Select(r => BatchOperationEntry<TRecord>.CreateUpdate(r));
@@ -218,11 +218,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 複数のレコードを一括削除する。
+        /// Deletes multiple records in bulk.
         /// </summary>
-        /// <param name="records">削除するレコード</param>
-        /// <param name="settings">処理設定</param>
-        /// <returns>処理結果</returns>
+        /// <param name="records">Records to delete</param>
+        /// <param name="settings">Processing settings</param>
+        /// <returns>Processing result</returns>
         public BatchProcessResult DeleteRange(IEnumerable<TRecord> records, BatchProcessSettings settings = null)
         {
             var operations = records.Select(r => BatchOperationEntry<TRecord>.CreateDelete(r));
@@ -230,11 +230,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// キーを指定して複数のレコードを一括削除する。
+        /// Deletes multiple records in bulk by specifying keys.
         /// </summary>
-        /// <param name="keys">削除するキー</param>
-        /// <param name="settings">処理設定</param>
-        /// <returns>処理結果</returns>
+        /// <param name="keys">Keys to delete</param>
+        /// <param name="settings">Processing settings</param>
+        /// <returns>Processing result</returns>
         public BatchProcessResult DeleteByKeys(IEnumerable<TKey> keys, BatchProcessSettings settings = null)
         {
             settings ??= new BatchProcessSettings();
@@ -259,11 +259,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 条件に一致するレコードを一括削除する。
+        /// Deletes all records matching a condition in bulk.
         /// </summary>
-        /// <param name="predicate">削除条件</param>
-        /// <param name="settings">処理設定</param>
-        /// <returns>処理結果</returns>
+        /// <param name="predicate">Deletion condition</param>
+        /// <param name="settings">Processing settings</param>
+        /// <returns>Processing result</returns>
         public BatchProcessResult DeleteWhere(Func<TRecord, bool> predicate, BatchProcessSettings settings = null)
         {
             settings ??= new BatchProcessSettings();
@@ -285,12 +285,12 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 条件に一致するレコードを一括更新する。
+        /// Updates all records matching a condition in bulk.
         /// </summary>
-        /// <param name="predicate">更新条件</param>
-        /// <param name="updater">更新関数</param>
-        /// <param name="settings">処理設定</param>
-        /// <returns>処理結果</returns>
+        /// <param name="predicate">Update condition</param>
+        /// <param name="updater">Update function</param>
+        /// <param name="settings">Processing settings</param>
+        /// <returns>Processing result</returns>
         public BatchProcessResult UpdateWhere(
             Func<TRecord, bool> predicate,
             Action<TRecord> updater,
@@ -323,11 +323,11 @@ namespace Xeon.XScriptableDB.Editor
                 }
             }
 
-            // レコードは参照型なので、変更は自動的に反映される
-            // 変更後にDirtyフラグをセット
+            // Records are reference types, so changes are reflected automatically
+            // Set the Dirty flag after changes
             EditorUtility.SetDirty(table);
 
-            // ただし、キーが変更された場合はソートが必要
+            // However, re-sorting is required if a key was changed
             if (settings.AutoSort)
                 table.EnsureSorted();
 
@@ -336,11 +336,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 複数のレコードを一括アップサートする。
+        /// Upserts multiple records in bulk.
         /// </summary>
-        /// <param name="records">アップサートするレコード</param>
-        /// <param name="settings">処理設定</param>
-        /// <returns>処理結果</returns>
+        /// <param name="records">Records to upsert</param>
+        /// <param name="settings">Processing settings</param>
+        /// <returns>Processing result</returns>
         public BatchProcessResult UpsertRange(IEnumerable<TRecord> records, BatchProcessSettings settings = null)
         {
             var operations = records.Select(r => BatchOperationEntry<TRecord>.CreateUpsert(r));
@@ -348,11 +348,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// テーブルの全レコードを置換する。
+        /// Replaces all records in the table.
         /// </summary>
-        /// <param name="records">新しいレコード</param>
-        /// <param name="settings">処理設定</param>
-        /// <returns>処理結果</returns>
+        /// <param name="records">New records</param>
+        /// <param name="settings">Processing settings</param>
+        /// <returns>Processing result</returns>
         public BatchProcessResult ReplaceAll(IEnumerable<TRecord> records, BatchProcessSettings settings = null)
         {
             settings ??= new BatchProcessSettings();
@@ -375,18 +375,18 @@ namespace Xeon.XScriptableDB.Editor
     }
 
     /// <summary>
-    /// バッチ処理の拡張メソッド。
+    /// Extension methods for batch processing.
     /// </summary>
     public static class BatchProcessorExtensions
     {
         /// <summary>
-        /// テーブルからバッチプロセッサを作成する。
+        /// Creates a batch processor from a table.
         /// </summary>
-        /// <typeparam name="TRecord">レコードの型</typeparam>
-        /// <typeparam name="TKey">キーの型</typeparam>
-        /// <param name="table">対象テーブル</param>
-        /// <param name="keySelector">キー選択関数</param>
-        /// <returns>バッチプロセッサ</returns>
+        /// <typeparam name="TRecord">Record type</typeparam>
+        /// <typeparam name="TKey">Key type</typeparam>
+        /// <param name="table">Target table</param>
+        /// <param name="keySelector">Key selector function</param>
+        /// <returns>Batch processor</returns>
         public static BatchProcessor<TRecord, TKey> CreateBatchProcessor<TRecord, TKey>(
             this TableAsset<TRecord, TKey> table,
             Func<TRecord, TKey> keySelector)

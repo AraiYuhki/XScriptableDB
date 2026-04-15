@@ -5,8 +5,8 @@ using System.Text;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// 複合キーの生成とハッシュ計算を行うヘルパークラス。
-    /// ハッシュ衝突を完全に回避するため、文字列キーベースの検索を提供する。
+    /// Helper class for generating composite keys and computing hash values.
+    /// Provides string-key-based lookup to completely avoid hash collisions.
     /// </summary>
     public static class CompositeKeyHelper
     {
@@ -15,12 +15,12 @@ namespace Xeon.XScriptableDB
         private const string NullPlaceholder = "\x00NULL\x00";
 
         /// <summary>
-        /// 複合キーの文字列表現を生成する。
-        /// Unit Separator (ASCII 31) を区切り文字として使用し、衝突を回避する。
-        /// 特殊文字はエスケープ処理される。
+        /// Generates the string representation of a composite key.
+        /// Uses Unit Separator (ASCII 31) as a delimiter to avoid collisions.
+        /// Special characters are escaped.
         /// </summary>
-        /// <param name="keys">キー値の配列</param>
-        /// <returns>文字列表現</returns>
+        /// <param name="keys">Array of key values</param>
+        /// <returns>String representation</returns>
         public static string ComputeCompositeString(params object[] keys)
         {
             if (keys == null || keys.Length == 0)
@@ -41,8 +41,8 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 値を文字列に変換し、特殊文字をエスケープする。
-        /// カルチャ非依存の変換を行う。
+        /// Converts a value to a string and escapes special characters.
+        /// Uses culture-invariant conversion.
         /// </summary>
         private static string EscapeValue(object value)
         {
@@ -67,8 +67,8 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// カルチャ非依存の文字列変換を行う。
-        /// float/doubleはラウンドトリップフォーマットを使用して精度を保持する。
+        /// Performs culture-invariant string conversion.
+        /// Uses round-trip format for float/double to preserve precision.
         /// </summary>
         private static string ConvertToInvariantString(object value)
         {
@@ -85,11 +85,11 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// デバッグ用の可読性のある文字列表現を生成する。
-        /// カルチャ非依存の変換を行う。
+        /// Generates a human-readable string representation for debugging.
+        /// Uses culture-invariant conversion.
         /// </summary>
-        /// <param name="keys">キー値の配列</param>
-        /// <returns>可読性のある文字列表現</returns>
+        /// <param name="keys">Array of key values</param>
+        /// <returns>Human-readable string representation</returns>
         public static string ComputeReadableString(params object[] keys)
         {
             if (keys == null || keys.Length == 0)
@@ -102,12 +102,12 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 決定的なハッシュコードを計算する。
-        /// string.GetHashCode() は .NET 実装によって異なる値を返す可能性があるため、
-        /// 独自の決定的ハッシュ関数を使用する。
+        /// Computes a deterministic hash code.
+        /// Uses a custom deterministic hash function because string.GetHashCode()
+        /// may return different values depending on the .NET runtime implementation.
         /// </summary>
-        /// <param name="str">ハッシュを計算する文字列</param>
-        /// <returns>決定的なハッシュ値</returns>
+        /// <param name="str">String to hash</param>
+        /// <returns>Deterministic hash value</returns>
         public static int GetDeterministicHashCode(string str)
         {
             if (string.IsNullOrEmpty(str))
@@ -130,10 +130,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 複合キーの決定的ハッシュ値を計算する。
+        /// Computes the deterministic hash value of a composite key.
         /// </summary>
-        /// <param name="keys">キー値の配列</param>
-        /// <returns>決定的なハッシュ値</returns>
+        /// <param name="keys">Array of key values</param>
+        /// <returns>Deterministic hash value</returns>
         public static int ComputeCompositeHash(params object[] keys)
         {
             var compositeString = ComputeCompositeString(keys);

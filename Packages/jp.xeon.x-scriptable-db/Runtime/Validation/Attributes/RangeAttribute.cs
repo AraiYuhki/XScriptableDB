@@ -3,15 +3,15 @@ using System;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// 数値の範囲を指定する属性。
+    /// Attribute that specifies a numeric range constraint.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class RangeAttribute : ValidationAttribute
     {
-        /// <summary>最小値</summary>
+        /// <summary>Minimum value</summary>
         public double Minimum { get; }
 
-        /// <summary>最大値</summary>
+        /// <summary>Maximum value</summary>
         public double Maximum { get; }
 
         public RangeAttribute(double minimum, double maximum)
@@ -29,7 +29,7 @@ namespace Xeon.XScriptableDB.Validation
         public override ValidationResult Validate(object value, string fieldName)
         {
             if (value == null)
-                return ValidationResult.Success; // nullは別のバリデーションで処理
+                return ValidationResult.Success; // null is handled by a separate validation
 
             double numValue;
             try

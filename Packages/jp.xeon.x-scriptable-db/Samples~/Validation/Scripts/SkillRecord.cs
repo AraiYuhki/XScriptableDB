@@ -7,8 +7,8 @@ using Range = Xeon.XScriptableDB.Validation.RangeAttribute;
 namespace Xeon.XScriptableDB.Samples.Validation
 {
     /// <summary>
-    /// スキルデータのレコードクラス。
-    /// 各種バリデーション属性を使用してデータ品質を担保する。
+    /// Record class for skill data.
+    /// Uses various validation attributes to ensure data quality.
     /// </summary>
     [Serializable]
     public class SkillRecord
@@ -16,87 +16,87 @@ namespace Xeon.XScriptableDB.Samples.Validation
         [SerializeField, CsvColumn("ID"), PrimaryKey]
         private int id;
 
-        [SerializeField, CsvColumn("スキル名"), Required, StringLength(30)]
+        [SerializeField, CsvColumn("SkillName"), Required, StringLength(30)]
         private string name;
 
-        [SerializeField, CsvColumn("説明"), StringLength(200)]
+        [SerializeField, CsvColumn("Description"), StringLength(200)]
         private string description;
 
-        [SerializeField, CsvColumn("MP消費"), Range(0, 999)]
+        [SerializeField, CsvColumn("MPCost"), Range(0, 999)]
         private int mpCost;
 
-        [SerializeField, CsvColumn("クールダウン"), Range(0f, 300f)]
+        [SerializeField, CsvColumn("Cooldown"), Range(0f, 300f)]
         private float cooldown;
 
-        [SerializeField, CsvColumn("威力"), Range(0, 9999)]
+        [SerializeField, CsvColumn("Power"), Range(0, 9999)]
         private int power;
 
-        [SerializeField, CsvColumn("属性")]
+        [SerializeField, CsvColumn("Element")]
         private ElementType elementType;
 
-        [SerializeField, CsvColumn("対象")]
+        [SerializeField, CsvColumn("Target")]
         private TargetType targetType;
 
-        [SerializeField, CsvColumn("習得Lv"), Range(1, 100)]
+        [SerializeField, CsvColumn("RequiredLevel"), Range(1, 100)]
         [Compare("maxLevel", Operator = CompareOperator.LessThanOrEqual)]
         private int requiredLevel;
 
-        [SerializeField, CsvColumn("最大Lv"), Range(1, 100)]
+        [SerializeField, CsvColumn("MaxLevel"), Range(1, 100)]
         private int maxLevel;
 
         /// <summary>
-        /// スキルID（主キー）
+        /// Skill ID (primary key)
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// スキル名
+        /// Skill name
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// 説明文
+        /// Description
         /// </summary>
         public string Description => description;
 
         /// <summary>
-        /// MP消費量
+        /// MP cost
         /// </summary>
         public int MpCost => mpCost;
 
         /// <summary>
-        /// クールダウン秒数
+        /// Cooldown in seconds
         /// </summary>
         public float Cooldown => cooldown;
 
         /// <summary>
-        /// 威力
+        /// Power
         /// </summary>
         public int Power => power;
 
         /// <summary>
-        /// 属性タイプ
+        /// Element type
         /// </summary>
         public ElementType ElementType => elementType;
 
         /// <summary>
-        /// 対象タイプ
+        /// Target type
         /// </summary>
         public TargetType TargetType => targetType;
 
         /// <summary>
-        /// 習得レベル
+        /// Required level to learn
         /// </summary>
         public int RequiredLevel => requiredLevel;
 
         /// <summary>
-        /// 最大強化レベル
+        /// Maximum upgrade level
         /// </summary>
         public int MaxLevel => maxLevel;
 
         public override string ToString()
         {
-            return $"[{id}] {name} (MP:{mpCost}, 威力:{power}, {elementType})";
+            return $"[{id}] {name} (MP:{mpCost}, Power:{power}, {elementType})";
         }
     }
 }

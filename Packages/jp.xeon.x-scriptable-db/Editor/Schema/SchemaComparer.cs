@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// スキーマ差分の種類。
+    /// Types of schema differences.
     /// </summary>
     public enum SchemaDifferenceType
     {
@@ -20,7 +20,7 @@ namespace Xeon.XScriptableDB.Editor
     }
 
     /// <summary>
-    /// スキーマ比較ユーティリティ。
+    /// Schema comparison utility.
     /// </summary>
     public static class SchemaComparer
     {
@@ -34,7 +34,7 @@ namespace Xeon.XScriptableDB.Editor
         };
 
         /// <summary>
-        /// 2つの型のスキーマを比較する。
+        /// Compares the schemas of two types.
         /// </summary>
         public static SchemaComparisonResult Compare(Type sourceType, Type targetType)
         {
@@ -46,14 +46,14 @@ namespace Xeon.XScriptableDB.Editor
             var sourceFieldNames = new HashSet<string>(sourceFields.Keys);
             var targetFieldNames = new HashSet<string>(targetFields.Keys);
 
-            // 追加されたフィールド
+            // Added fields
             foreach (var name in targetFieldNames.Except(sourceFieldNames))
             {
                 var field = targetFields[name];
                 result.Differences.Add(new(SchemaDifferenceType.FieldAdded, name, null, field.FieldType.Name));
             }
 
-            // 削除されたフィールド
+            // Removed fields
             foreach (var name in sourceFieldNames.Except(targetFieldNames))
             {
                 var field = sourceFields[name];
@@ -62,13 +62,13 @@ namespace Xeon.XScriptableDB.Editor
                 result.CompatibilityNote = "Fields have been removed, potential data loss may occur";
             }
 
-            // 共通フィールドの比較
+            // Compare common fields
             foreach (var name in sourceFieldNames.Intersect(targetFieldNames))
             {
                 var sourceField = sourceFields[name];
                 var targetField = targetFields[name];
 
-                // 型の変更
+                // Type change
                 if (sourceField.FieldType != targetField.FieldType)
                 {
                     result.Differences.Add(new(SchemaDifferenceType.FieldTypeChanged, name, sourceField.FieldType.Name, targetField.FieldType.Name));
@@ -80,13 +80,13 @@ namespace Xeon.XScriptableDB.Editor
                     }
                 }
 
-                // PrimaryKeyの変更
+                // PrimaryKey change
                 if (sourceField.IsPrimaryKey != targetField.IsPrimaryKey)
                 {
                     result.Differences.Add(new(SchemaDifferenceType.PrimaryKeyChanged, name, sourceField.IsPrimaryKey, targetField.IsPrimaryKey));
                 }
 
-                // SecondaryKeyの変更
+                // SecondaryKey change
                 if (sourceField.IsSecondaryKey && !targetField.IsSecondaryKey)
                 {
                     result.Differences.Add(new(SchemaDifferenceType.SecondaryKeyRemoved, name));
@@ -101,7 +101,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 型からフィールドスキーマ情報を取得する。
+        /// Gets field schema information from a type.
         /// </summary>
         public static Dictionary<string, FieldSchemaInfo> GetFieldSchemas(Type type)
         {
@@ -117,23 +117,23 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 型間の変換が可能かどうかを判定する。
+        /// Determines whether conversion between types is possible.
         /// </summary>
         private static bool IsTypeConvertible(Type from, Type to)
         {
-            // 同じ型
+            // Same type
             if (from == to)
                 return true;
 
-            // 数値型の変換
+            // Numeric type conversion
             if (NumericTypes.Contains(from) && NumericTypes.Contains(to))
                 return true;
 
-            // 文字列への変換は常に可能
+            // Conversion to string is always possible
             if (to == typeof(string))
                 return true;
 
-            // Nullable型
+            // Nullable type
             var underlyingFrom = Nullable.GetUnderlyingType(from);
             var underlyingTo = Nullable.GetUnderlyingType(to);
 
@@ -147,7 +147,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// テーブルアセット間のスキーマを比較する。
+        /// Compares the schemas between table assets.
         /// </summary>
         public static SchemaComparisonResult Compare(ITableAsset source, ITableAsset target)
         {
@@ -155,7 +155,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// スキーマのサマリーを生成する。
+        /// Generates a schema summary.
         /// </summary>
         public static string GenerateSchemaSummary(Type type)
         {

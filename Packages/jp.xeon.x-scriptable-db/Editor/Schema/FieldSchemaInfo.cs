@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// フィールド情報。
+    /// Field information.
     /// </summary>
     public class FieldSchemaInfo
     {

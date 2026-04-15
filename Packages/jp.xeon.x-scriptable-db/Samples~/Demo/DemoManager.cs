@@ -6,8 +6,8 @@ using Xeon.XScriptableDB;
 namespace XScriptableDB.Samples.Demo
 {
     /// <summary>
-    /// XScriptableDBの機能をデモするマネージャー。
-    /// UIボタンから各機能を呼び出して結果を表示する。
+    /// Manager that demos XScriptableDB features.
+    /// Calls each feature from UI buttons and displays results.
     /// </summary>
     public class DemoManager : MonoBehaviour
     {
@@ -23,39 +23,39 @@ namespace XScriptableDB.Samples.Demo
         private void Start()
         {
             ClearOutput();
-            Log("XScriptableDB デモへようこそ！");
-            Log("左側のボタンをクリックして各機能を試してください。");
+            Log("Welcome to the XScriptableDB Demo!");
+            Log("Click the buttons on the left to try each feature.");
             Log("");
-            Log($"ItemTable: {itemTable?.Count ?? 0}件のレコード");
+            Log($"ItemTable: {itemTable?.Count ?? 0} records");
         }
 
         /// <summary>
-        /// 全レコードを表示する。
+        /// Displays all records.
         /// </summary>
         public void ShowAllRecords()
         {
             ClearOutput();
-            Log("=== 全レコード ===");
+            Log("=== All Records ===");
 
             foreach (var item in itemTable.All)
             {
                 Log($"  {item}");
             }
 
-            Log($"\n合計: {itemTable.Count}件");
+            Log($"\nTotal: {itemTable.Count} records");
         }
 
         /// <summary>
-        /// PrimaryKeyで検索する。
+        /// Searches by PrimaryKey.
         /// </summary>
         public void SearchByPrimaryKey()
         {
             ClearOutput();
-            Log("=== PrimaryKey検索（O(log n)） ===");
+            Log("=== PrimaryKey Search (O(log n)) ===");
 
             if (!int.TryParse(searchInput.text, out var id))
             {
-                Log("IDを入力してください（例: 1001）");
+                Log("Enter an ID (e.g.: 1001)");
                 return;
             }
 
@@ -66,27 +66,27 @@ namespace XScriptableDB.Samples.Demo
             }
             else
             {
-                Log($"ID {id} は見つかりませんでした");
+                Log($"ID {id} was not found");
             }
         }
 
         /// <summary>
-        /// SecondaryKeyで検索する。
+        /// Searches by SecondaryKey.
         /// </summary>
         public void SearchBySecondaryKey()
         {
             ClearOutput();
-            Log("=== SecondaryKey検索（O(1)） ===");
+            Log("=== SecondaryKey Search (O(1)) ===");
 
             var category = searchInput.text;
             if (string.IsNullOrEmpty(category))
             {
-                Log("カテゴリを入力してください（例: Weapon, Armor, Potion）");
+                Log("Enter a category (e.g.: Weapon, Armor, Potion)");
                 return;
             }
 
             var items = itemTable.FindAllBySecondaryKeyAsArray("category", category);
-            Log($"Category = \"{category}\": {items.Length}件");
+            Log($"Category = \"{category}\": {items.Length} results");
 
             foreach (var item in items)
             {
@@ -95,29 +95,29 @@ namespace XScriptableDB.Samples.Demo
         }
 
         /// <summary>
-        /// 複合SecondaryKeyで検索する。
+        /// Searches by composite SecondaryKey.
         /// </summary>
         public void SearchByCompositeKey()
         {
             ClearOutput();
-            Log("=== 複合SecondaryKey検索（O(1)） ===");
+            Log("=== Composite SecondaryKey Search (O(1)) ===");
 
             var parts = searchInput.text.Split('/');
             if (parts.Length != 2)
             {
-                Log("カテゴリ/レアリティを入力してください（例: Weapon/3）");
+                Log("Enter category/rarity (e.g.: Weapon/3)");
                 return;
             }
 
             var category = parts[0].Trim();
             if (!int.TryParse(parts[1].Trim(), out var rarity))
             {
-                Log("レアリティは数字で入力してください");
+                Log("Enter rarity as a number");
                 return;
             }
 
             var items = itemTable.FindAllBySecondaryKeyAsArray("CategoryRarity", category, rarity);
-            Log($"Category=\"{category}\", Rarity={rarity}: {items.Length}件");
+            Log($"Category=\"{category}\", Rarity={rarity}: {items.Length} results");
 
             foreach (var item in items)
             {
@@ -126,19 +126,19 @@ namespace XScriptableDB.Samples.Demo
         }
 
         /// <summary>
-        /// Where句で検索する。
+        /// Searches using a Where clause.
         /// </summary>
         public void SearchWithWhere()
         {
             ClearOutput();
-            Log("=== Where検索（GC Alloc 0） ===");
+            Log("=== Where Search (GC Alloc 0) ===");
 
             if (!int.TryParse(searchInput.text, out var minPrice))
             {
                 minPrice = 500;
             }
 
-            Log($"Price > {minPrice} のアイテム:");
+            Log($"Items with Price > {minPrice}:");
 
             var count = 0;
             foreach (var item in itemTable.Where(r => r.Price > minPrice))
@@ -146,16 +146,16 @@ namespace XScriptableDB.Samples.Demo
                 count++;
                 Log($"  {item}");
             }
-            Log($"  {count}件見つかりました");
+            Log($"  {count} results found");
         }
 
         /// <summary>
-        /// 範囲検索を実行する。
+        /// Executes a range search.
         /// </summary>
         public void SearchInRange()
         {
             ClearOutput();
-            Log("=== 範囲検索 ===");
+            Log("=== Range Search ===");
 
             var parts = searchInput.text.Split('-');
             int minId = 1001, maxId = 1005;
@@ -166,7 +166,7 @@ namespace XScriptableDB.Samples.Demo
                 int.TryParse(parts[1].Trim(), out maxId);
             }
 
-            Log($"ID {minId} ～ {maxId} のアイテム:");
+            Log($"Items with ID {minId} to {maxId}:");
 
             foreach (var item in itemTable.FindInRange(minId, maxId))
             {
@@ -175,46 +175,46 @@ namespace XScriptableDB.Samples.Demo
         }
 
         /// <summary>
-        /// 集計関数のデモ。
+        /// Demo of aggregate functions.
         /// </summary>
         public void ShowAggregation()
         {
             ClearOutput();
-            Log("=== 集計関数 ===");
+            Log("=== Aggregate Functions ===");
 
             // Count
             var weaponCount = itemTable.Count(r => r.Category == "Weapon");
-            Log($"武器の数: {weaponCount}");
+            Log($"Weapon count: {weaponCount}");
 
             // Any
             var hasExpensive = itemTable.Any(r => r.Price > 5000);
-            Log($"5000G以上のアイテムあり: {hasExpensive}");
+            Log($"Has items over 5000G: {hasExpensive}");
 
             // All
             var allHavePrice = itemTable.All(r => r.Price > 0);
-            Log($"全アイテムに価格あり: {allHavePrice}");
+            Log($"All items have a price: {allHavePrice}");
 
             // FirstOrDefault
             var cheapest = itemTable.FirstOrDefault(r => r.Price < 100);
-            Log($"最安値アイテム: {cheapest?.Name ?? "なし"}");
+            Log($"Cheapest item: {cheapest?.Name ?? "none"}");
         }
 
         /// <summary>
-        /// パフォーマンス比較。
+        /// Performance comparison.
         /// </summary>
         public void ShowPerformanceComparison()
         {
             ClearOutput();
-            Log("=== パフォーマンス比較 ===");
+            Log("=== Performance Comparison ===");
             Log("");
-            Log("検索方法の計算量:");
-            Log("  PrimaryKey (Find)      : O(log n) - バイナリサーチ");
-            Log("  SecondaryKey           : O(1)     - ハッシュルックアップ");
-            Log("  複合SecondaryKey       : O(1)     - ハッシュルックアップ");
-            Log("  Where                  : O(n)     - 全件スキャン");
+            Log("Search method complexity:");
+            Log("  PrimaryKey (Find)      : O(log n) - Binary search");
+            Log("  SecondaryKey           : O(1)     - Hash lookup");
+            Log("  Composite SecondaryKey : O(1)     - Hash lookup");
+            Log("  Where                  : O(n)     - Full scan");
             Log("");
-            Log("SecondaryKeyを適切に設定することで、");
-            Log("頻繁に検索する条件を高速化できます。");
+            Log("Setting SecondaryKeys appropriately speeds up");
+            Log("frequently searched conditions.");
         }
 
         private void ClearOutput()

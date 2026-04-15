@@ -4,12 +4,12 @@ using System.Text.RegularExpressions;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// 正規表現パターンを指定する属性。
+    /// Attribute to specify a regular expression pattern.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class RegularExpressionAttribute : ValidationAttribute
     {
-        /// <summary>正規表現パターン</summary>
+        /// <summary>Regular expression pattern</summary>
         public string Pattern { get; }
 
         public RegularExpressionAttribute(string pattern)

@@ -7,12 +7,12 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// マイグレーション実行エンジン。
+    /// Migration execution engine.
     /// </summary>
     public static class MigrationExecutor
     {
         /// <summary>
-        /// スキーマ差分から自動的にマイグレーション定義を生成する。
+        /// Automatically generates a migration definition from schema differences.
         /// </summary>
         public static MigrationDefinition GenerateMigration(SchemaComparisonResult comparison, string migrationName = null)
         {
@@ -76,7 +76,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// マイグレーションを実行する。
+        /// Executes the migration.
         /// </summary>
         public static MigrationResult Execute(MigrationDefinition migration, ITableAsset sourceTable)
         {
@@ -141,8 +141,8 @@ namespace Xeon.XScriptableDB.Editor
                     break;
 
                 case MigrationOperationType.RenameField:
-                    // フィールドのリネームはランタイムでは不可能
-                    // コード生成が必要
+                    // Field renaming is not possible at runtime
+                    // Code generation is required
                     break;
 
                 case MigrationOperationType.CopyField:
@@ -247,23 +247,23 @@ namespace Xeon.XScriptableDB.Editor
 
         private static object ApplyTransform(object value, string expression)
         {
-            // シンプルな変換式をサポート
+            // Supports simple transform expressions
             if (string.IsNullOrEmpty(expression))
                 return value;
 
-            // 例: "UPPER" -> 大文字変換
+            // Example: "UPPER" -> convert to uppercase
             if (expression.Equals("UPPER", StringComparison.OrdinalIgnoreCase))
                 return value?.ToString()?.ToUpper();
 
-            // 例: "LOWER" -> 小文字変換
+            // Example: "LOWER" -> convert to lowercase
             if (expression.Equals("LOWER", StringComparison.OrdinalIgnoreCase))
                 return value?.ToString()?.ToLower();
 
-            // 例: "TRIM" -> 前後の空白除去
+            // Example: "TRIM" -> remove leading and trailing whitespace
             if (expression.Equals("TRIM", StringComparison.OrdinalIgnoreCase))
                 return value?.ToString()?.Trim();
 
-            // 例: "*2" -> 2倍
+            // Example: "*2" -> multiply by 2
             if (expression.StartsWith("*") && double.TryParse(expression[1..], out var multiplier))
             {
                 if (value is int intVal)
@@ -274,7 +274,7 @@ namespace Xeon.XScriptableDB.Editor
                     return doubleVal * multiplier;
             }
 
-            // 例: "+10" -> 10を加算
+            // Example: "+10" -> add 10
             if (expression.StartsWith("+") && double.TryParse(expression[1..], out var addend))
             {
                 if (value is int intVal)
@@ -289,7 +289,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// マイグレーションのドライラン（実際には適用しない）。
+        /// Dry run of the migration (does not actually apply it).
         /// </summary>
         public static MigrationResult DryRun(MigrationDefinition migration, ITableAsset sourceTable)
         {
@@ -301,7 +301,7 @@ namespace Xeon.XScriptableDB.Editor
                 var records = sourceTable.Records.Cast<object>().ToList();
                 result.ProcessedCount = records.Count;
 
-                // 各操作の検証
+                // Validate each operation
                 foreach (var operation in migration.Operations)
                 {
                     ValidateOperation(operation, sourceTable.RecordType, result);

@@ -8,14 +8,14 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// XScriptableDB コマンドラインインターフェース。
-    /// Unity -batchmode で実行可能。
+    /// XScriptableDB command line interface.
+    /// Can be executed with Unity -batchmode.
     /// </summary>
     public static class XScriptableDBCLI
     {
         /// <summary>
-        /// エクスポートコマンド。
-        /// 使用例: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Export -table=ItemTable -output=./export.csv
+        /// Export command.
+        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Export -table=ItemTable -output=./export.csv
         /// </summary>
         public static void Export()
         {
@@ -57,8 +57,8 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// インポートコマンド。
-        /// 使用例: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Import -table=ItemTable -input=./data.csv
+        /// Import command.
+        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Import -table=ItemTable -input=./data.csv
         /// </summary>
         public static void Import()
         {
@@ -107,8 +107,8 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// バックアップコマンド。
-        /// 使用例: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Backup -table=ItemTable
+        /// Backup command.
+        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Backup -table=ItemTable
         /// </summary>
         public static void Backup()
         {
@@ -116,7 +116,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (!args.TryGetValue("table", out var tableName))
             {
-                // 全テーブルをバックアップ
+                // Backup all tables
                 BackupAllTables();
                 return;
             }
@@ -144,8 +144,8 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// バリデーションコマンド。
-        /// 使用例: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Validate -table=ItemTable
+        /// Validation command.
+        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Validate -table=ItemTable
         /// </summary>
         public static void Validate()
         {
@@ -166,7 +166,7 @@ namespace Xeon.XScriptableDB.Editor
             }
             else
             {
-                // 全テーブルをバリデーション
+                // Validate all tables
                 foreach (var table in FindAllTables())
                 {
                     if (!ValidateTable(table))
@@ -178,8 +178,8 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// SQL実行コマンド。
-        /// 使用例: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Query -sql="SELECT * FROM Items WHERE Price > 100"
+        /// SQL query command.
+        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Query -sql="SELECT * FROM Items WHERE Price > 100"
         /// </summary>
         public static void Query()
         {
@@ -196,7 +196,7 @@ namespace Xeon.XScriptableDB.Editor
             {
                 var executor = new SqlExecutor();
 
-                // 全テーブルを登録
+                // Register all tables
                 foreach (var table in FindAllTables())
                 {
                     executor.RegisterTable(table.GetType().Name, table);
@@ -213,7 +213,7 @@ namespace Xeon.XScriptableDB.Editor
 
                 Log($"Query executed successfully. Records: {result.Records.Count}");
 
-                // 結果をJSON形式で出力
+                // Output results in JSON format
                 if (args.TryGetValue("output", out var outputPath))
                 {
                     var json = JsonUtility.ToJson(new QueryResultWrapper { Records = result.Records.Select(r => r.ToString()).ToList() }, true);
@@ -241,8 +241,8 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// テーブル一覧コマンド。
-        /// 使用例: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.ListTables
+        /// List tables command.
+        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.ListTables
         /// </summary>
         public static void ListTables()
         {
@@ -258,8 +258,8 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// スキーマ情報コマンド。
-        /// 使用例: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Schema -table=ItemTable
+        /// Schema information command.
+        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Schema -table=ItemTable
         /// </summary>
         public static void Schema()
         {
@@ -287,7 +287,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// ヘルプコマンド。
+        /// Help command.
         /// </summary>
         public static void Help()
         {
@@ -381,7 +381,7 @@ namespace Xeon.XScriptableDB.Editor
                 return;
             }
             
-            // 汎用エクスポート
+            // Generic export
             var records = new List<object>();
             foreach (var record in table.Records)
             {
@@ -439,7 +439,7 @@ namespace Xeon.XScriptableDB.Editor
             var tableName = table.GetType().Name;
             var hasErrors = false;
 
-            // 重複キーのチェック
+            // Check for duplicate keys
             var duplicates = table.FindDuplicateKeysAsObjects();
             if (duplicates.Count > 0)
             {
@@ -447,7 +447,7 @@ namespace Xeon.XScriptableDB.Editor
                 hasErrors = true;
             }
 
-            // nullレコードのチェック
+            // Check for null records
             var nullCount = 0;
             foreach (var record in table.Records)
             {

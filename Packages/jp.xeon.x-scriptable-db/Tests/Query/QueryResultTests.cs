@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// QueryResult と QueryResultSpan のテスト。
+    /// Tests for QueryResult and QueryResultSpan.
     /// </summary>
     public class QueryResultTests
     {
@@ -106,7 +106,7 @@ namespace Xeon.XScriptableDB.Tests
 
             var result = new QueryResult<TestRecord>(records, indices);
 
-            // ref structはラムダ式内で使用できないため、try-catchでテスト
+            // Cannot use ref struct inside a lambda, so test with try-catch
             var threw = false;
             try
             {
@@ -125,7 +125,7 @@ namespace Xeon.XScriptableDB.Tests
             var records = CreateTestRecords();
             var result = new QueryResult<TestRecord>(records);
 
-            // ref structはラムダ式内で使用できないため、try-catchでテスト
+            // Cannot use ref struct inside a lambda, so test with try-catch
             var threw = false;
             try
             {

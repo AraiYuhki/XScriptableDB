@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// バックアップマニフェスト。
+    /// Backup manifest.
     /// </summary>
     [Serializable]
     public class BackupManifest

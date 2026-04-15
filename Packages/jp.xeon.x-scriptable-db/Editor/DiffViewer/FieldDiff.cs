@@ -3,21 +3,21 @@ using System;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// フィールドレベルの差分情報。
+    /// Diff information at the field level.
     /// </summary>
     [Serializable]
     public class FieldDiff
     {
-        /// <summary>フィールド名</summary>
+        /// <summary>Field name</summary>
         public string FieldName { get; set; }
 
-        /// <summary>変更前の値</summary>
+        /// <summary>Value before change</summary>
         public object OldValue { get; set; }
 
-        /// <summary>変更後の値</summary>
+        /// <summary>Value after change</summary>
         public object NewValue { get; set; }
 
-        /// <summary>差分の種類</summary>
+        /// <summary>Type of diff</summary>
         public DiffType DiffType { get; set; }
 
         public FieldDiff() { }
@@ -31,7 +31,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 値が変更されたかどうか。
+        /// Whether the value has changed.
         /// </summary>
         public bool HasChanged => DiffType != DiffType.Unchanged;
 

@@ -1,58 +1,58 @@
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// バッチ操作の種類。
+    /// Type of batch operation.
     /// </summary>
     public enum BatchOperationType
     {
-        /// <summary>追加</summary>
+        /// <summary>Add</summary>
         Add,
 
-        /// <summary>更新</summary>
+        /// <summary>Update</summary>
         Update,
 
-        /// <summary>削除</summary>
+        /// <summary>Delete</summary>
         Delete,
 
-        /// <summary>アップサート（存在すれば更新、なければ追加）</summary>
+        /// <summary>Upsert (update if exists, add if not)</summary>
         Upsert
     }
 
     /// <summary>
-    /// バッチ操作の結果。
+    /// Batch operation result.
     /// </summary>
     public enum BatchOperationResult
     {
-        /// <summary>成功</summary>
+        /// <summary>Success</summary>
         Success,
 
-        /// <summary>スキップ</summary>
+        /// <summary>Skipped</summary>
         Skipped,
 
-        /// <summary>失敗</summary>
+        /// <summary>Failed</summary>
         Failed
     }
 
     /// <summary>
-    /// バッチ操作のエントリ。
+    /// Batch operation entry.
     /// </summary>
-    /// <typeparam name="TRecord">レコードの型</typeparam>
+    /// <typeparam name="TRecord">Record type</typeparam>
     public class BatchOperationEntry<TRecord>
     {
-        /// <summary>操作の種類</summary>
+        /// <summary>Type of operation</summary>
         public BatchOperationType Type { get; set; }
 
-        /// <summary>対象レコード</summary>
+        /// <summary>Target record</summary>
         public TRecord Record { get; set; }
 
-        /// <summary>操作結果</summary>
+        /// <summary>Operation result</summary>
         public BatchOperationResult Result { get; set; } = BatchOperationResult.Success;
 
-        /// <summary>エラーメッセージ</summary>
+        /// <summary>Error message</summary>
         public string ErrorMessage { get; set; }
 
         /// <summary>
-        /// 追加操作のエントリを作成する。
+        /// Creates an add operation entry.
         /// </summary>
         public static BatchOperationEntry<TRecord> CreateAdd(TRecord record)
         {
@@ -64,7 +64,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 更新操作のエントリを作成する。
+        /// Creates an update operation entry.
         /// </summary>
         public static BatchOperationEntry<TRecord> CreateUpdate(TRecord record)
         {
@@ -76,7 +76,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 削除操作のエントリを作成する。
+        /// Creates a delete operation entry.
         /// </summary>
         public static BatchOperationEntry<TRecord> CreateDelete(TRecord record)
         {
@@ -88,7 +88,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// アップサート操作のエントリを作成する。
+        /// Creates an upsert operation entry.
         /// </summary>
         public static BatchOperationEntry<TRecord> CreateUpsert(TRecord record)
         {

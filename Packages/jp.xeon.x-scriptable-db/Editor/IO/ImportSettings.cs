@@ -3,23 +3,23 @@ using System.Text;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// テーブルインポーターの設定。
+    /// Settings for the table importer.
     /// </summary>
     public class ImportSettings
     {
-        /// <summary>ファイルパス</summary>
+        /// <summary>File path</summary>
         public string FilePath { get; set; }
 
-        /// <summary>エンコーディング</summary>
+        /// <summary>Encoding</summary>
         public Encoding Encoding { get; set; } = Encoding.UTF8;
 
-        /// <summary>区切り文字（nullの場合は自動判定）</summary>
+        /// <summary>Delimiter character (auto-detected if null)</summary>
         public char? Delimiter { get; set; }
 
-        /// <summary>プレビューを表示するかどうか</summary>
+        /// <summary>Whether to show a preview</summary>
         public bool ShowPreview { get; set; } = true;
 
-        /// <summary>変更のない行をスキップするかどうか</summary>
+        /// <summary>Whether to skip unchanged records</summary>
         public bool SkipUnchangedRecords { get; set; } = false;
     }
 }

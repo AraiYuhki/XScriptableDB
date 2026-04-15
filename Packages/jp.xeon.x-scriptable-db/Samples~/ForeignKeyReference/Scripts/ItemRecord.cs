@@ -7,8 +7,8 @@ using Xeon.XScriptableDB.Validation;
 namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
 {
     /// <summary>
-    /// アイテムマスタのレコードクラス。
-    /// カテゴリとレアリティへの外部キー参照を持つ。
+    /// Record class for the item master.
+    /// Holds foreign key references to category and rarity.
     /// </summary>
     [Serializable]
     public class ItemRecord
@@ -16,56 +16,56 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         [SerializeField, CsvColumn("ID"), PrimaryKey]
         private int id;
 
-        [SerializeField, CsvColumn("アイテム名")]
+        [SerializeField, CsvColumn("ItemName")]
         private string name;
 
-        [SerializeField, CsvColumn("説明")]
+        [SerializeField, CsvColumn("Description")]
         private string description;
 
-        [SerializeField, CsvColumn("カテゴリID"), SecondaryKey, ForeignKey(typeof(CategoryTable))]
+        [SerializeField, CsvColumn("CategoryID"), SecondaryKey, ForeignKey(typeof(CategoryTable))]
         private int categoryId;
 
-        [SerializeField, CsvColumn("レアリティID"), SecondaryKey, ForeignKey(typeof(RarityTable))]
+        [SerializeField, CsvColumn("RarityID"), SecondaryKey, ForeignKey(typeof(RarityTable))]
         private int rarityId;
 
-        [SerializeField, CsvColumn("基本価格")]
+        [SerializeField, CsvColumn("BasePrice")]
         private int basePrice;
 
-        [SerializeField, CsvColumn("スタック上限")]
+        [SerializeField, CsvColumn("StackLimit")]
         private int stackLimit;
 
         /// <summary>
-        /// アイテムID（主キー）
+        /// Item ID (primary key)
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// アイテム名
+        /// Item name
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// 説明
+        /// Description
         /// </summary>
         public string Description => description;
 
         /// <summary>
-        /// カテゴリID（外部キー）
+        /// Category ID (foreign key)
         /// </summary>
         public int CategoryId => categoryId;
 
         /// <summary>
-        /// レアリティID（外部キー）
+        /// Rarity ID (foreign key)
         /// </summary>
         public int RarityId => rarityId;
 
         /// <summary>
-        /// 基本価格
+        /// Base price
         /// </summary>
         public int BasePrice => basePrice;
 
         /// <summary>
-        /// スタック上限
+        /// Stack limit
         /// </summary>
         public int StackLimit => stackLimit;
 

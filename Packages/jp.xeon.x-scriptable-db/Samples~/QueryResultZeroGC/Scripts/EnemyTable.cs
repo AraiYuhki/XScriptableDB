@@ -4,8 +4,8 @@ using Xeon.XScriptableDB;
 namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
 {
     /// <summary>
-    /// 敵テーブル。
-    /// Zero GCサンプル用。
+    /// Enemy table.
+    /// For the Zero GC sample.
     /// </summary>
     [CreateAssetMenu(
         fileName = "EnemyTable",

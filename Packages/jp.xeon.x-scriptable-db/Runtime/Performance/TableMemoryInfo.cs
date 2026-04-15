@@ -3,7 +3,7 @@ using System;
 namespace Xeon.XScriptableDB.Performance
 {
     /// <summary>
-    /// テーブルのメモリ使用量情報。
+    /// Memory usage information for a table.
     /// </summary>
     public struct TableMemoryInfo
     {

@@ -6,7 +6,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests.Editor
 {
     /// <summary>
-    /// TableEditor関連クラスのテスト。
+    /// Tests for TableEditor-related classes.
     /// </summary>
     public class TableEditorTests
     {
@@ -307,7 +307,7 @@ namespace Xeon.XScriptableDB.Tests.Editor
         [Test]
         public void ClassGenerator_TypeConversion_SnakeCaseEnum_ConvertsToPascalCase()
         {
-            // スネークケースのenum型名はPascalCaseに変換される
+            // snake_case enum type names are converted to PascalCase
             var definition = new TableDefinition
             {
                 TableName = "test",
@@ -320,15 +320,15 @@ namespace Xeon.XScriptableDB.Tests.Editor
 
             var code = ClassGenerator.GenerateRecord(definition);
             Assert.IsTrue(code.Contains("ElementType"),
-                "スネークケースのenum型名はPascalCaseに変換される");
+                "snake_case enum type names are converted to PascalCase");
             Assert.IsFalse(code.Contains("private element_type "),
-                "スネークケースのままのフィールド型は生成されない");
+                "Fields with snake_case type names are not generated as-is");
         }
 
         [Test]
         public void ClassGenerator_TypeConversion_PascalCaseEnum_PreservedAsPascalCase()
         {
-            // すでにPascalCaseのenum型名はそのまま維持される
+            // Enum type names already in PascalCase are preserved as-is
             var definition = new TableDefinition
             {
                 TableName = "test",
@@ -341,7 +341,7 @@ namespace Xeon.XScriptableDB.Tests.Editor
 
             var code = ClassGenerator.GenerateRecord(definition);
             Assert.IsTrue(code.Contains("RarityType"),
-                "PascalCaseのenum型名はそのまま維持される");
+                "PascalCase enum type names are preserved as-is");
         }
 
         [Test]
@@ -358,16 +358,16 @@ namespace Xeon.XScriptableDB.Tests.Editor
             };
 
             var code = ClassGenerator.GenerateRecord(definition);
-            // フィールド名にはアンダースコアプレフィックスが付く
+            // Field names are prefixed with underscore
             Assert.IsTrue(code.Contains("private int _id"),
-                "int型フィールドは_プレフィックス付きで生成される");
+                "int type fields are generated with _ prefix");
             Assert.IsTrue(code.Contains("private string _itemName"),
-                "スネークケースのフィールド名はキャメルケースに変換され_プレフィックスが付く");
-            // プロパティのゲッターも_プレフィックス付きフィールドを参照する
+                "snake_case field names are converted to camelCase with _ prefix");
+            // Property getters also reference fields with _ prefix
             Assert.IsTrue(code.Contains("get => _id"),
-                "プロパティのgetterは_プレフィックス付きフィールドを参照する");
+                "Property getters reference fields with _ prefix");
             Assert.IsTrue(code.Contains("get => _itemName"),
-                "スネークケース由来のプロパティのgetterも_プレフィックス付きフィールドを参照する");
+                "Property getters derived from snake_case also reference fields with _ prefix");
         }
 
         #endregion

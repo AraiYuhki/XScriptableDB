@@ -3,7 +3,7 @@ using System;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// マイグレーション操作の定義。
+    /// Definition of a migration operation.
     /// </summary>
     [Serializable]
     public class MigrationOperation

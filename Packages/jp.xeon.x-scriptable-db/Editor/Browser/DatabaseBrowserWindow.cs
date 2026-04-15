@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// データベースブラウザウィンドウ。
+    /// Database browser window.
     /// </summary>
     public class DatabaseBrowserWindow : EditorWindow
     {
@@ -87,7 +87,7 @@ namespace Xeon.XScriptableDB.Editor
                 var isPrimaryKey = field.GetCustomAttribute<PrimaryKeyAttribute>() != null;
                 var isSecondaryKey = field.GetCustomAttributes<SecondaryKeyAttribute>().Any();
 
-                // privateの場合は、SerializeFieldが無ければ対象にしない
+                // Skip private fields without SerializeField
                 if (field.IsPrivate && !isSerializable)
                     continue;
 
@@ -155,18 +155,18 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
 
-            // 左パネル: テーブルリスト
+            // Left panel: table list
             DrawTableList();
 
-            // スプリッター
+            // Splitter
             DrawSplitter();
 
-            // 右パネル: テーブル詳細
+            // Right panel: table details
             DrawTableInfo();
 
             EditorGUILayout.EndHorizontal();
 
-            // スプリッタードラッグ中は再描画
+            // Repaint while dragging the splitter
             if (isDraggingSplit)
                 Repaint();
         }
@@ -175,7 +175,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.BeginVertical(GUILayout.Width(splitPosition));
 
-            // ヘッダー
+            // Header
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
             EditorGUILayout.LabelField($"Tables ({tables.Count})", EditorStyles.boldLabel);
             if (GUILayout.Button("↻", EditorStyles.toolbarButton, GUILayout.Width(25)))
@@ -184,7 +184,7 @@ namespace Xeon.XScriptableDB.Editor
             }
             EditorGUILayout.EndHorizontal();
 
-            // 検索バー
+            // Search bar
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
             searchText = EditorGUILayout.TextField(searchText, EditorStyles.toolbarSearchField);
             if (GUILayout.Button("", GUI.skin.FindStyle("ToolbarSearchCancelButton") ?? EditorStyles.toolbarButton, GUILayout.Width(18)))
@@ -194,7 +194,7 @@ namespace Xeon.XScriptableDB.Editor
             }
             EditorGUILayout.EndHorizontal();
 
-            // テーブルリスト
+            // Table list
             tableListScrollPosition = EditorGUILayout.BeginScrollView(tableListScrollPosition);
 
             var filteredTables = string.IsNullOrEmpty(searchText)
@@ -208,17 +208,17 @@ namespace Xeon.XScriptableDB.Editor
 
                 var rect = EditorGUILayout.BeginHorizontal(GUILayout.Height(22));
 
-                // 背景描画
+                // Draw background
                 if (isSelected)
                     EditorGUI.DrawRect(rect, bgColor);
 
-                // テーブル名
+                // Table name
                 var displayName = $"  {table.Name} ({table.RecordCount})";
                 EditorGUILayout.LabelField(displayName, GUILayout.ExpandWidth(true));
 
                 EditorGUILayout.EndHorizontal();
 
-                // クリック検出
+                // Detect click
                 if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
                 {
                     selectedTable = table;
@@ -272,7 +272,7 @@ namespace Xeon.XScriptableDB.Editor
 
             tableInfoScrollPosition = EditorGUILayout.BeginScrollView(tableInfoScrollPosition, GUILayout.ExpandWidth(true));
 
-            // テーブル名とアクション
+            // Table name and actions
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(selectedTable.Name, headerStyle);
             GUILayout.FlexibleSpace();
@@ -290,7 +290,7 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.Space(5);
 
-            // 基本情報
+            // Basic information
             EditorGUILayout.LabelField("Table Information", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
             EditorGUILayout.LabelField("Asset Path:", selectedTable.AssetPath);
@@ -300,12 +300,12 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.Space(10);
 
-            // カラム情報
+            // Column information
             DrawColumnsInfo();
 
             EditorGUILayout.Space(10);
 
-            // データプレビュー
+            // Data preview
             DrawDataPreview();
 
             EditorGUILayout.EndScrollView();
@@ -322,7 +322,7 @@ namespace Xeon.XScriptableDB.Editor
                 return;
             }
 
-            // テーブルヘッダー
+            // Table header
             EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Name", EditorStyles.boldLabel, GUILayout.Width(150));
             EditorGUILayout.LabelField("Type", EditorStyles.boldLabel, GUILayout.Width(120));
@@ -330,7 +330,7 @@ namespace Xeon.XScriptableDB.Editor
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
-            // カラム一覧
+            // Column list
             foreach (var column in selectedTable.Columns)
             {
                 EditorGUILayout.BeginHorizontal();
@@ -365,9 +365,9 @@ namespace Xeon.XScriptableDB.Editor
                 dataPreviewScrollPosition,
                 GUILayout.Height(220), GUILayout.ExpandWidth(true));
 
-            // ヘッダー
+            // Header
             EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
-            foreach (var column in selectedTable.Columns.Take(6)) // 最大6カラム表示
+            foreach (var column in selectedTable.Columns.Take(6)) // Show up to 6 columns
             {
                 EditorGUILayout.LabelField(column.Name, EditorStyles.boldLabel, GUILayout.Width(100));
             }
@@ -377,7 +377,7 @@ namespace Xeon.XScriptableDB.Editor
             }
             EditorGUILayout.EndHorizontal();
 
-            // データ行
+            // Data rows
             var rowCount = 0;
             foreach (var record in selectedTable.TableAsset.Records)
             {
@@ -437,11 +437,11 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (selectedTable?.Asset == null) return;
 
-            // TableEditorWindowを開く
+            // Open the DataEditorWindow
             var window = EditorWindow.GetWindow<DataEditorWindow>();
             window.Show();
 
-            // TODO: 選択したテーブルを開く処理を追加
+            // TODO: Add logic to open the selected table
         }
     }
 }

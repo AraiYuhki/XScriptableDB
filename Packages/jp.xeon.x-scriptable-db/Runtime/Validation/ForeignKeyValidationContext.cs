@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// 外部キー検証のコンテキスト。
+    /// Context for foreign key validation.
     /// </summary>
     public class ForeignKeyValidationContext
     {
@@ -14,27 +14,27 @@ namespace Xeon.XScriptableDB.Validation
         private readonly Dictionary<Type, HashSet<object>> keyCache = new();
 
         /// <summary>
-        /// テーブルを登録する。
+        /// Registers a table.
         /// </summary>
-        /// <typeparam name="T">テーブルの型</typeparam>
-        /// <param name="table">テーブルアセット</param>
+        /// <typeparam name="T">Type of the table</typeparam>
+        /// <param name="table">Table asset</param>
         public void RegisterTable<T>(T table) where T : ITableAsset
         {
             tables[typeof(T)] = table;
         }
 
         /// <summary>
-        /// テーブルを登録する。
+        /// Registers a table.
         /// </summary>
-        /// <param name="tableType">テーブルの型</param>
-        /// <param name="table">テーブルアセット</param>
+        /// <param name="tableType">Type of the table</param>
+        /// <param name="table">Table asset</param>
         public void RegisterTable(Type tableType, ITableAsset table)
         {
             tables[tableType] = table;
         }
 
         /// <summary>
-        /// 登録されているテーブルを取得する。
+        /// Returns the registered table.
         /// </summary>
         public ITableAsset GetTable(Type tableType)
         {
@@ -42,7 +42,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// テーブルのキーセットを取得する（キャッシュ付き）。
+        /// Returns the key set for a table (with caching).
         /// </summary>
         public HashSet<object> GetKeySet(Type tableType)
         {
@@ -75,7 +75,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// キーキャッシュをクリアする。
+        /// Clears the key cache.
         /// </summary>
         public void ClearCache()
         {
@@ -83,7 +83,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// PrimaryKeyフィールドを取得する。
+        /// Returns the PrimaryKey field.
         /// </summary>
         private FieldInfo GetPrimaryKeyField(Type recordType)
         {

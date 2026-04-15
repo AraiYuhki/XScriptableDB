@@ -3,37 +3,37 @@ using System;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// フィールドまたはプロパティをSecondaryKeyとしてマークする属性。
-    /// SecondaryKeyはO(1)検索用のハッシュインデックスを構築するために使用される。
+    /// Attribute to mark a field or property as a SecondaryKey.
+    /// SecondaryKey is used to build a hash index for O(1) lookups.
     /// </summary>
     /// <remarks>
-    /// 1つのレコードクラスに複数のSecondaryKeyを指定可能。
-    /// 各SecondaryKeyには一意の名前を付ける必要がある。
-    /// 同じ名前を持つ複数のフィールドは複合インデックスとしてグループ化される。
+    /// Multiple SecondaryKeys may be specified on a single record class.
+    /// Each SecondaryKey must have a unique name.
+    /// Multiple fields with the same name are grouped as a composite index.
     /// </remarks>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = true, Inherited = true)]
     public class SecondaryKeyAttribute : Attribute
     {
         /// <summary>
-        /// インデックスの名前。指定しない場合はメンバー名が使用される。
-        /// 同じ名前を持つ複数のフィールドは複合インデックスとしてグループ化される。
+        /// Name of the index. If not specified, the member name is used.
+        /// Multiple fields sharing the same name are grouped as a composite index.
         /// </summary>
         public string Name { get; }
 
         /// <summary>
-        /// 複合インデックス内でのフィールド順序。
-        /// 単一フィールドインデックスの場合は無視される。
+        /// Field order within a composite index.
+        /// Ignored for single-field indexes.
         /// </summary>
         public int Order { get; set; } = 0;
 
         /// <summary>
-        /// 同じキー値を持つ複数のレコードを許可するかどうか。
-        /// trueの場合、1つのキーに対して複数のレコードがマッピングされる。
+        /// Whether to allow multiple records with the same key value.
+        /// When true, multiple records can be mapped to a single key.
         /// </summary>
         public bool AllowDuplicates { get; set; } = true;
 
         /// <summary>
-        /// SecondaryKeyAttribute を作成する。
+        /// Creates a SecondaryKeyAttribute.
         /// </summary>
         public SecondaryKeyAttribute()
         {
@@ -41,19 +41,19 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// 名前を指定して SecondaryKeyAttribute を作成する。
+        /// Creates a SecondaryKeyAttribute with a specified name.
         /// </summary>
-        /// <param name="name">インデックスの名前</param>
+        /// <param name="name">Name of the index</param>
         public SecondaryKeyAttribute(string name)
         {
             Name = name;
         }
 
         /// <summary>
-        /// 名前と順序を指定して SecondaryKeyAttribute を作成する。
+        /// Creates a SecondaryKeyAttribute with a specified name and order.
         /// </summary>
-        /// <param name="name">インデックスの名前</param>
-        /// <param name="order">複合インデックス内の順序</param>
+        /// <param name="name">Name of the index</param>
+        /// <param name="order">Order within the composite index</param>
         public SecondaryKeyAttribute(string name, int order)
         {
             Name = name;

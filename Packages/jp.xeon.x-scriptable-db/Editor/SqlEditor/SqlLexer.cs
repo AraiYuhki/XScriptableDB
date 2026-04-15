@@ -4,7 +4,7 @@ using System.Text;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQL字句解析器。
+    /// SQL lexical analyzer.
     /// </summary>
     public class SqlLexer
     {
@@ -157,7 +157,7 @@ namespace Xeon.XScriptableDB.Editor
                 return new Token(TokenType.GreaterThan, ">", startPos);
             }
 
-            // Minus (演算子として処理)
+            // Minus (processed as an operator)
             if (c == '-')
             {
                 position++;

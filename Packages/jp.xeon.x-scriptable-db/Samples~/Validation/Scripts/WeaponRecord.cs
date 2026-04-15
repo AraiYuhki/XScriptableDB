@@ -8,8 +8,8 @@ using Range =  Xeon.XScriptableDB.Validation.RangeAttribute;
 namespace Xeon.XScriptableDB.Samples.Validation
 {
     /// <summary>
-    /// 武器データのレコードクラス。
-    /// 外部キー参照のバリデーションを示すサンプル。
+    /// Record class for weapon data.
+    /// Sample demonstrating foreign key reference validation.
     /// </summary>
     [Serializable]
     public class WeaponRecord
@@ -17,40 +17,40 @@ namespace Xeon.XScriptableDB.Samples.Validation
         [SerializeField, CsvColumn("ID"), PrimaryKey]
         private int id;
 
-        [SerializeField, CsvColumn("武器名"), Required]
+        [SerializeField, CsvColumn("WeaponName"), Required]
         private string name;
 
-        [SerializeField, CsvColumn("スキルID"), ForeignKey(typeof(SkillTable))]
+        [SerializeField, CsvColumn("SkillID"), ForeignKey(typeof(SkillTable))]
         private int skillId;
 
-        [SerializeField, CsvColumn("攻撃力"), Range(1, 9999)]
+        [SerializeField, CsvColumn("Attack"), Range(1, 9999)]
         private int attack;
 
-        [SerializeField, CsvColumn("レアリティ"), Range(1, 5)]
+        [SerializeField, CsvColumn("Rarity"), Range(1, 5)]
         private int rarity;
 
         /// <summary>
-        /// 武器ID（主キー）
+        /// Weapon ID (primary key)
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// 武器名
+        /// Weapon name
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// 付与スキルID（SkillTableへの外部キー）
+        /// Granted skill ID (foreign key to SkillTable)
         /// </summary>
         public int SkillId => skillId;
 
         /// <summary>
-        /// 攻撃力
+        /// Attack power
         /// </summary>
         public int Attack => attack;
 
         /// <summary>
-        /// レアリティ（1-5）
+        /// Rarity (1-5)
         /// </summary>
         public int Rarity => rarity;
 

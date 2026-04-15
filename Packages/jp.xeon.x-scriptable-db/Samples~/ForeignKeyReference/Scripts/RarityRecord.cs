@@ -6,8 +6,8 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
 {
     /// <summary>
-    /// レアリティマスタのレコードクラス。
-    /// アイテムの希少度を定義する。
+    /// Record class for the rarity master.
+    /// Defines the rarity level of items.
     /// </summary>
     [Serializable]
     public class RarityRecord
@@ -15,54 +15,54 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         [SerializeField, CsvColumn("ID"), PrimaryKey]
         private int id;
 
-        [SerializeField, CsvColumn("レアリティ名")]
+        [SerializeField, CsvColumn("RarityName")]
         private string name;
 
-        [SerializeField, CsvColumn("カラーR")]
+        [SerializeField, CsvColumn("ColorR")]
         private float colorR;
 
-        [SerializeField, CsvColumn("カラーG")]
+        [SerializeField, CsvColumn("ColorG")]
         private float colorG;
 
-        [SerializeField, CsvColumn("カラーB")]
+        [SerializeField, CsvColumn("ColorB")]
         private float colorB;
 
-        [SerializeField, CsvColumn("価格倍率")]
+        [SerializeField, CsvColumn("PriceMultiplier")]
         private float priceMultiplier;
 
-        [SerializeField, CsvColumn("ドロップ率")]
+        [SerializeField, CsvColumn("DropRate")]
         private float dropRate;
 
         /// <summary>
-        /// レアリティID（主キー）
+        /// Rarity ID (primary key)
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// レアリティ名
+        /// Rarity name
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// 表示色
+        /// Display color
         /// </summary>
         public Color Color => new(colorR, colorG, colorB, 1f);
 
         /// <summary>
-        /// 価格倍率
+        /// Price multiplier
         /// </summary>
         public float PriceMultiplier => priceMultiplier;
 
         /// <summary>
-        /// ドロップ率
+        /// Drop rate
         /// </summary>
         public float DropRate => dropRate;
 
         /// <summary>
-        /// 星の数（レアリティIDと同じ）
+        /// Star count (same as rarity ID)
         /// </summary>
         public int StarCount => id;
 
-        public override string ToString() => $"[{id}] {name} (×{priceMultiplier})";
+        public override string ToString() => $"[{id}] {name} (x{priceMultiplier})";
     }
 }

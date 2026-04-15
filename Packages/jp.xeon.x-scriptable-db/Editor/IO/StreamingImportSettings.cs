@@ -4,29 +4,29 @@ using System.Text;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// ストリーミングインポートの設定。
+    /// Settings for a streaming import.
     /// </summary>
     public class StreamingImportSettings
     {
-        /// <summary>チャンクサイズ（1回で処理する行数）</summary>
+        /// <summary>Chunk size (number of lines processed at a time)</summary>
         public int ChunkSize { get; set; } = 1000;
 
-        /// <summary>エンコーディング</summary>
+        /// <summary>Encoding</summary>
         public Encoding Encoding { get; set; } = Encoding.UTF8;
 
-        /// <summary>区切り文字</summary>
+        /// <summary>Delimiter character</summary>
         public char Delimiter { get; set; } = ',';
 
-        /// <summary>ヘッダー行があるか</summary>
+        /// <summary>Whether a header row is present</summary>
         public bool HasHeader { get; set; } = true;
 
-        /// <summary>エラー時に継続するか</summary>
+        /// <summary>Whether to continue on error</summary>
         public bool ContinueOnError { get; set; } = true;
 
-        /// <summary>最大エラー数（これを超えると処理を停止）</summary>
+        /// <summary>Maximum error count (processing stops when this is exceeded)</summary>
         public int MaxErrors { get; set; } = 100;
 
-        /// <summary>進捗コールバック</summary>
+        /// <summary>Progress callback</summary>
         public Action<StreamingImportProgress> OnProgress { get; set; }
     }
 }

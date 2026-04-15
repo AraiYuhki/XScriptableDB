@@ -5,63 +5,63 @@ using Xeon.XScriptableDB.IO;
 namespace XScriptableDB.Samples
 {
     /// <summary>
-    /// アイテムデータのレコードクラス。
+    /// Record class for item data.
     /// </summary>
     [Serializable]
     public class ItemRecord
     {
         /// <summary>
-        /// アイテムID（主キー）。
-        /// PrimaryKey属性を付けることで、バイナリサーチによるO(log n)の高速検索が可能。
+        /// Item ID (primary key).
+        /// Adding the PrimaryKey attribute enables O(log n) fast lookup via binary search.
         /// </summary>
         [PrimaryKey]
         [CsvColumn("ID")]
         public int Id;
 
         /// <summary>
-        /// カテゴリ（副キー）。
-        /// SecondaryKey属性を付けることで、ハッシュインデックスによるO(1)の検索が可能。
+        /// Category (secondary key).
+        /// Adding the SecondaryKey attribute enables O(1) lookup via hash index.
         /// </summary>
         [SecondaryKey]
-        [CsvColumn("カテゴリ")]
+        [CsvColumn("Category")]
         public string Category;
 
         /// <summary>
-        /// アイテム名。
+        /// Item name.
         /// </summary>
-        [CsvColumn("名前")]
+        [CsvColumn("Name")]
         public string Name;
 
         /// <summary>
-        /// 説明文。
+        /// Description.
         /// </summary>
-        [CsvColumn("説明")]
+        [CsvColumn("Description")]
         public string Description;
 
         /// <summary>
-        /// 価格。
+        /// Price.
         /// </summary>
-        [CsvColumn("価格")]
+        [CsvColumn("Price")]
         public int Price;
 
         /// <summary>
-        /// 攻撃力。
+        /// Attack power.
         /// </summary>
-        [CsvColumn("攻撃力")]
+        [CsvColumn("Attack")]
         public int Attack;
 
         /// <summary>
-        /// 防御力。
+        /// Defense power.
         /// </summary>
-        [CsvColumn("防御力")]
+        [CsvColumn("Defense")]
         public int Defense;
 
         /// <summary>
-        /// レアリティ（副キー）。
-        /// 複数のSecondaryKeyを設定可能。
+        /// Rarity (secondary key).
+        /// Multiple SecondaryKeys can be set.
         /// </summary>
         [SecondaryKey]
-        [CsvColumn("レアリティ")]
+        [CsvColumn("Rarity")]
         public int Rarity;
 
         public override string ToString()

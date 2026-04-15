@@ -5,22 +5,22 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
 {
     /// <summary>
-    /// パフォーマンス計測ユーティリティ。
+    /// Performance measurement utility.
     /// </summary>
     public static class PerformanceProfiler
     {
         /// <summary>
-        /// 処理時間とGCアロケーションを計測する。
+        /// Measures execution time and GC allocation.
         /// </summary>
-        /// <param name="action">計測対象のアクション</param>
-        /// <param name="iterations">繰り返し回数</param>
-        /// <returns>計測結果</returns>
+        /// <param name="action">Action to measure</param>
+        /// <param name="iterations">Number of iterations</param>
+        /// <returns>Measurement result</returns>
         public static ProfileResult Measure(Action action, int iterations = 1)
         {
-            // ウォームアップ
+            // Warmup
             action();
 
-            // GCを実行してクリーンな状態にする
+            // Run GC to start from a clean state
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();
@@ -57,7 +57,7 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         }
 
         /// <summary>
-        /// 2つの処理を比較計測する。
+        /// Compares measurement of two operations.
         /// </summary>
         public static ComparisonResult Compare(
             string name1, Action action1,
@@ -78,7 +78,7 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
     }
 
     /// <summary>
-    /// パフォーマンス計測結果。
+    /// Performance measurement result.
     /// </summary>
     public class ProfileResult
     {
@@ -101,7 +101,7 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
     }
 
     /// <summary>
-    /// 比較計測結果。
+    /// Comparison measurement result.
     /// </summary>
     public class ComparisonResult
     {

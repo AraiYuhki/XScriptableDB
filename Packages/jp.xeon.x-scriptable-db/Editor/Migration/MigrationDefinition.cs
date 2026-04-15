@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// マイグレーション操作の種類。
+    /// Types of migration operations.
     /// </summary>
     public enum MigrationOperationType
     {
@@ -19,7 +19,7 @@ namespace Xeon.XScriptableDB.Editor
     }
     
     /// <summary>
-    /// マイグレーション定義。
+    /// Migration definition.
     /// </summary>
     [CreateAssetMenu(fileName = "NewMigration", menuName = "XScriptableDB/Migration Definition")]
     public class MigrationDefinition : ScriptableObject

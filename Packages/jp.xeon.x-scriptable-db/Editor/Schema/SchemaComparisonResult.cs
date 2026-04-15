@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// スキーマ比較結果。
+    /// Schema comparison result.
     /// </summary>
     public class SchemaComparisonResult
     {

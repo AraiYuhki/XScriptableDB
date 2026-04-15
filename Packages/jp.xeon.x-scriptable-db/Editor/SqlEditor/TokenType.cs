@@ -1,7 +1,7 @@
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQLトークンの種類。
+    /// SQL token types.
     /// </summary>
     public enum TokenType
     {

@@ -3,7 +3,7 @@
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// カラム情報。
+    /// Column information.
     /// </summary>
     public class ColumnInfo
     {

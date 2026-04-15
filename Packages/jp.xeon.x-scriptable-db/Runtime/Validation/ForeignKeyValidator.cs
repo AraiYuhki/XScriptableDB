@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// 外部キーバリデーター。
+    /// Foreign key validator.
     /// </summary>
     public static class ForeignKeyValidator
     {
@@ -14,13 +14,13 @@ namespace Xeon.XScriptableDB.Validation
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         /// <summary>
-        /// 外部キー制約を検証する。
+        /// Validates foreign key constraints.
         /// </summary>
-        /// <typeparam name="T">レコードの型</typeparam>
-        /// <param name="tableAsset">検証するテーブル</param>
-        /// <param name="context">検証コンテキスト</param>
-        /// <param name="keySelector">キーセレクター</param>
-        /// <returns>検証結果</returns>
+        /// <typeparam name="T">Type of the record</typeparam>
+        /// <param name="tableAsset">Table to validate</param>
+        /// <param name="context">Validation context</param>
+        /// <param name="keySelector">Key selector</param>
+        /// <returns>Validation result</returns>
         public static TableValidationResult ValidateForeignKeys<T>(ITableAsset tableAsset,
             ForeignKeyValidationContext context,
             Func<T, object> keySelector = null) where T : class
@@ -50,7 +50,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// 単一レコードの外部キーを検証する。
+        /// Validates the foreign keys of a single record.
         /// </summary>
         private static RecordValidationResult ValidateRecord<T>(
             T record,
@@ -72,7 +72,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// 単一フィールドの外部キーを検証する。
+        /// Validates the foreign key of a single field.
         /// </summary>
         private static void ValidateFieldForeignKey<T>(
             T record,
@@ -105,7 +105,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// 外部キーフィールドを取得する。
+        /// Returns the foreign key fields.
         /// </summary>
         private static List<(FieldInfo field, ForeignKeyAttribute attr)> GetForeignKeyFields(Type type)
         {
@@ -124,7 +124,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// 外部キー参照の整合性レポートを生成する。
+        /// Generates an integrity report for foreign key references.
         /// </summary>
         public static ForeignKeyReport GenerateReport(
             ITableAsset sourceTable,
@@ -155,7 +155,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// ターゲットテーブルのキーを収集する。
+        /// Collects the keys from the target table.
         /// </summary>
         private static HashSet<object> CollectTargetKeys(ITableAsset targetTable)
         {
@@ -179,7 +179,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// 外部キー参照を検証してレポートに追加する。
+        /// Validates foreign key references and adds findings to the report.
         /// </summary>
         private static void ValidateForeignKeyReferences(
             ITableAsset sourceTable,
@@ -203,7 +203,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// PrimaryKeyフィールドを取得する。
+        /// Returns the PrimaryKey field.
         /// </summary>
         private static FieldInfo GetPrimaryKeyField(Type recordType)
         {

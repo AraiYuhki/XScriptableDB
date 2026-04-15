@@ -209,7 +209,7 @@ namespace {namespaceName}
                     result = "SerializableDateTime";
                     break;
                 default:
-                    // Enumやユーザー定義型はPascalCaseに変換
+                    // Convert enum and user-defined types to PascalCase
                     result = typeName.SnakeToPascalCase();
                     break;
             }

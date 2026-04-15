@@ -4,38 +4,38 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// ストリーミングインポートの進捗情報。
+    /// Progress information for a streaming import.
     /// </summary>
     public class StreamingImportProgress
     {
-        /// <summary>現在の状態</summary>
+        /// <summary>Current state</summary>
         public StreamingImportState State { get; set; } = StreamingImportState.NotStarted;
 
-        /// <summary>総行数</summary>
+        /// <summary>Total line count</summary>
         public int TotalLines { get; set; }
 
-        /// <summary>処理済み行数</summary>
+        /// <summary>Number of processed lines</summary>
         public int ProcessedLines { get; set; }
 
-        /// <summary>成功したレコード数</summary>
+        /// <summary>Number of successfully imported records</summary>
         public int SuccessCount { get; set; }
 
-        /// <summary>失敗したレコード数</summary>
+        /// <summary>Number of failed records</summary>
         public int ErrorCount { get; set; }
 
-        /// <summary>警告リスト</summary>
+        /// <summary>Warning list</summary>
         public List<string> Warnings { get; } = new();
 
-        /// <summary>エラーリスト</summary>
+        /// <summary>Error list</summary>
         public List<string> Errors { get; } = new();
 
-        /// <summary>現在のチャンク番号</summary>
+        /// <summary>Current chunk number</summary>
         public int CurrentChunk { get; set; }
 
-        /// <summary>総チャンク数</summary>
+        /// <summary>Total chunk count</summary>
         public int TotalChunks { get; set; }
 
-        /// <summary>処理の進捗（0.0〜1.0）</summary>
+        /// <summary>Processing progress (0.0 to 1.0)</summary>
         public float Progress
         {
             get
@@ -46,16 +46,16 @@ namespace Xeon.XScriptableDB.Editor
             }
         }
 
-        /// <summary>エラーメッセージ（失敗時）</summary>
+        /// <summary>Error message (on failure)</summary>
         public string ErrorMessage { get; set; }
 
-        /// <summary>開始時刻</summary>
+        /// <summary>Start time</summary>
         public DateTime StartTime { get; set; }
 
-        /// <summary>終了時刻</summary>
+        /// <summary>End time</summary>
         public DateTime? EndTime { get; set; }
 
-        /// <summary>経過時間</summary>
+        /// <summary>Elapsed time</summary>
         public TimeSpan ElapsedTime => (EndTime ?? DateTime.Now) - StartTime;
     }
 }

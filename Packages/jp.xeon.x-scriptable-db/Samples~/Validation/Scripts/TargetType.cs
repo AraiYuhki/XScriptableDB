@@ -1,7 +1,7 @@
 namespace Xeon.XScriptableDB.Samples.Validation
 {
     /// <summary>
-    /// スキルの対象タイプ。
+    /// Skill target type.
     /// </summary>
     public enum TargetType
     {

@@ -5,11 +5,11 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SecondaryKeyインデックスの定義。
-    /// 単一フィールドと複合インデックスの両方を表現できる。
+    /// Definition of a SecondaryKey index.
+    /// Can represent both single-field and composite indexes.
     /// </summary>
     /// <remarks>
-    /// Editor操作を想定しているため、編集用にsetを公開する。
+    /// Setters are exposed for editing because this class is intended for use in the Editor.
     /// </remarks>
     [Serializable]
     public class IndexDefinition
@@ -24,7 +24,7 @@ namespace Xeon.XScriptableDB.Editor
         private bool allowDuplicates = true;
 
         /// <summary>
-        /// インデックスの名前。
+        /// The name of the index.
         /// </summary>
         public string Name
         {
@@ -33,8 +33,8 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// インデックスを構成するカラム名のリスト。
-        /// 複数のカラムがある場合は複合インデックス。
+        /// List of column names that make up the index.
+        /// When multiple columns are present, it is a composite index.
         /// </summary>
         public List<string> Columns
         {
@@ -43,7 +43,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 同じキー値を持つ複数のレコードを許可するかどうか。
+        /// Whether to allow multiple records with the same key value.
         /// </summary>
         public bool AllowDuplicates
         {
@@ -52,7 +52,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 複合インデックスかどうか。
+        /// Whether this is a composite index.
         /// </summary>
         public bool IsComposite => columns.Count > 1;
 
@@ -73,7 +73,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 単一カラムのインデックス定義から作成。
+        /// Creates an index definition from a single column.
         /// </summary>
         public static IndexDefinition FromSingleColumn(string columnName)
         {
@@ -81,7 +81,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 複合インデックス定義を作成。
+        /// Creates a composite index definition.
         /// </summary>
         public static IndexDefinition FromComposite(string name, params string[] columnNames)
         {
@@ -89,7 +89,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// レガシー形式（文字列）からの移行。
+        /// Migrates from the legacy format (string).
         /// </summary>
         public static IndexDefinition FromLegacy(string legacyIndexName)
         {

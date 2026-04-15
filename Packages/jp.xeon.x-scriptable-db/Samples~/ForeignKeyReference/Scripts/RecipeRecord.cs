@@ -7,8 +7,8 @@ using Xeon.XScriptableDB.Validation;
 namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
 {
     /// <summary>
-    /// レシピマスタのレコードクラス。
-    /// アイテムへの複数の外部キー参照を持つ。
+    /// Record class for the recipe master.
+    /// Holds multiple foreign key references to items.
     /// </summary>
     [Serializable]
     public class RecipeRecord
@@ -16,95 +16,95 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         [SerializeField, CsvColumn("ID"), PrimaryKey]
         private int id;
 
-        [SerializeField, CsvColumn("レシピ名")]
+        [SerializeField, CsvColumn("RecipeName")]
         private string name;
 
-        [SerializeField, CsvColumn("完成品ID"), ForeignKey(typeof(ItemTable))]
+        [SerializeField, CsvColumn("ResultItemID"), ForeignKey(typeof(ItemTable))]
         private int resultItemId;
 
-        [SerializeField, CsvColumn("完成数")]
+        [SerializeField, CsvColumn("ResultCount")]
         private int resultCount;
 
-        [SerializeField, CsvColumn("素材1ID")]
+        [SerializeField, CsvColumn("Material1ID")]
         private int material1Id;
 
-        [SerializeField, CsvColumn("素材1数")]
+        [SerializeField, CsvColumn("Material1Count")]
         private int material1Count;
 
-        [SerializeField, CsvColumn("素材2ID")]
+        [SerializeField, CsvColumn("Material2ID")]
         private int material2Id;
 
-        [SerializeField, CsvColumn("素材2数")]
+        [SerializeField, CsvColumn("Material2Count")]
         private int material2Count;
 
-        [SerializeField, CsvColumn("素材3ID")]
+        [SerializeField, CsvColumn("Material3ID")]
         private int material3Id;
 
-        [SerializeField, CsvColumn("素材3数")]
+        [SerializeField, CsvColumn("Material3Count")]
         private int material3Count;
 
         /// <summary>
-        /// レシピID（主キー）
+        /// Recipe ID (primary key)
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// レシピ名
+        /// Recipe name
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// 完成品アイテムID（外部キー）
+        /// Result item ID (foreign key)
         /// </summary>
         public int ResultItemId => resultItemId;
 
         /// <summary>
-        /// 完成数
+        /// Result count
         /// </summary>
         public int ResultCount => resultCount;
 
         /// <summary>
-        /// 素材1のアイテムID（0は未設定）
+        /// Material 1 item ID (0 means not set)
         /// </summary>
         public int Material1Id => material1Id;
 
         /// <summary>
-        /// 素材1の必要数
+        /// Required count for material 1
         /// </summary>
         public int Material1Count => material1Count;
 
         /// <summary>
-        /// 素材2のアイテムID（0は未設定）
+        /// Material 2 item ID (0 means not set)
         /// </summary>
         public int Material2Id => material2Id;
 
         /// <summary>
-        /// 素材2の必要数
+        /// Required count for material 2
         /// </summary>
         public int Material2Count => material2Count;
 
         /// <summary>
-        /// 素材3のアイテムID（0は未設定）
+        /// Material 3 item ID (0 means not set)
         /// </summary>
         public int Material3Id => material3Id;
 
         /// <summary>
-        /// 素材3の必要数
+        /// Required count for material 3
         /// </summary>
         public int Material3Count => material3Count;
 
         /// <summary>
-        /// 素材1が設定されているか
+        /// Whether material 1 is set
         /// </summary>
         public bool HasMaterial1 => material1Id > 0;
 
         /// <summary>
-        /// 素材2が設定されているか
+        /// Whether material 2 is set
         /// </summary>
         public bool HasMaterial2 => material2Id > 0;
 
         /// <summary>
-        /// 素材3が設定されているか
+        /// Whether material 3 is set
         /// </summary>
         public bool HasMaterial3 => material3Id > 0;
 

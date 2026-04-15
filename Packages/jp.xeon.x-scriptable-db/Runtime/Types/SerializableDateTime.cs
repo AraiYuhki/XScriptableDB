@@ -4,9 +4,9 @@ using UnityEngine;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// シリアライズ可能なDateTime構造体。
-    /// UnityはDateTime型を直接シリアライズできないため、
-    /// このラッパー構造体を使用してInspectorで編集可能にする。
+    /// A serializable DateTime struct.
+    /// Because Unity cannot directly serialize the DateTime type,
+    /// this wrapper struct is used to make it editable in the Inspector.
     /// </summary>
     [Serializable]
     public struct SerializableDateTime : IEquatable<SerializableDateTime>, IComparable<SerializableDateTime>

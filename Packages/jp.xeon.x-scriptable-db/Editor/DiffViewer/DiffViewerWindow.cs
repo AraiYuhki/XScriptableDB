@@ -6,12 +6,12 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// テーブル差分を表示・適用するためのEditorWindow。
+    /// EditorWindow for viewing and applying table diffs.
     /// </summary>
     public class DiffViewerWindow : EditorWindow
     {
         /// <summary>
-        /// 差分結果を指定してウィンドウを開く。
+        /// Opens the window with the specified diff result.
         /// </summary>
         public static DiffViewerWindow Open(TableDiffResult diffResult, ScriptableObject targetTable,
             object[] importedRecords)
@@ -20,7 +20,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 差分結果を指定してウィンドウを開く（適用時コールバック付き）。
+        /// Opens the window with the specified diff result (with an on-applied callback).
         /// </summary>
         public static DiffViewerWindow Open(TableDiffResult diffResult, ScriptableObject targetTable,
             object[] importedRecords, Action onApplied)
@@ -59,7 +59,7 @@ namespace Xeon.XScriptableDB.Editor
             onAppliedCallback = onApplied;
             selectedKeys.Clear();
 
-            // デフォルトで全ての変更を選択
+            // Select all changes by default
             if (result != null)
             {
                 foreach (var diff in result.Diffs)
@@ -158,7 +158,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
-                // フィルター
+                // Filter
                 if (GUILayout.Toggle(filterType == null, "All", EditorStyles.toolbarButton, GUILayout.Width(50)))
                     filterType = null;
                 if (GUILayout.Toggle(filterType == DiffType.Added, "Added", EditorStyles.toolbarButton,
@@ -176,7 +176,7 @@ namespace Xeon.XScriptableDB.Editor
 
                 GUILayout.FlexibleSpace();
 
-                // 選択操作
+                // Selection operations
                 if (GUILayout.Button("Select All", EditorStyles.toolbarButton, GUILayout.Width(70)))
                     SelectAll();
                 if (GUILayout.Button("Deselect All", EditorStyles.toolbarButton, GUILayout.Width(75)))
@@ -218,7 +218,7 @@ namespace Xeon.XScriptableDB.Editor
             using var _ = new EditorGUILayout.VerticalScope("Box");
             using (new EditorGUILayout.HorizontalScope())
             {
-                // チェックボックス
+                // Checkbox
                 EditorGUI.BeginDisabledGroup(!canSelect);
                 var newSelected = EditorGUILayout.Toggle(isSelected, GUILayout.Width(20));
                 if (newSelected != isSelected && canSelect)
@@ -231,7 +231,7 @@ namespace Xeon.XScriptableDB.Editor
 
                 EditorGUI.EndDisabledGroup();
 
-                // 差分タイプアイコン
+                // Diff type icon
                 var icon = diff.DiffType switch
                 {
                     DiffType.Added => "[+]",
@@ -244,7 +244,7 @@ namespace Xeon.XScriptableDB.Editor
                 // PrimaryKey
                 EditorGUILayout.LabelField($"Key: {diff.PrimaryKey}", style, GUILayout.Width(150));
 
-                // 変更フィールド数
+                // Number of changed fields
                 if (diff.DiffType == DiffType.Modified)
                 {
                     EditorGUILayout.LabelField($"({diff.ChangedFieldCount} fields changed)", GUILayout.Width(120));
@@ -253,7 +253,7 @@ namespace Xeon.XScriptableDB.Editor
                 GUILayout.FlexibleSpace();
             }
 
-            // フィールド詳細
+            // Field details
             if (diff.DiffType == DiffType.Modified && diff.FieldDiffs.Count > 0)
             {
                 EditorGUI.indentLevel++;
@@ -411,10 +411,10 @@ namespace Xeon.XScriptableDB.Editor
                 EditorUtility.SetDirty(targetTable);
                 EditorUtility.DisplayDialog("Complete", "Changes have been applied", "OK");
 
-                // コールバック呼び出し
+                // Invoke callback
                 onAppliedCallback?.Invoke();
 
-                // 差分を再計算
+                // Recalculate diff
                 RefreshDiff();
             }
             catch (Exception e)
@@ -436,7 +436,7 @@ namespace Xeon.XScriptableDB.Editor
 
             try
             {
-                // SetRecordsメソッドを呼び出す
+                // Call the SetRecords method
                 var setRecordsMethod = targetTable.GetType().GetMethod("SetRecords");
                 if (setRecordsMethod != null)
                 {
@@ -451,16 +451,16 @@ namespace Xeon.XScriptableDB.Editor
 
                 EditorUtility.SetDirty(targetTable);
 
-                // コールバックがない場合のみ自動保存
+                // Auto-save only if no callback is set
                 if (onAppliedCallback == null)
                     AssetDatabase.SaveAssetIfDirty(targetTable);
 
                 EditorUtility.DisplayDialog("Complete", "All changes have been applied", "OK");
 
-                // コールバック呼び出し
+                // Invoke callback
                 onAppliedCallback?.Invoke();
 
-                // ウィンドウを閉じる
+                // Close the window
                 Close();
             }
             catch (Exception e)
@@ -472,14 +472,14 @@ namespace Xeon.XScriptableDB.Editor
 
         private void ApplyChangesToTable(ITableAsset tableAsset, HashSet<object> keysToApply)
         {
-            // 現在のレコードをリストにコピー
+            // Copy current records into a list
             var currentRecords = new List<object>();
             foreach (var record in tableAsset.Records)
                 currentRecords.Add(record);
 
             var recordType = tableAsset.RecordType;
 
-            // 変更を適用
+            // Apply changes
             foreach (var diff in diffResult.Diffs)
             {
                 if (!keysToApply.Contains(diff.PrimaryKey))
@@ -495,7 +495,7 @@ namespace Xeon.XScriptableDB.Editor
                     case DiffType.Removed:
                         if (diff.OldIndex >= 0 && diff.OldIndex < currentRecords.Count)
                         {
-                            // インデックスで削除すると順序が変わるので、nullにしてあとで除去
+                            // Null out instead of removing by index to avoid reordering; remove all nulls later
                             currentRecords[diff.OldIndex] = null;
                         }
 
@@ -511,10 +511,10 @@ namespace Xeon.XScriptableDB.Editor
                 }
             }
 
-            // nullを除去
+            // Remove nulls
             currentRecords.RemoveAll(r => r == null);
 
-            // SetRecordsを呼び出す
+            // Call SetRecords
             var setRecordsMethod = targetTable.GetType().GetMethod("SetRecords");
             if (setRecordsMethod != null)
             {

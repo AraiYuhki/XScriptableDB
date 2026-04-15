@@ -4,7 +4,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// SqlParser のテスト。
+    /// Tests for SqlParser.
     /// </summary>
     public class SqlParserTests
     {

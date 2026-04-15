@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// テストデータ生成器。
+    /// Test data generator.
     /// </summary>
     public static class TestDataGenerator
     {
@@ -17,7 +17,7 @@ namespace Xeon.XScriptableDB.Editor
         private static readonly string[] SampleNouns = { "Sword", "Shield", "Potion", "Armor", "Ring", "Book", "Gem", "Key", "Map", "Scroll" };
 
         /// <summary>
-        /// テーブルにテストデータを生成する。
+        /// Generates test data into the table.
         /// </summary>
         public static int Generate(ITableAsset table, int count, TableGeneratorConfig config = null)
         {
@@ -25,7 +25,7 @@ namespace Xeon.XScriptableDB.Editor
             var fields = recordType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             var generatedCount = 0;
 
-            // 既存のPrimaryKey値を取得
+            // Retrieve existing PrimaryKey values
             var existingKeys = new HashSet<object>();
             var primaryKeyField = fields.FirstOrDefault(f => f.GetCustomAttribute<PrimaryKeyAttribute>() != null);
 
@@ -67,13 +67,13 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// フィールド値を生成する。
+        /// Generates a value for a field.
         /// </summary>
         private static object GenerateFieldValue(FieldInfo field, int index, FieldGeneratorConfig config)
         {
             var fieldType = field.FieldType;
 
-            // PrimaryKeyは連番
+            // PrimaryKey uses sequential numbering
             if (field.GetCustomAttribute<PrimaryKeyAttribute>() != null)
             {
                 if (fieldType == typeof(int))
@@ -84,11 +84,11 @@ namespace Xeon.XScriptableDB.Editor
                     return $"ID_{index:D6}";
             }
 
-            // 設定がある場合はそれに従う
+            // If a config is provided, follow it
             if (config != null)
                 return GenerateFromConfig(config, fieldType, index);
 
-            // デフォルト生成
+            // Default generation
             return GenerateDefaultValue(fieldType, field.Name, index);
         }
 
@@ -152,7 +152,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             var nameLower = fieldName.ToLower();
 
-            // フィールド名から推測
+            // Infer from field name
             if (nameLower.Contains("name"))
             {
                 if (nameLower.Contains("item") || nameLower.Contains("product"))
@@ -301,7 +301,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// テーブルの全レコードをクリアする。
+        /// Clears all records from the table.
         /// </summary>
         public static void ClearTable(ITableAsset table)
         {
@@ -319,7 +319,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// デフォルト設定を生成する。
+        /// Generates a default configuration.
         /// </summary>
         public static TableGeneratorConfig CreateDefaultConfig(ITableAsset table)
         {

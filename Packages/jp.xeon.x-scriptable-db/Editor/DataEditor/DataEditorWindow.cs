@@ -9,8 +9,8 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// TableAssetを編集するためのEditorWindow。
-    /// 仮想スクロールにより大量レコードの表示に対応。
+    /// EditorWindow for editing TableAssets.
+    /// Supports displaying large numbers of records via virtual scrolling.
     /// </summary>
     public class DataEditorWindow : EditorWindow
     {
@@ -43,16 +43,16 @@ namespace Xeon.XScriptableDB.Editor
         private GUIStyle warningStyle;
         private GUIStyle unsavedStyle;
 
-        // 仮想スクロール
+        // Virtual scroll
         private VirtualizedPropertyListView virtualizedList;
         private bool useVirtualScroll = true;
         private const int VirtualScrollThreshold = 100;
 
-        // インポート/エクスポート設定
+        // Import/export settings
         private FileFormat exportFormat = FileFormat.CSV;
         private bool useExcelEncoding = false;
 
-        // 変更追跡
+        // Change tracking
         private bool idDirty;
         private int lastRecordHash;
 
@@ -61,11 +61,11 @@ namespace Xeon.XScriptableDB.Editor
             RefreshTableList();
             InitializeVirtualizedList();
 
-            // ドメインリロード後にクローンが失われた場合は再作成
+            // Recreate clone if lost after domain reload
             if (selectedTable != null && editingClone == null)
             {
                 CreateEditingClone(selectedTable);
-                idDirty = false; // リロード後は未保存状態をリセット
+                idDirty = false; // Reset unsaved state after reload
             }
         }
 
@@ -246,7 +246,7 @@ namespace Xeon.XScriptableDB.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            // 選択中のテーブルを更新
+            // Refresh the currently selected table
             if (selectedTable != null)
             {
                 serializedTable?.Update();
@@ -299,7 +299,7 @@ namespace Xeon.XScriptableDB.Editor
                 DrawDuplicateKeyWarning();
                 DrawRecordToolbar();
 
-                // 仮想スクロール使用判定
+                // Determine whether to use virtual scrolling
                 var tableAsset = editingClone as ITableAsset;
                 var recordCount = tableAsset?.Count ?? recordsProperty?.arraySize ?? 0;
                 var shouldUseVirtualScroll = useVirtualScroll && recordCount >= VirtualScrollThreshold;
@@ -330,7 +330,7 @@ namespace Xeon.XScriptableDB.Editor
                 if (originalTableAsset != null)
                     EditorGUILayout.LabelField($"Key: {originalTableAsset.KeyType.Name}", GUILayout.Width(100));
 
-                // 仮想スクロール切り替え
+                // Toggle virtual scrolling
                 if (editingTableAsset.Count < VirtualScrollThreshold)
                     return;
                 
@@ -374,7 +374,7 @@ namespace Xeon.XScriptableDB.Editor
 
             GUILayout.FlexibleSpace();
 
-            // インポート/エクスポート
+            // Import/Export
             DrawImportExportButtons();
 
             GUILayout.Space(10);
@@ -399,7 +399,7 @@ namespace Xeon.XScriptableDB.Editor
             if (!isExportable && !isImportable)
                 return;
 
-            // フォーマット選択
+            // Format selection
             exportFormat =
                 (FileFormat)EditorGUILayout.EnumPopup(exportFormat, EditorStyles.toolbarPopup, GUILayout.Width(50));
 
@@ -412,7 +412,7 @@ namespace Xeon.XScriptableDB.Editor
             if (GUILayout.Button("Export", EditorStyles.toolbarButton, GUILayout.Width(80)))
                 ExportToFile();
 
-            // Excel対応エンコーディングオプション
+            // Excel-compatible encoding option
             useExcelEncoding =
                 GUILayout.Toggle(useExcelEncoding, "Excel", EditorStyles.toolbarButton, GUILayout.Width(50));
             EditorGUI.EndDisabledGroup();
@@ -439,7 +439,7 @@ namespace Xeon.XScriptableDB.Editor
 
             try
             {
-                // ITableAssetの場合はプレビュー付きインポート
+                // For ITableAsset, import with preview
                 if (editingTableAsset != null && originalTableAsset != null)
                 {
                     var encoding = useExcelEncoding ? Encoding.GetEncoding(932) : Encoding.UTF8;
@@ -451,7 +451,7 @@ namespace Xeon.XScriptableDB.Editor
                         return;
                     }
 
-                    // 差分を計算してDiffViewerを開く（クローンに対して）
+                    // Calculate diff and open DiffViewer (against the clone)
                     var diffResult = DiffCalculator.Calculate(editingTableAsset, importedRecords);
                     DiffViewerWindow.Open(diffResult, editingClone, importedRecords, () =>
                     {
@@ -463,7 +463,7 @@ namespace Xeon.XScriptableDB.Editor
                 }
                 else if (editingClone is IImportable importer)
                 {
-                    // 従来の直接インポート
+                    // Legacy direct import
                     importer.Import(filePath);
                     serializedTable.Update();
                     virtualizedList?.ClearCache();
@@ -496,7 +496,7 @@ namespace Xeon.XScriptableDB.Editor
 
             try
             {
-                // Excel対応の場合はShift-JIS (CP932)を使用
+                // Use Shift-JIS (CP932) for Excel compatibility
                 var encoding = useExcelEncoding ? Encoding.GetEncoding(932) : Encoding.UTF8;
                 exporter.Export(filePath, encoding);
                 EditorUtility.DisplayDialog("Export Complete", $"Exported {selectedTable.name}\n{filePath}", "OK");
@@ -509,7 +509,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 仮想スクロールを使用したレコードリスト描画。
+        /// Draws the record list using virtual scrolling.
         /// </summary>
         private void DrawRecordListVirtualized()
         {
@@ -518,11 +518,11 @@ namespace Xeon.XScriptableDB.Editor
 
             serializedTable.Update();
 
-            // 仮想スクロールリストの設定
+            // Configure the virtual scroll list
             virtualizedList.SetProperty(recordsProperty);
             virtualizedList.SelectedIndex = selectedRecordIndex;
 
-            // 描画領域を確保
+            // Reserve drawing area
             var rect = GUILayoutUtility.GetRect(0, 0, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             if (rect.height > 0)
             {
@@ -538,7 +538,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 標準のレコードリスト描画。
+        /// Draws the record list using standard scrolling.
         /// </summary>
         private void DrawRecordListStandard()
         {
@@ -642,7 +642,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private void SelectTable(ScriptableObject table)
         {
-            // 未保存の変更がある場合は確認
+            // Prompt if there are unsaved changes
             if (idDirty && selectedTable != null)
             {
                 var result = EditorUtility.DisplayDialogComplex(
@@ -690,7 +690,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             CleanupClone();
 
-            // クローンを作成
+            // Create clone
             editingClone = Instantiate(original);
             editingClone.name = original.name + " (Editing)";
             editingClone.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave;
@@ -772,7 +772,7 @@ namespace Xeon.XScriptableDB.Editor
             virtualizedList?.ClearCache();
             idDirty = true;
 
-            // 新しいレコードにスクロール
+            // Scroll to the new record
             virtualizedList?.ScrollToIndex(selectedRecordIndex);
 
             Repaint();
@@ -853,10 +853,10 @@ namespace Xeon.XScriptableDB.Editor
                 }
             }
 
-            // クローンの変更を適用
+            // Apply clone changes
             serializedTable.ApplyModifiedProperties();
 
-            // 元のアセットにコピー
+            // Copy to the original asset
             ApplyChangesToOriginal();
 
             EditorUtility.DisplayDialog("Save Complete", $"Saved {selectedTable.name}", "OK");
@@ -867,13 +867,13 @@ namespace Xeon.XScriptableDB.Editor
             if (selectedTable == null || editingClone == null)
                 return;
 
-            // 元の名前を保持
+            // Preserve the original name
             var originalName = selectedTable.name;
 
-            // EditorUtility.CopySerializedでクローンから元にコピー
+            // Copy from clone to original using EditorUtility.CopySerialized
             EditorUtility.CopySerialized(editingClone, selectedTable);
 
-            // CopySerializedは名前もコピーするため、元の名前を復元
+            // Restore the original name since CopySerialized also copies the name
             selectedTable.name = originalName;
 
             EditorUtility.SetDirty(selectedTable);
@@ -885,7 +885,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private void OnDisable()
         {
-            // ドメインリロード前にクローンをクリーンアップ
+            // Clean up the clone before domain reload
             CleanupClone();
         }
 
@@ -900,7 +900,7 @@ namespace Xeon.XScriptableDB.Editor
 
                 if (result == 0)
                     ApplyChangesToOriginal();
-                // キャンセルの場合でもクリーンアップは行う（ウィンドウは既に閉じられるため）
+                // Clean up even if cancelled (window is already being closed)
             }
 
             CleanupClone();

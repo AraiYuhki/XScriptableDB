@@ -1,7 +1,7 @@
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// 比較バリデーションの種類。
+    /// Type of comparison operator for validation.
     /// </summary>
     public enum CompareOperator
     {

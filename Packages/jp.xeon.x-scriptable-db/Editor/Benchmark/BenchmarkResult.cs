@@ -1,7 +1,7 @@
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// ベンチマーク結果。
+    /// Benchmark result.
     /// </summary>
     public class BenchmarkResult
     {

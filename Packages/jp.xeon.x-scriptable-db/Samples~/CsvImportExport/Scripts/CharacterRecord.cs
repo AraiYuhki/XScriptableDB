@@ -6,8 +6,8 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Samples.CsvImportExport
 {
     /// <summary>
-    /// キャラクターデータのレコードクラス。
-    /// 日本語のCSV列名を使用して、企画担当者が編集しやすいようにしている。
+    /// Record class for character data.
+    /// Uses English CSV column names for easy editing by designers.
     /// </summary>
     [Serializable]
     public class CharacterRecord : CsvData
@@ -15,39 +15,39 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         [SerializeField, CsvColumn("ID"), PrimaryKey]
         private int id;
 
-        [SerializeField, CsvColumn("名前")]
+        [SerializeField, CsvColumn("Name")]
         private string name;
 
-        [SerializeField, CsvColumn("レベル")]
+        [SerializeField, CsvColumn("Level")]
         private int level;
 
         [SerializeField, CsvColumn("HP")]
         private int hp;
 
-        [SerializeField, CsvColumn("攻撃力")]
+        [SerializeField, CsvColumn("Attack")]
         private int attack;
 
-        [SerializeField, CsvColumn("防御力")]
+        [SerializeField, CsvColumn("Defense")]
         private int defense;
 
-        [SerializeField, CsvColumn("職業"), SecondaryKey]
+        [SerializeField, CsvColumn("Class"), SecondaryKey]
         private string characterClass;
 
-        [SerializeField, CsvColumn("プレイアブル"), SecondaryKey]
+        [SerializeField, CsvColumn("Playable"), SecondaryKey]
         private bool isPlayable;
 
         /// <summary>
-        /// キャラクターID（主キー）
+        /// Character ID (primary key)
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// キャラクター名
+        /// Character name
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// レベル
+        /// Level
         /// </summary>
         public int Level => level;
 
@@ -57,22 +57,22 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         public int Hp => hp;
 
         /// <summary>
-        /// 攻撃力
+        /// Attack power
         /// </summary>
         public int Attack => attack;
 
         /// <summary>
-        /// 防御力
+        /// Defense power
         /// </summary>
         public int Defense => defense;
 
         /// <summary>
-        /// 職業
+        /// Character class
         /// </summary>
         public string CharacterClass => characterClass;
 
         /// <summary>
-        /// プレイアブルキャラクターかどうか
+        /// Whether this is a playable character
         /// </summary>
         public bool IsPlayable => isPlayable;
 

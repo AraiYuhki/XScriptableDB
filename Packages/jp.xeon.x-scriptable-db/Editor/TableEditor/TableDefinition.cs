@@ -45,7 +45,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// レガシー形式（文字列リスト）からIndexDefinitionリストに移行する。
+        /// Migrates from the legacy format (list of strings) to a list of IndexDefinitions.
         /// </summary>
         public void MigrateFromLegacyIndices(List<string> legacyIndices)
         {
@@ -63,7 +63,7 @@ namespace Xeon.XScriptableDB.Editor
     }
 
     /// <summary>
-    /// レガシー形式のテーブル定義（YAMLからの移行用）。
+    /// Legacy format table definition (used for migration from YAML).
     /// </summary>
     [Serializable]
     internal class LegacyTableDefinition

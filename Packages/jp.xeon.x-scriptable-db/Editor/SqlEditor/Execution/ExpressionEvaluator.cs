@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQL式を評価するクラス。
+    /// Class that evaluates SQL expressions.
     /// </summary>
     public class ExpressionEvaluator
     {
@@ -19,7 +19,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// サブクエリ実行用のデリゲートを設定する。
+        /// Sets the delegate for subquery execution.
         /// </summary>
         public void SetSubqueryExecutor(Func<SelectStatement, List<object>> executor)
         {
@@ -27,7 +27,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 式を評価してブール値を返す。
+        /// Evaluates an expression and returns a boolean value.
         /// </summary>
         public bool EvaluateExpression(SqlExpression expr, object record, Type recordType)
         {
@@ -60,7 +60,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 比較式を評価する。
+        /// Evaluates a comparison expression.
         /// </summary>
         public bool EvaluateComparison(ComparisonExpression expr, object record, Type recordType)
         {
@@ -76,7 +76,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 式から値を取得する。
+        /// Resolves a value from an expression.
         /// </summary>
         public object ResolveValue(SqlExpression expr, object record, Type recordType)
         {
@@ -106,7 +106,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// IN演算子を評価する。
+        /// Evaluates the IN operator.
         /// </summary>
         private bool EvaluateInOperator(object leftValue, SqlExpression rightExpr, object record, Type recordType)
         {
@@ -176,7 +176,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 算術式を評価する。
+        /// Evaluates an arithmetic expression.
         /// </summary>
         public object EvaluateArithmetic(ArithmeticExpression expr, object record, Type recordType)
         {
@@ -201,7 +201,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// CASE式を評価する。
+        /// Evaluates a CASE expression.
         /// </summary>
         public object EvaluateCase(CaseExpression expr, object record, Type recordType)
         {
@@ -218,7 +218,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 関数を評価する。
+        /// Evaluates a function.
         /// </summary>
         public object EvaluateFunction(FunctionCallExpression expr, object record, Type recordType)
         {
@@ -263,7 +263,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// LIKE演算子を評価する。
+        /// Evaluates the LIKE operator.
         /// </summary>
         public bool EvaluateLike(string value, string pattern)
         {

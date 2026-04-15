@@ -5,7 +5,7 @@ using System.Linq;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQLを実行するクラス。
+    /// Class that executes SQL.
     /// </summary>
     public class SqlExecutor
     {
@@ -29,7 +29,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// テーブルを登録する。
+        /// Registers a table.
         /// </summary>
         public void RegisterTable(string tableName, ITableAsset table)
         {
@@ -37,7 +37,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 登録されているテーブルを取得する。
+        /// Gets the registered table.
         /// </summary>
         public ITableAsset GetTable(string tableName)
         {
@@ -45,12 +45,12 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// 登録されているテーブル名の一覧を取得する。
+        /// Gets the list of registered table names.
         /// </summary>
         public IReadOnlyCollection<string> TableNames => tables.Keys;
 
         /// <summary>
-        /// SQL文字列を解析して実行する。
+        /// Parses and executes a SQL string.
         /// </summary>
         public SqlQueryResult Execute(string sql)
         {
