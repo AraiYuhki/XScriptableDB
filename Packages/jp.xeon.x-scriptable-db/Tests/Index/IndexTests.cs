@@ -5,7 +5,7 @@ using System.Linq;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// Tests for IndexBuilder, IndexData, and SecondaryKeyAttribute.
+    /// IndexBuilder、IndexData、およびSecondaryKeyAttributeのテスト。
     /// </summary>
     public class IndexTests
     {
@@ -179,13 +179,13 @@ namespace Xeon.XScriptableDB.Tests
             var container = IndexBuilder.BuildIndices(records);
             var categoryIndex = container.GetIndex("Category");
 
-            // "A" should have 2 records
+            // "A"は2つのレコードを持つはず
             var aIndices = categoryIndex.FindByKey("A");
             Assert.That(aIndices.Length, Is.EqualTo(2));
             Assert.That(aIndices, Contains.Item(0));
             Assert.That(aIndices, Contains.Item(1));
 
-            // "B" should have 1 record
+            // "B"は1つのレコードを持つはず
             var bIndices = categoryIndex.FindByKey("B");
             Assert.That(bIndices.Length, Is.EqualTo(1));
             Assert.That(bIndices[0], Is.EqualTo(2));
@@ -237,7 +237,7 @@ namespace Xeon.XScriptableDB.Tests
             var records = Array.Empty<TestRecord>();
             var container = IndexBuilder.BuildIndices(records);
 
-            Assert.That(container.Count, Is.EqualTo(2)); // Still creates index definitions
+            Assert.That(container.Count, Is.EqualTo(2)); // インデックス定義は作成される
             Assert.That(container.GetIndex("Category").Count, Is.EqualTo(0));
         }
 

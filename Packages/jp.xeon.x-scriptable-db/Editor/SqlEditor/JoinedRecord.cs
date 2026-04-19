@@ -4,14 +4,14 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Record resulting from a JOIN operation.
+    /// JOIN操作の結果のレコード。
     /// </summary>
     public class JoinedRecord
     {
-        /// <summary>Map from table name/alias to record</summary>
+        /// <summary>テーブル名/エイリアスからレコードへのマップ</summary>
         public Dictionary<string, object> TableRecords { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>Map from table name/alias to record type</summary>
+        /// <summary>テーブル名/エイリアスからレコード型へのマップ</summary>
         public Dictionary<string, Type> TableTypes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
         public object GetRecord(string tableAlias) => TableRecords.GetValueOrDefault(tableAlias, null);

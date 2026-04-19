@@ -8,7 +8,7 @@ using Xeon.XScriptableDB.Performance;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Performance monitoring window.
+    /// パフォーマンスモニタリングウィンドウ。
     /// </summary>
     public class PerformanceWindow : EditorWindow
     {
@@ -32,7 +32,7 @@ namespace Xeon.XScriptableDB.Editor
         public static void ShowWindow()
         {
             var window = GetWindow<PerformanceWindow>();
-            window.titleContent = new GUIContent("Performance");
+            window.titleContent = new GUIContent("パフォーマンス");
             window.minSize = new Vector2(400, 300);
             window.Show();
         }
@@ -64,16 +64,16 @@ namespace Xeon.XScriptableDB.Editor
         {
             InitStyles();
 
-            // Tabs
+            // タブ
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-            if (GUILayout.Toggle(currentTab == Tab.Cache, "Cache", EditorStyles.toolbarButton))
+            if (GUILayout.Toggle(currentTab == Tab.Cache, "キャッシュ", EditorStyles.toolbarButton))
                 currentTab = Tab.Cache;
-            if (GUILayout.Toggle(currentTab == Tab.Memory, "Memory", EditorStyles.toolbarButton))
+            if (GUILayout.Toggle(currentTab == Tab.Memory, "メモリ", EditorStyles.toolbarButton))
                 currentTab = Tab.Memory;
-            if (GUILayout.Toggle(currentTab == Tab.Queries, "Queries", EditorStyles.toolbarButton))
+            if (GUILayout.Toggle(currentTab == Tab.Queries, "クエリ", EditorStyles.toolbarButton))
                 currentTab = Tab.Queries;
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Refresh", EditorStyles.toolbarButton))
+            if (GUILayout.Button("更新", EditorStyles.toolbarButton))
             {
                 Refresh();
             }
@@ -99,12 +99,12 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawCacheTab()
         {
-            EditorGUILayout.LabelField("Query Cache", headerStyle);
+            EditorGUILayout.LabelField("クエリキャッシュ", headerStyle);
             EditorGUILayout.Space(5);
 
-            // Cache settings
+            // キャッシュ設定
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Cache Enabled:");
+            EditorGUILayout.LabelField("キャッシュ有効:");
             var newEnabled = EditorGUILayout.Toggle(CacheManager.IsEnabled);
             if (newEnabled != CacheManager.IsEnabled)
             {
@@ -114,24 +114,24 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.Space(10);
 
-            // Statistics
+            // 統計情報
             var stats = CacheManager.GetStatistics();
 
-            DrawStatRow("Capacity:", stats.Capacity.ToString());
-            DrawStatRow("Entries:", stats.Count.ToString());
-            DrawStatRow("Hit Count:", stats.HitCount.ToString());
-            DrawStatRow("Miss Count:", stats.MissCount.ToString());
-            DrawStatRow("Hit Rate:", $"{stats.HitRate:P1}");
+            DrawStatRow("容量:", stats.Capacity.ToString());
+            DrawStatRow("エントリ数:", stats.Count.ToString());
+            DrawStatRow("ヒット数:", stats.HitCount.ToString());
+            DrawStatRow("ミス数:", stats.MissCount.ToString());
+            DrawStatRow("ヒット率:", $"{stats.HitRate:P1}");
 
             EditorGUILayout.Space(10);
 
-            // Actions
+            // アクション
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Clear Cache"))
+            if (GUILayout.Button("キャッシュをクリア"))
             {
                 CacheManager.Clear();
             }
-            if (GUILayout.Button("Reset Statistics"))
+            if (GUILayout.Button("統計をリセット"))
             {
                 CacheManager.ResetStatistics();
             }
@@ -140,24 +140,24 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawMemoryTab()
         {
-            EditorGUILayout.LabelField("Memory Usage", headerStyle);
+            EditorGUILayout.LabelField("メモリ使用量", headerStyle);
             EditorGUILayout.Space(5);
 
-            // System memory
+            // システムメモリ
             var snapshot = MemoryProfiler.TakeSnapshot();
-            DrawStatRow("Total Memory:", FormatBytes(snapshot.TotalMemory));
+            DrawStatRow("合計メモリ:", FormatBytes(snapshot.TotalMemory));
             DrawStatRow("GC Gen 0:", snapshot.GCCollectionCount0.ToString());
             DrawStatRow("GC Gen 1:", snapshot.GCCollectionCount1.ToString());
             DrawStatRow("GC Gen 2:", snapshot.GCCollectionCount2.ToString());
 
             EditorGUILayout.Space(10);
 
-            // Memory per table
-            EditorGUILayout.LabelField("Table Memory (Estimated)", EditorStyles.boldLabel);
+            // テーブルごとのメモリ
+            EditorGUILayout.LabelField("テーブルメモリ (推定)", EditorStyles.boldLabel);
 
             if (memoryInfos.Count == 0)
             {
-                EditorGUILayout.HelpBox("No tables found. Click 'Refresh' to scan.", MessageType.Info);
+                EditorGUILayout.HelpBox("テーブルが見つかりません。『更新』をクリックしてスキャンしてください。", MessageType.Info);
             }
             else
             {
@@ -167,7 +167,7 @@ namespace Xeon.XScriptableDB.Editor
                 {
                     EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
                     EditorGUILayout.LabelField(info.TableName);
-                    EditorGUILayout.LabelField($"{info.RecordCount} records", GUILayout.Width(100));
+                    EditorGUILayout.LabelField($"{info.RecordCount} 件のレコード", GUILayout.Width(100));
                     EditorGUILayout.LabelField(FormatBytes(info.EstimatedTotalSize), valueStyle, GUILayout.Width(80));
                     EditorGUILayout.EndHorizontal();
 
@@ -175,12 +175,12 @@ namespace Xeon.XScriptableDB.Editor
                 }
 
                 EditorGUILayout.Space(5);
-                DrawStatRow("Total Estimated:", FormatBytes(totalSize));
+                DrawStatRow("合計推定サイズ:", FormatBytes(totalSize));
             }
 
             EditorGUILayout.Space(10);
 
-            if (GUILayout.Button("Force GC"))
+            if (GUILayout.Button("GCを強制実行"))
             {
                 System.GC.Collect();
                 System.GC.WaitForPendingFinalizers();
@@ -190,38 +190,38 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawQueriesTab()
         {
-            EditorGUILayout.LabelField("Query Profiler", headerStyle);
+            EditorGUILayout.LabelField("クエリプロファイラ", headerStyle);
             EditorGUILayout.Space(5);
 
-            // Statistics
+            // 統計情報
             var stats = profiler.GetStatistics();
-            DrawStatRow("Query Count:", stats.QueryCount.ToString());
-            DrawStatRow("Total Time:", $"{stats.TotalMilliseconds:F2} ms");
-            DrawStatRow("Average Time:", $"{stats.AverageMilliseconds:F3} ms");
-            DrawStatRow("Min Time:", $"{stats.MinMilliseconds:F3} ms");
-            DrawStatRow("Max Time:", $"{stats.MaxMilliseconds:F3} ms");
-            DrawStatRow("Cached Queries:", stats.CachedQueryCount.ToString());
+            DrawStatRow("クエリ数:", stats.QueryCount.ToString());
+            DrawStatRow("合計時間:", $"{stats.TotalMilliseconds:F2} ms");
+            DrawStatRow("平均時間:", $"{stats.AverageMilliseconds:F3} ms");
+            DrawStatRow("最小時間:", $"{stats.MinMilliseconds:F3} ms");
+            DrawStatRow("最大時間:", $"{stats.MaxMilliseconds:F3} ms");
+            DrawStatRow("キャッシュヒット:", stats.CachedQueryCount.ToString());
 
             EditorGUILayout.Space(10);
 
-            // Query history
-            EditorGUILayout.LabelField("Recent Queries", EditorStyles.boldLabel);
+            // クエリ履歴
+            EditorGUILayout.LabelField("最近のクエリ", EditorStyles.boldLabel);
 
             var profiles = profiler.GetProfiles();
             if (profiles.Count == 0)
             {
-                EditorGUILayout.HelpBox("No queries recorded yet.", MessageType.Info);
+                EditorGUILayout.HelpBox("クエリ履歴がありません。", MessageType.Info);
             }
             else
             {
-                // Show the latest 10 entries
+                // 最新10件を表示します
                 var recent = profiles.Reverse().Take(10);
                 foreach (var profile in recent)
                 {
-                    var cached = profile.WasCached ? " [cached]" : "";
+                    var cached = profile.WasCached ? " [キャッシュ済み]" : "";
                     EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
                     EditorGUILayout.LabelField($"{profile.QueryName}{cached}");
-                    EditorGUILayout.LabelField($"{profile.ResultCount} results", GUILayout.Width(80));
+                    EditorGUILayout.LabelField($"{profile.ResultCount} 件の結果", GUILayout.Width(80));
                     EditorGUILayout.LabelField($"{profile.ElapsedMilliseconds:F3} ms", valueStyle, GUILayout.Width(80));
                     EditorGUILayout.EndHorizontal();
                 }
@@ -229,7 +229,7 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.Space(10);
 
-            if (GUILayout.Button("Clear History"))
+            if (GUILayout.Button("履歴をクリア"))
             {
                 profiler.Clear();
             }

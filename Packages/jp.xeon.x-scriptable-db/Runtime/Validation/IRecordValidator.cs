@@ -1,16 +1,16 @@
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// Interface for custom record validators.
+    /// カスタムレコードバリデーターのインターフェース。
     /// </summary>
-    /// <typeparam name="T">Type of the record</typeparam>
+    /// <typeparam name="T">レコードの型</typeparam>
     public interface IRecordValidator<T>
     {
         /// <summary>
-        /// Validates a record.
+        /// レコードを検証します。
         /// </summary>
-        /// <param name="record">Record to validate</param>
-        /// <returns>Validation result</returns>
+        /// <param name="record">検証するレコード</param>
+        /// <returns>検証結果</returns>
         ValidationResult Validate(T record);
     }
 }

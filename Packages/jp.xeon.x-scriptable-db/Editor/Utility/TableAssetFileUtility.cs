@@ -9,13 +9,13 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Import/export utility that does not require database registration.
-    /// Scans and processes ITableAsset directly from AssetDatabase.
+    /// データベースの登録を必要としないインポート/エクスポートユーティリティ。
+    /// AssetDatabaseから直接ITableAssetをスキャンして処理します。
     /// </summary>
     public static class TableAssetFileUtility
     {
         /// <summary>
-        /// Scans and returns all ITableAssets in the project.
+        /// プロジェクト内のすべてのITableAssetをスキャンして返します。
         /// </summary>
         private static List<ScriptableObject> FindAllTableAssets()
         {
@@ -34,7 +34,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Exports all TableAssets in the project.
+        /// プロジェクト内のすべてのTableAssetをエクスポートします。
         /// </summary>
         public static void ExportAll(string extension)
         {
@@ -72,7 +72,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Batch imports files from a folder into TableAssets in the project.
+        /// フォルダからプロジェクトのTableAssetにファイルを一括インポートします。
         /// </summary>
         public static void ImportAll(string extension)
         {
@@ -131,7 +131,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Exports a single table.
+        /// 単一のテーブルをエクスポートします。
         /// </summary>
         public static bool ExportSingle(ScriptableObject table, string filePath, Encoding encoding = null)
         {
@@ -146,7 +146,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Imports a single table.
+        /// 単一のテーブルをインポートします。
         /// </summary>
         public static bool ImportSingle(ScriptableObject table, string filePath)
         {

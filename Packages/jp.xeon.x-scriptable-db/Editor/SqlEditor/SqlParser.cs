@@ -5,7 +5,7 @@ using System.Globalization;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQL parser.
+    /// SQLパーサー。
     /// </summary>
     public class SqlParser
     {
@@ -13,10 +13,10 @@ namespace Xeon.XScriptableDB.Editor
         private int current;
 
         /// <summary>
-        /// Parses an SQL statement.
+        /// SQLステートメントを解析します。
         /// </summary>
-        /// <param name="sql">SQL string</param>
-        /// <returns>Parsed SQL statement</returns>
+        /// <param name="sql">SQL文字列</param>
+        /// <returns>解析されたSQLステートメント</returns>
         public SqlStatement Parse(string sql)
         {
             var lexer = new SqlLexer(sql);
@@ -51,7 +51,7 @@ namespace Xeon.XScriptableDB.Editor
             stmt.FromTable = ParseTableReference();
             stmt.TableName = stmt.FromTable.TableName;
 
-            // JOIN clause
+            // JOIN句
             while (IsJoinKeyword())
                 stmt.Joins.Add(ParseJoinClause());
 
@@ -101,7 +101,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             var join = new JoinClause();
 
-            // Determine JOIN type
+            // JOINの種類を決定する
             if (Match(TokenType.Inner))
             {
                 join.JoinType = JoinType.Inner;
@@ -126,10 +126,10 @@ namespace Xeon.XScriptableDB.Editor
             }
             else if (Match(TokenType.Join))
             {
-                join.JoinType = JoinType.Inner; // Bare JOIN is treated as INNER JOIN
+                join.JoinType = JoinType.Inner; // 単独のJOINはINNER JOINとして扱われます
             }
 
-            // Table name
+            // テーブル名
             var tableRef = ParseTableReference();
             join.TableName = tableRef.TableName;
             join.Alias = tableRef.Alias;
@@ -149,7 +149,7 @@ namespace Xeon.XScriptableDB.Editor
             var tableRef = new TableReference();
             tableRef.TableName = ParseTableName();
 
-            // Alias (AS is optional)
+            // エイリアス（ASはオプション）
             if (MatchKeyword("AS"))
             {
                 var aliasToken = Expect(TokenType.Identifier, "alias");
@@ -231,7 +231,7 @@ namespace Xeon.XScriptableDB.Editor
                         Expression = ParseSelectExpression()
                     };
 
-                    // Check for AS alias
+                    // ASエイリアスを確認する
                     if (MatchKeyword("AS"))
                     {
                         var aliasToken = Expect(TokenType.Identifier, "alias");
@@ -239,7 +239,7 @@ namespace Xeon.XScriptableDB.Editor
                     }
                     else if (Check(TokenType.Identifier) && !IsReservedKeyword())
                     {
-                        // Alias without AS
+                        // ASなしのエイリアス
                         column.Alias = Advance().Value;
                     }
 
@@ -301,7 +301,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private SqlExpression ParseUnaryExpression()
         {
-            // Unary minus
+            // 単項マイナス
             if (Match(TokenType.Minus))
             {
                 var expr = ParseUnaryExpression();
@@ -318,10 +318,10 @@ namespace Xeon.XScriptableDB.Editor
 
         private SqlExpression ParsePrimaryExpression()
         {
-            // Parentheses
+            // 括弧
             if (Match(TokenType.LeftParen))
             {
-                // Determine if subquery or grouping
+                // サブクエリかグループ化かを判断する
                 if (Check(TokenType.Select))
                 {
                     var subquery = ParseSelect();
@@ -334,19 +334,19 @@ namespace Xeon.XScriptableDB.Editor
                 return expr;
             }
 
-            // CASE expression
+            // CASE式
             if (Check(TokenType.Case))
                 return ParseCaseExpression();
 
-            // Aggregate function
+            // 集約関数
             if (IsAggregateFunction())
                 return ParseAggregateFunction();
 
-            // String function
+            // 文字列関数
             if (IsStringFunction())
                 return ParseStringFunction();
 
-            // Literal
+            // リテラル
             if (Match(TokenType.StringLiteral))
                 return new LiteralExpression(Previous().Value);
 
@@ -361,7 +361,7 @@ namespace Xeon.XScriptableDB.Editor
             if (Match(TokenType.Null))
                 return new LiteralExpression(null);
 
-            // Column reference
+            // 列参照
             return ParseColumnExpression();
         }
 
@@ -371,7 +371,7 @@ namespace Xeon.XScriptableDB.Editor
                   Check(TokenType.Avg) || Check(TokenType.Min) || Check(TokenType.Max)))
                 return false;
 
-            // Check if the next token is ( (true only for function calls)
+            // 次のトークンが ( かどうかを確認する（関数呼び出しの場合のみtrue）
             return current + 1 < tokens.Count && tokens[current + 1].Type == TokenType.LeftParen;
         }
 
@@ -400,10 +400,10 @@ namespace Xeon.XScriptableDB.Editor
             if (Match(TokenType.Distinct))
                 aggExpr.IsDistinct = true;
 
-            // Special case for COUNT(*)
+            // COUNT(*)の特別なケース
             if (func == AggregateFunction.Count && Match(TokenType.Star))
             {
-                aggExpr.Argument = null; // COUNT(*) has no argument
+                aggExpr.Argument = null; // COUNT(*)には引数がありません
             }
             else
             {
@@ -421,7 +421,7 @@ namespace Xeon.XScriptableDB.Editor
                   Check(TokenType.Trim) || Check(TokenType.Length)))
                 return false;
 
-            // Check if the next token is ( (true only for function calls)
+            // 次のトークンが ( かどうかを確認する（関数呼び出しの場合のみtrue）
             return current + 1 < tokens.Count && tokens[current + 1].Type == TokenType.LeftParen;
         }
 
@@ -518,7 +518,7 @@ namespace Xeon.XScriptableDB.Editor
                 if (Match(TokenType.Desc))
                     item.Order = SortOrder.Descending;
                 else
-                    Match(TokenType.Asc); // Optional ASC
+                    Match(TokenType.Asc); // ASC（省略可能）
 
                 items.Add(item);
             } while (Match(TokenType.Comma));
@@ -569,7 +569,7 @@ namespace Xeon.XScriptableDB.Editor
 
         private SqlExpression ParseComparisonExpression()
         {
-            // Handle parentheses
+            // 括弧を処理する
             if (Match(TokenType.LeftParen))
             {
                 var expr = ParseExpression();
@@ -577,7 +577,7 @@ namespace Xeon.XScriptableDB.Editor
                 return expr;
             }
 
-            // Parse expression including arithmetic, functions, and aggregates
+            // 算術演算、関数、集約を含む式を解析する
             var left = ParseSelectExpression();
 
             // IS NULL / IS NOT NULL
@@ -593,7 +593,7 @@ namespace Xeon.XScriptableDB.Editor
                 };
             }
 
-            // Comparison operators
+            // 比較演算子
             ComparisonOperator? op = null;
 
             if (Match(TokenType.Equal)) op = ComparisonOperator.Equal;
@@ -617,7 +617,7 @@ namespace Xeon.XScriptableDB.Editor
             if (op == null)
                 return left;
 
-            // Parse expression including arithmetic, functions, and aggregates
+            // 算術演算、関数、集約を含む式を解析する
             var right = ParseSelectExpression();
 
             return new ComparisonExpression
@@ -632,7 +632,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             Expect(TokenType.LeftParen, "(");
 
-            // Check for subquery
+            // サブクエリを確認する
             if (Check(TokenType.Select))
             {
                 var subquery = ParseSelect();
@@ -675,7 +675,7 @@ namespace Xeon.XScriptableDB.Editor
             var columnName = token.Value;
             string tableAlias = null;
 
-            // Check for table.column notation
+            // table.column表記を確認する
             if (Match(TokenType.Dot))
             {
                 tableAlias = columnName;
@@ -690,14 +690,14 @@ namespace Xeon.XScriptableDB.Editor
         {
             var token = Peek();
 
-            // Identifiers are always allowed
+            // 識別子は常に許可されます
             if (token.Type == TokenType.Identifier)
             {
                 Advance();
                 return token;
             }
 
-            // Keywords used as function names are also allowed as column names
+            // 関数名として使用されるキーワードは、列名としても許可されます
             if (IsKeywordUsableAsColumnName(token.Type))
             {
                 Advance();

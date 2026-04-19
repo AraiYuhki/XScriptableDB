@@ -1,28 +1,28 @@
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// Base interface for records managed by TableAsset.
-    /// When combined with the [PrimaryKey] attribute, automatic key management becomes available.
+    /// TableAssetで管理されるレコードの基本インターフェース。
+    /// [PrimaryKey]属性と組み合わせることで、自動的なキー管理が利用可能になります。
     /// </summary>
     public interface IRecord
     {
         /// <summary>
-        /// Returns the PrimaryKey value of the record as an object.
-        /// Implement this when fast access without reflection is required.
-        /// If not implemented, the [PrimaryKey] attribute is used to access the value via reflection.
+        /// レコードのPrimaryKey値をオブジェクトとして返します。
+        /// リフレクションを使用しない高速なアクセスが必要な場合に実装してください。
+        /// 実装されていない場合、[PrimaryKey]属性を使用してリフレクション経由で値にアクセスします。
         /// </summary>
         object GetPrimaryKeyValue() => null;
     }
 
     /// <summary>
-    /// Record interface that provides type-safe PrimaryKey access.
-    /// Equivalent to IPrimaryKey&lt;TKey&gt; but inherits from IRecord.
+    /// 型安全なPrimaryKeyアクセスを提供するレコードインターフェース。
+    /// IPrimaryKey&lt;TKey&gt;と同等ですが、IRecordを継承します。
     /// </summary>
-    /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
+    /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
     public interface IRecord<TKey> : IRecord
     {
         /// <summary>
-        /// PrimaryKey value of the record.
+        /// レコードのPrimaryKey値。
         /// </summary>
         TKey PrimaryKey { get; }
 

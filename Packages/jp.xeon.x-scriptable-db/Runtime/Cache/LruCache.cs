@@ -4,11 +4,11 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Cache
 {
     /// <summary>
-    /// LRU (Least Recently Used) cache.
-    /// Evicts the least recently used item when the capacity is exceeded.
+    /// LRU (Least Recently Used) キャッシュ。
+    /// 容量を超えた場合、最も最近使用されていないアイテムを削除します。
     /// </summary>
-    /// <typeparam name="TKey">Key type</typeparam>
-    /// <typeparam name="TValue">Value type</typeparam>
+    /// <typeparam name="TKey">キーの型</typeparam>
+    /// <typeparam name="TValue">値の型</typeparam>
     public class LruCache<TKey, TValue>
     {
         private readonly int capacity;
@@ -16,10 +16,10 @@ namespace Xeon.XScriptableDB.Cache
         private readonly LinkedList<CacheItem> lruList;
         private readonly object syncLock = new();
 
-        /// <summary>Maximum capacity of the cache</summary>
+        /// <summary>キャッシュの最大容量</summary>
         public int Capacity => capacity;
 
-        /// <summary>Current number of items</summary>
+        /// <summary>現在のアイテム数</summary>
         public int Count
         {
             get
@@ -31,13 +31,13 @@ namespace Xeon.XScriptableDB.Cache
             }
         }
 
-        /// <summary>Number of cache hits</summary>
+        /// <summary>キャッシュヒット数</summary>
         public long HitCount { get; private set; }
 
-        /// <summary>Number of cache misses</summary>
+        /// <summary>キャッシュミス数</summary>
         public long MissCount { get; private set; }
 
-        /// <summary>Hit rate</summary>
+        /// <summary>ヒット率</summary>
         public double HitRate
         {
             get
@@ -58,18 +58,18 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Gets a value from the cache.
+        /// キャッシュから値を取得します。
         /// </summary>
-        /// <param name="key">Key</param>
-        /// <param name="value">Value (if found)</param>
-        /// <returns>True if the key exists</returns>
+        /// <param name="key">キー</param>
+        /// <param name="value">値（見つかった場合）</param>
+        /// <returns>キーが存在する場合はtrue</returns>
         public bool TryGet(TKey key, out TValue value)
         {
             lock (syncLock)
             {
                 if (cache.TryGetValue(key, out var node))
                 {
-                    // Move to the front of the list since it was accessed
+                    // アクセスされたため、リストの先頭に移動します
                     lruList.Remove(node);
                     lruList.AddFirst(node);
                     value = node.Value.Value;
@@ -84,7 +84,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Gets a value. Throws an exception if the key does not exist.
+        /// 値を取得します。キーが存在しない場合は例外をスローします。
         /// </summary>
         public TValue Get(TKey key)
         {
@@ -95,30 +95,30 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Sets a value in the cache.
+        /// キャッシュに値を設定します。
         /// </summary>
-        /// <param name="key">Key</param>
-        /// <param name="value">Value</param>
+        /// <param name="key">キー</param>
+        /// <param name="value">値</param>
         public void Set(TKey key, TValue value)
         {
             lock (syncLock)
             {
                 if (cache.TryGetValue(key, out var existingNode))
                 {
-                    // Update the existing item
+                    // 既存のアイテムを更新します
                     existingNode.Value.Value = value;
                     lruList.Remove(existingNode);
                     lruList.AddFirst(existingNode);
                     return;
                 }
 
-                // If over capacity, remove the least recently used item
+                // 容量を超えている場合、最も最近使用されていないアイテムを削除します
                 if (cache.Count >= capacity)
                 {
                     RemoveLeastRecentlyUsed();
                 }
 
-                // Add the new item
+                // 新しいアイテムを追加します
                 var item = new CacheItem { Key = key, Value = value };
                 var node = new LinkedListNode<CacheItem>(item);
                 lruList.AddFirst(node);
@@ -127,11 +127,11 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Gets a value, or creates and adds it using the factory function if it does not exist.
+        /// 値を取得します。存在しない場合は、ファクトリ関数を使用して作成し、追加します。
         /// </summary>
-        /// <param name="key">Key</param>
-        /// <param name="factory">Function that produces the value</param>
-        /// <returns>Value</returns>
+        /// <param name="key">キー</param>
+        /// <param name="factory">値を生成する関数</param>
+        /// <returns>値</returns>
         public TValue GetOrAdd(TKey key, Func<TKey, TValue> factory)
         {
             lock (syncLock)
@@ -146,7 +146,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Checks whether a key exists in the cache.
+        /// キーがキャッシュに存在するかどうかを確認します。
         /// </summary>
         public bool Contains(TKey key)
         {
@@ -157,7 +157,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Removes the item with the specified key.
+        /// 指定されたキーのアイテムを削除します。
         /// </summary>
         public bool Remove(TKey key)
         {
@@ -174,7 +174,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Clears the cache.
+        /// キャッシュをクリアします。
         /// </summary>
         public void Clear()
         {
@@ -186,7 +186,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Resets the statistics counters.
+        /// 統計カウンターをリセットします。
         /// </summary>
         public void ResetStatistics()
         {
@@ -195,7 +195,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Removes the least recently used item.
+        /// 最も最近使用されていないアイテムを削除します。
         /// </summary>
         private void RemoveLeastRecentlyUsed()
         {

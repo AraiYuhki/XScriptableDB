@@ -7,8 +7,8 @@ using Xeon.XScriptableDB.Validation;
 namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
 {
     /// <summary>
-    /// Record class for the recipe master.
-    /// Holds multiple foreign key references to items.
+    /// レシピマスターのレコードクラス。
+    /// アイテムへの複数の外部キー参照を保持します。
     /// </summary>
     [Serializable]
     public class RecipeRecord
@@ -44,67 +44,67 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         private int material3Count;
 
         /// <summary>
-        /// Recipe ID (primary key)
+        /// レシピID（主キー）
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// Recipe name
+        /// レシピ名
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// Result item ID (foreign key)
+        /// 完成品アイテムID（外部キー）
         /// </summary>
         public int ResultItemId => resultItemId;
 
         /// <summary>
-        /// Result count
+        /// 完成個数
         /// </summary>
         public int ResultCount => resultCount;
 
         /// <summary>
-        /// Material 1 item ID (0 means not set)
+        /// 素材1のアイテムID（0は未設定）
         /// </summary>
         public int Material1Id => material1Id;
 
         /// <summary>
-        /// Required count for material 1
+        /// 素材1の必要数
         /// </summary>
         public int Material1Count => material1Count;
 
         /// <summary>
-        /// Material 2 item ID (0 means not set)
+        /// 素材2のアイテムID（0は未設定）
         /// </summary>
         public int Material2Id => material2Id;
 
         /// <summary>
-        /// Required count for material 2
+        /// 素材2の必要数
         /// </summary>
         public int Material2Count => material2Count;
 
         /// <summary>
-        /// Material 3 item ID (0 means not set)
+        /// 素材3のアイテムID（0は未設定）
         /// </summary>
         public int Material3Id => material3Id;
 
         /// <summary>
-        /// Required count for material 3
+        /// 素材3の必要数
         /// </summary>
         public int Material3Count => material3Count;
 
         /// <summary>
-        /// Whether material 1 is set
+        /// 素材1が設定されているかどうか
         /// </summary>
         public bool HasMaterial1 => material1Id > 0;
 
         /// <summary>
-        /// Whether material 2 is set
+        /// 素材2が設定されているかどうか
         /// </summary>
         public bool HasMaterial2 => material2Id > 0;
 
         /// <summary>
-        /// Whether material 3 is set
+        /// 素材3が設定されているかどうか
         /// </summary>
         public bool HasMaterial3 => material3Id > 0;
 

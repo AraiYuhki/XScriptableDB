@@ -1,7 +1,7 @@
 namespace Xeon.XScriptableDB.Cache
 {
     /// <summary>
-    /// Cache statistics.
+    /// キャッシュの統計。
     /// </summary>
     public struct CacheStatistics
     {

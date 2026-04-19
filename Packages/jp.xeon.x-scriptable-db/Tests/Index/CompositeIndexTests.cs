@@ -6,8 +6,8 @@ using System.Linq;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// Tests for composite index functionality.
-    /// Tests for the implementation combining the best aspects of PR#3 and PR#4.
+    /// 複合インデックス機能のテスト。
+    /// PR#3とPR#4の優れた側面を組み合わせた実装のテスト。
     /// </summary>
     public class CompositeIndexTests
     {

@@ -4,8 +4,8 @@ using Xeon.XScriptableDB;
 namespace Xeon.XScriptableDB.Samples.Validation
 {
     /// <summary>
-    /// Skill table.
-    /// For the validation sample.
+    /// スキルテーブル。
+    /// バリデーションサンプル用です。
     /// </summary>
     [CreateAssetMenu(
         fileName = "SkillTable",

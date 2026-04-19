@@ -6,7 +6,7 @@ using Xeon.XScriptableDB.Cache;
 namespace Xeon.XScriptableDB.Tests.Cache
 {
     /// <summary>
-    /// Tests for the cache system.
+    /// キャッシュシステムのテスト。
     /// </summary>
     public class CacheTests
     {
@@ -72,7 +72,7 @@ namespace Xeon.XScriptableDB.Tests.Cache
             cache.Set("key2", 2);
             cache.Set("key3", 3);
 
-            // key1 is the oldest
+            // key1は最も古いエントリ
             cache.Set("key4", 4);
 
             Assert.IsFalse(cache.Contains("key1"));
@@ -89,10 +89,10 @@ namespace Xeon.XScriptableDB.Tests.Cache
             cache.Set("key2", 2);
             cache.Set("key3", 3);
 
-            // Access key1 to make it the most recently used
+            // key1にアクセスして、最も最近使用されたエントリにする
             cache.TryGet("key1", out _);
 
-            // key2 becomes the oldest
+            // key2が最も古いエントリになる
             cache.Set("key4", 4);
 
             Assert.IsTrue(cache.Contains("key1"));
@@ -144,9 +144,9 @@ namespace Xeon.XScriptableDB.Tests.Cache
             var cache = new LruCache<string, int>(10);
             cache.Set("key1", 100);
 
-            cache.TryGet("key1", out _); // hit
-            cache.TryGet("key1", out _); // hit
-            cache.TryGet("key2", out _); // miss
+            cache.TryGet("key1", out _); // ヒット
+            cache.TryGet("key1", out _); // ヒット
+            cache.TryGet("key2", out _); // ミス
 
             Assert.AreEqual(2, cache.HitCount);
             Assert.AreEqual(1, cache.MissCount);
@@ -288,8 +288,8 @@ namespace Xeon.XScriptableDB.Tests.Cache
             var cache = new QueryCache();
             cache.Set(typeof(TestTable), "FindById", 1, "Value1");
 
-            cache.TryGet<string>(typeof(TestTable), "FindById", 1, out _); // hit
-            cache.TryGet<string>(typeof(TestTable), "FindById", 2, out _); // miss
+            cache.TryGet<string>(typeof(TestTable), "FindById", 1, out _); // ヒット
+            cache.TryGet<string>(typeof(TestTable), "FindById", 2, out _); // ミス
 
             Assert.AreEqual(1, cache.HitCount);
             Assert.AreEqual(1, cache.MissCount);
@@ -408,7 +408,7 @@ namespace Xeon.XScriptableDB.Tests.Cache
             Assert.AreEqual(0, CacheManager.QueryCache.Count);
             Assert.IsFalse(CacheManager.IsEnabled);
 
-            // Reset after test
+            // テスト後にリセットする
             CacheManager.IsEnabled = true;
         }
 
@@ -424,7 +424,7 @@ namespace Xeon.XScriptableDB.Tests.Cache
         [TearDown]
         public void TearDown()
         {
-            // Reset cache after test
+            // テスト後にキャッシュをリセットする
             CacheManager.IsEnabled = true;
             CacheManager.Clear();
             CacheManager.ResetStatistics();
@@ -432,7 +432,7 @@ namespace Xeon.XScriptableDB.Tests.Cache
 
         #endregion
 
-        // Dummy types for testing
+        // テスト用のダミー型
         private class TestTable { }
         private class OtherTable { }
     }

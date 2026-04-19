@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Row data from a SELECT result.
+    /// SELECT結果からの行データ。
     /// </summary>
     public class ResultRow
     {

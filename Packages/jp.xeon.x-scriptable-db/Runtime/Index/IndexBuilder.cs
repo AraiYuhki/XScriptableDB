@@ -8,20 +8,20 @@ using UnityEngine;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// Builder class for constructing SecondaryKey indexes.
-    /// Supports both single-field indexes and composite indexes.
+    /// SecondaryKeyインデックスを構築するためのビルダークラス。
+    /// 単一フィールドインデックスと複合インデックスの両方をサポートします。
     /// </summary>
     public static class IndexBuilder
     {
         private const BindingFlags MemberFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         /// <summary>
-        /// Builds SecondaryKey indexes from a record array.
-        /// Multiple fields sharing the same name are built as a composite index.
+        /// レコード配列からSecondaryKeyインデックスを構築します。
+        /// 同じ名前を共有する複数のフィールドは、複合インデックスとして構築されます。
         /// </summary>
-        /// <typeparam name="T">Record type</typeparam>
-        /// <param name="records">Record array</param>
-        /// <returns>The built index container</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <param name="records">レコード配列</param>
+        /// <returns>構築されたインデックスコンテナ</returns>
         public static IndexContainer BuildIndices<T>(T[] records)
         {
             var container = new IndexContainer();
@@ -51,12 +51,12 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Builds an index for a specific SecondaryKey.
+        /// 特定のSecondaryKeyのインデックスを構築します。
         /// </summary>
-        /// <typeparam name="T">Record type</typeparam>
-        /// <param name="records">Record array</param>
-        /// <param name="indexName">Index name</param>
-        /// <returns>The built index data, or null if not found</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <param name="records">レコード配列</param>
+        /// <param name="indexName">インデックス名</param>
+        /// <returns>構築されたインデックスデータ。見つからない場合はnull</returns>
         public static IndexData BuildIndex<T>(T[] records, string indexName)
         {
             var type = typeof(T);
@@ -80,10 +80,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Finds SecondaryKey members on a type.
+        /// 型からSecondaryKeyメンバーを検索します。
         /// </summary>
-        /// <param name="type">Type to search</param>
-        /// <returns>List of SecondaryKey members and their attributes</returns>
+        /// <param name="type">検索する型</param>
+        /// <returns>SecondaryKeyメンバーとその属性のリスト</returns>
         public static List<(MemberInfo member, SecondaryKeyAttribute attribute)> FindSecondaryKeyMembers(Type type)
         {
             var result = new List<(MemberInfo, SecondaryKeyAttribute)>();
@@ -106,11 +106,11 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Gets SecondaryKey members grouped by index name.
-        /// Members sharing the same index name are treated as a composite index.
+        /// インデックス名でグループ化されたSecondaryKeyメンバーを取得します。
+        /// 同じインデックス名を共有するメンバーは、複合インデックスとして扱われます。
         /// </summary>
-        /// <param name="type">Type to search</param>
-        /// <returns>Dictionary of grouped members keyed by index name</returns>
+        /// <param name="type">検索する型</param>
+        /// <returns>インデックス名をキーとしたグループ化されたメンバーのディクショナリ</returns>
         public static Dictionary<string, List<(MemberInfo member, SecondaryKeyAttribute attribute)>> GroupSecondaryKeyMembers(Type type)
         {
             var result = new Dictionary<string, List<(MemberInfo member, SecondaryKeyAttribute attribute)>>();
@@ -129,13 +129,13 @@ namespace Xeon.XScriptableDB
 
             foreach (var key in result.Keys.ToList())
             {
-                // Use OrderBy + ThenBy with member name as tiebreaker (ensures deterministic order)
+                // タイブレーカーとしてメンバー名を使用したOrderBy + ThenByを使用します（決定論的な順序を保証します）
                 result[key] = result[key]
                     .OrderBy(item => item.attribute.Order)
                     .ThenBy(item => item.member.Name)
                     .ToList();
 
-                // Warn if any members share the same Order value
+                // メンバーが同じOrder値を共有している場合は警告する
                 var orders = result[key].Select(item => item.attribute.Order).ToList();
                 if (orders.Distinct().Count() != orders.Count)
                 {
@@ -149,11 +149,11 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Determines whether an index is a composite key.
+        /// インデックスが複合キーかどうかを判定します。
         /// </summary>
-        /// <param name="indexName">Index name</param>
-        /// <param name="type">Record type</param>
-        /// <returns>True if it is a composite index</returns>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="type">レコードの型</param>
+        /// <returns>複合インデックスの場合はtrue</returns>
         public static bool IsCompositeIndex(string indexName, Type type)
         {
             var groups = GroupSecondaryKeyMembers(type);
@@ -161,10 +161,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Checks whether a type has any SecondaryKeys.
+        /// 型にSecondaryKeyがあるかどうかを確認します。
         /// </summary>
-        /// <param name="type">Type to check</param>
-        /// <returns>True if the type has at least one SecondaryKey</returns>
+        /// <param name="type">確認する型</param>
+        /// <returns>型に少なくとも1つのSecondaryKeyがある場合はtrue</returns>
         public static bool HasSecondaryKeys(Type type)
         {
             foreach (var field in type.GetFields(MemberFlags))
@@ -183,12 +183,12 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Resolves the AllowDuplicates setting for composite index members.
-        /// Enforces a consistent setting across all members; if inconsistent, logs a warning and uses the most restrictive value (false).
+        /// 複合インデックスメンバーのAllowDuplicates設定を解決します。
+        /// すべてのメンバー間で一貫した設定を強制します。一貫性がない場合は警告をログに記録し、最も制限の厳しい値（false）を使用します。
         /// </summary>
-        /// <param name="indexName">Index name</param>
-        /// <param name="members">List of members and their attributes</param>
-        /// <returns>The resolved AllowDuplicates value</returns>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="members">メンバーとその属性のリスト</param>
+        /// <returns>解決されたAllowDuplicatesの値</returns>
         private static bool ResolveAllowDuplicates(
             string indexName,
             List<(MemberInfo member, SecondaryKeyAttribute attribute)> members)
@@ -241,7 +241,7 @@ namespace Xeon.XScriptableDB
                 return indexData;
             }
 
-            // Use string keys as the primary key (avoids hash collisions)
+            // プライマリキーとして文字列キーを使用する（ハッシュの衝突を回避する）
             var keyGroups = new Dictionary<string, List<int>>();
 
             for (var i = 0; i < records.Length; i++)
@@ -297,7 +297,7 @@ namespace Xeon.XScriptableDB
                 return indexData;
             }
 
-            // Use string keys as the primary key (fully avoids hash collisions)
+            // プライマリキーとして文字列キーを使用する（ハッシュの衝突を完全に回避する）
             var keyGroups = new Dictionary<string, List<int>>();
 
             for (var i = 0; i < records.Length; i++)
@@ -368,8 +368,8 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Converts a value to a culture-invariant string.
-        /// float/double use round-trip format to preserve precision.
+        /// 値をカルチャに依存しない文字列に変換します。
+        /// float/doubleは精度を保つためにラウンドトリップ形式を使用します。
         /// </summary>
         private static string ConvertToInvariantString(object value)
         {

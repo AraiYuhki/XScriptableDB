@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// Foreign key validator.
+    /// 外部キーの検証ツール。
     /// </summary>
     public static class ForeignKeyValidator
     {
@@ -14,13 +14,13 @@ namespace Xeon.XScriptableDB.Validation
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         /// <summary>
-        /// Validates foreign key constraints.
+        /// 外部キー制約を検証します。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <param name="tableAsset">Table to validate</param>
-        /// <param name="context">Validation context</param>
-        /// <param name="keySelector">Key selector</param>
-        /// <returns>Validation result</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <param name="tableAsset">検証するテーブル</param>
+        /// <param name="context">検証コンテキスト</param>
+        /// <param name="keySelector">キーセレクター</param>
+        /// <returns>検証結果</returns>
         public static TableValidationResult ValidateForeignKeys<T>(ITableAsset tableAsset,
             ForeignKeyValidationContext context,
             Func<T, object> keySelector = null) where T : class
@@ -50,7 +50,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// Validates the foreign keys of a single record.
+        /// 単一レコードの外部キーを検証します。
         /// </summary>
         private static RecordValidationResult ValidateRecord<T>(
             T record,
@@ -72,7 +72,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// Validates the foreign key of a single field.
+        /// 単一フィールドの外部キーを検証します。
         /// </summary>
         private static void ValidateFieldForeignKey<T>(
             T record,
@@ -90,7 +90,7 @@ namespace Xeon.XScriptableDB.Validation
             {
                 recordResult.AddError(
                     field.Name,
-                    $"The reference table {attr.ReferenceTableType.Name} is not registered.",
+                    $"参照テーブル {attr.ReferenceTableType.Name} が登録されていません。",
                     ValidationErrorType.ForeignKey);
                 return;
             }
@@ -99,13 +99,13 @@ namespace Xeon.XScriptableDB.Validation
             {
                 recordResult.AddError(
                     field.Name,
-                    attr.ErrorMessage ?? $"The value '{value}' of {field.Name} does not exist in {attr.ReferenceTableType.Name}.",
+                    attr.ErrorMessage ?? $"{field.Name} の値 '{value}' は {attr.ReferenceTableType.Name} に存在しません。",
                     ValidationErrorType.ForeignKey);
             }
         }
 
         /// <summary>
-        /// Returns the foreign key fields.
+        /// 外部キーフィールドを返します。
         /// </summary>
         private static List<(FieldInfo field, ForeignKeyAttribute attr)> GetForeignKeyFields(Type type)
         {
@@ -124,7 +124,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// Generates an integrity report for foreign key references.
+        /// 外部キー参照の整合性レポートを生成します。
         /// </summary>
         public static ForeignKeyReport GenerateReport(
             ITableAsset sourceTable,
@@ -146,7 +146,7 @@ namespace Xeon.XScriptableDB.Validation
 
             if (fkField == null)
             {
-                report.Errors.Add($"Field '{foreignKeyField}' was not found.");
+                report.Errors.Add($"フィールド '{foreignKeyField}' が見つかりませんでした。");
                 return report;
             }
 
@@ -155,7 +155,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// Collects the keys from the target table.
+        /// ターゲットテーブルからキーを収集します。
         /// </summary>
         private static HashSet<object> CollectTargetKeys(ITableAsset targetTable)
         {
@@ -179,7 +179,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// Validates foreign key references and adds findings to the report.
+        /// 外部キー参照を検証し、結果をレポートに追加します。
         /// </summary>
         private static void ValidateForeignKeyReferences(
             ITableAsset sourceTable,
@@ -203,7 +203,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// Returns the PrimaryKey field.
+        /// PrimaryKeyフィールドを返します。
         /// </summary>
         private static FieldInfo GetPrimaryKeyField(Type recordType)
         {

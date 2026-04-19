@@ -6,16 +6,16 @@ using UnityEngine;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// Reflection-related utility methods.
+    /// リフレクション関連のユーティリティメソッド。
     /// </summary>
     public static class ReflectionUtility
     {
         private const BindingFlags AllInstanceFields = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         /// <summary>
-        /// Returns all serializable fields.
-        /// Public fields are always included.
-        /// Private fields are included only if they have the SerializeField attribute.
+        /// シリアライズ可能なすべてのフィールドを返します。
+        /// パブリックフィールドは常に含まれます。
+        /// プライベートフィールドは、SerializeField属性がある場合のみ含まれます。
         /// </summary>
         public static IEnumerable<FieldInfo> GetSerializableFields(Type type)
         {
@@ -27,20 +27,20 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Determines whether a field is serializable.
+        /// フィールドがシリアライズ可能かどうかを判定します。
         /// </summary>
         public static bool IsSerializableField(FieldInfo field)
         {
-            // Public fields are always included
+            // パブリックフィールドは常に含まれる
             if (field.IsPublic)
                 return true;
 
-            // Private fields are included only if they have the SerializeField attribute
+            // プライベートフィールドはSerializeField属性がある場合のみ含まれる
             return field.GetCustomAttribute<SerializeField>() != null;
         }
 
         /// <summary>
-        /// Returns the serializable field with the specified name.
+        /// 指定された名前のシリアライズ可能なフィールドを返します。
         /// </summary>
         public static FieldInfo GetSerializableField(Type type, string fieldName)
         {

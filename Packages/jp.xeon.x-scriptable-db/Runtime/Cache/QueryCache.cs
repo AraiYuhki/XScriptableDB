@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Cache
 {
     /// <summary>
-    /// Cache for query results.
+    /// クエリ結果のキャッシュ。
     /// </summary>
     public class QueryCache
     {
@@ -13,22 +13,22 @@ namespace Xeon.XScriptableDB.Cache
         private readonly Dictionary<QueryCacheKey, int> entryVersions = new();
         private readonly object versionLock = new();
 
-        /// <summary>Default cache capacity</summary>
+        /// <summary>デフォルトのキャッシュ容量</summary>
         public const int DefaultCapacity = 1000;
 
-        /// <summary>Cache capacity</summary>
+        /// <summary>キャッシュ容量</summary>
         public int Capacity => cache.Capacity;
 
-        /// <summary>Current number of entries</summary>
+        /// <summary>現在のエントリ数</summary>
         public int Count => cache.Count;
 
-        /// <summary>Hit rate</summary>
+        /// <summary>ヒット率</summary>
         public double HitRate => cache.HitRate;
 
-        /// <summary>Hit count</summary>
+        /// <summary>ヒット数</summary>
         public long HitCount => cache.HitCount;
 
-        /// <summary>Miss count</summary>
+        /// <summary>ミス数</summary>
         public long MissCount => cache.MissCount;
 
         public QueryCache(int capacity = DefaultCapacity)
@@ -37,11 +37,11 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Checks whether a cache entry is current by comparing it against the table version.
+        /// キャッシュエントリがテーブルのバージョンと比較して最新かどうかを確認します。
         /// </summary>
-        /// <param name="cacheKey">Cache key to validate</param>
-        /// <param name="tableType">Type of the corresponding table</param>
-        /// <returns>True if valid; false if invalid and removed</returns>
+        /// <param name="cacheKey">検証するキャッシュキー</param>
+        /// <param name="tableType">対応するテーブルの型</param>
+        /// <returns>有効な場合はtrue、無効で削除された場合はfalse</returns>
         private bool ValidateVersion(QueryCacheKey cacheKey, Type tableType)
         {
             lock (versionLock)
@@ -55,7 +55,7 @@ namespace Xeon.XScriptableDB.Cache
                 if (entryVersion >= tableVersion)
                     return true;
 
-                // The table has been updated, so the cache entry is invalid
+                // テーブルが更新されているため、キャッシュエントリは無効です
                 cache.Remove(cacheKey);
                 entryVersions.Remove(cacheKey);
                 return false;
@@ -63,19 +63,19 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Retrieves a value from the cache.
+        /// キャッシュから値を取得します。
         /// </summary>
-        /// <typeparam name="T">Type of the value</typeparam>
-        /// <param name="tableType">Type of the table</param>
-        /// <param name="queryType">Type of the query</param>
-        /// <param name="keyValue">Key value</param>
-        /// <param name="value">Retrieved value</param>
-        /// <returns>True if the cache was hit</returns>
+        /// <typeparam name="T">値の型</typeparam>
+        /// <param name="tableType">テーブルの型</param>
+        /// <param name="queryType">クエリの型</param>
+        /// <param name="keyValue">キー値</param>
+        /// <param name="value">取得された値</param>
+        /// <returns>キャッシュにヒットした場合はtrue</returns>
         public bool TryGet<T>(Type tableType, string queryType, object keyValue, out T value)
         {
             var cacheKey = new QueryCacheKey(tableType, queryType, keyValue);
 
-            // Version check
+            // バージョンチェック
             if (!ValidateVersion(cacheKey, tableType))
             {
                 value = default;
@@ -93,13 +93,13 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Sets a value in the cache.
+        /// キャッシュに値を設定します。
         /// </summary>
-        /// <typeparam name="T">Type of the value</typeparam>
-        /// <param name="tableType">Type of the table</param>
-        /// <param name="queryType">Type of the query</param>
-        /// <param name="keyValue">Key value</param>
-        /// <param name="value">Value to cache</param>
+        /// <typeparam name="T">値の型</typeparam>
+        /// <param name="tableType">テーブルの型</param>
+        /// <param name="queryType">クエリの型</param>
+        /// <param name="keyValue">キー値</param>
+        /// <param name="value">キャッシュする値</param>
         public void Set<T>(Type tableType, string queryType, object keyValue, T value)
         {
             var cacheKey = new QueryCacheKey(tableType, queryType, keyValue);
@@ -114,7 +114,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Retrieves a value from the cache, or generates and adds it if not present.
+        /// キャッシュから値を取得します。存在しない場合は生成して追加します。
         /// </summary>
         public T GetOrAdd<T>(Type tableType, string queryType, object keyValue, Func<T> factory)
         {
@@ -127,10 +127,10 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Notifies that the data in the table has changed.
-        /// All cache entries related to this table will be invalidated.
+        /// テーブルのデータが変更されたことを通知します。
+        /// このテーブルに関連するすべてのキャッシュエントリが無効になります。
         /// </summary>
-        /// <param name="tableType">Type of the changed table</param>
+        /// <param name="tableType">変更されたテーブルの型</param>
         public void InvalidateTable(Type tableType)
         {
             lock (versionLock)
@@ -140,7 +140,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Removes the cache entry for a specific query.
+        /// 特定のクエリのキャッシュエントリを削除します。
         /// </summary>
         public void Invalidate(Type tableType, string queryType, object keyValue)
         {
@@ -154,7 +154,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Clears the cache.
+        /// キャッシュをクリアします。
         /// </summary>
         public void Clear()
         {
@@ -167,7 +167,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Resets statistics.
+        /// 統計をリセットします。
         /// </summary>
         public void ResetStatistics()
         {
@@ -175,7 +175,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Retrieves cache statistics.
+        /// キャッシュの統計を取得します。
         /// </summary>
         public CacheStatistics GetStatistics()
         {

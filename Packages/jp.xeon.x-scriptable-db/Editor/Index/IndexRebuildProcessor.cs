@@ -5,12 +5,12 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Processor that automatically rebuilds SecondaryKey indices when a table asset is saved.
+    /// テーブルアセットの保存時にSecondaryKeyインデックスを自動的に再構築するプロセッサ。
     /// </summary>
     public class IndexRebuildProcessor : AssetModificationProcessor
     {
         /// <summary>
-        /// Called when assets are about to be saved.
+        /// アセットが保存される際に呼び出されます。
         /// </summary>
         private static string[] OnWillSaveAssets(string[] paths)
         {
@@ -32,7 +32,7 @@ namespace Xeon.XScriptableDB.Editor
             if (!IndexBuilder.HasSecondaryKeys(recordType))
                 return;
 
-            // Call the RebuildSecondaryIndices method
+            // RebuildSecondaryIndicesメソッドを呼び出します
             var method = asset.GetType().GetMethod("RebuildSecondaryIndices", BindingFlags.Public | BindingFlags.Instance);
             if (method != null)
             {

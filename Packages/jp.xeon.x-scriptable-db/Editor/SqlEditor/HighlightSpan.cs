@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// A highlighted span of text.
+    /// ハイライトされたテキストの範囲。
     /// </summary>
     public struct HighlightSpan
     {

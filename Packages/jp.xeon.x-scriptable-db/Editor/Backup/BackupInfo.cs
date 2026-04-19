@@ -3,7 +3,7 @@ using System;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Backup information.
+    /// バックアップ情報。
     /// </summary>
     [Serializable]
     public class BackupInfo

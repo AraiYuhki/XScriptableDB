@@ -3,29 +3,29 @@ using System.Text;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Export settings.
+    /// エクスポート設定。
     /// </summary>
     public class ExportSettings
     {
-        /// <summary>Output file path</summary>
+        /// <summary>出力ファイルパス</summary>
         public string FilePath { get; set; }
 
-        /// <summary>Encoding</summary>
+        /// <summary>エンコーディング</summary>
         public Encoding Encoding { get; set; } = Encoding.UTF8;
 
-        /// <summary>Delimiter character (defaults to comma)</summary>
+        /// <summary>区切り文字（デフォルトはカンマ）</summary>
         public char Delimiter { get; set; } = ',';
 
-        /// <summary>Whether to sort by PrimaryKey</summary>
+        /// <summary>PrimaryKeyでソートするかどうか</summary>
         public bool SortByPrimaryKey { get; set; } = true;
 
-        /// <summary>Column order for export (definition order if null)</summary>
+        /// <summary>エクスポート時の列順序（nullの場合は定義順）</summary>
         public string[] ColumnOrder { get; set; }
 
-        /// <summary>Columns to exclude</summary>
+        /// <summary>除外する列</summary>
         public string[] ExcludeColumns { get; set; }
 
-        /// <summary>Whether to write a BOM (for UTF-8)</summary>
+        /// <summary>BOMを書き込むかどうか（UTF-8用）</summary>
         public bool WriteBom { get; set; } = false;
     }
 }

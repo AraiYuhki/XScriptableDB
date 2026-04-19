@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Migration execution result.
+    /// マイグレーション実行結果。
     /// </summary>
     public class MigrationResult
     {

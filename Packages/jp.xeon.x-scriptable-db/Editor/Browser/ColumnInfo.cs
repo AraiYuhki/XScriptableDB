@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Column information.
+    /// 列情報。
     /// </summary>
     public class ColumnInfo
     {

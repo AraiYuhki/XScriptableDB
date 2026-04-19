@@ -5,8 +5,8 @@ namespace Xeon.XScriptableDB
     public static class StringUtility
     {
         /// <summary>
-        /// Converts a string to PascalCase (first letter uppercase).
-        /// Example: "userName" → "UserName"
+        /// 文字列をPascalCase（最初の文字を大文字）に変換します。
+        /// 例: "userName" → "UserName"
         /// </summary>
         public static string ToPascalCase(this string origin)
         {
@@ -20,8 +20,8 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Converts a string to camelCase (first letter lowercase).
-        /// Example: "UserName" → "userName"
+        /// 文字列をcamelCase（最初の文字を小文字）に変換します。
+        /// 例: "UserName" → "userName"
         /// </summary>
         public static string ToCamelCase(this string origin)
         {
@@ -35,8 +35,8 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Converts snake_case to PascalCase.
-        /// Example: "created_at" → "CreatedAt"
+        /// snake_caseをPascalCaseに変換します。
+        /// 例: "created_at" → "CreatedAt"
         /// </summary>
         public static string SnakeToPascalCase(this string origin)
         {
@@ -62,8 +62,8 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Converts snake_case to camelCase.
-        /// Example: "created_at" → "createdAt"
+        /// snake_caseをcamelCaseに変換します。
+        /// 例: "created_at" → "createdAt"
         /// </summary>
         public static string SnakeToCamelCase(this string origin)
         {
@@ -75,8 +75,8 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Converts camelCase or PascalCase to snake_case.
-        /// Example: "createdAt" → "created_at", "CreatedAt" → "created_at"
+        /// camelCaseまたはPascalCaseをsnake_caseに変換します。
+        /// 例: "createdAt" → "created_at", "CreatedAt" → "created_at"
         /// </summary>
         public static string ToSnakeCase(this string origin)
         {

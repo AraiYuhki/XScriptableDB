@@ -4,51 +4,51 @@ using System.Collections;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// Non-generic interface for TableAsset.
-    /// Used when operating on tables without knowing the concrete type, such as in Editor code.
+    /// TableAssetの非ジェネリックインターフェース。
+    /// エディタコードなどで、具体的な型を知らずにテーブルを操作する場合に使用します。
     /// </summary>
     public interface ITableAsset
     {
         /// <summary>
-        /// Returns all records.
+        /// すべてのレコードを返します。
         /// </summary>
         IEnumerable Records { get; }
 
         /// <summary>
-        /// Number of records.
+        /// レコード数。
         /// </summary>
         int Count { get; }
 
         /// <summary>
-        /// Type of the record.
+        /// レコードの型。
         /// </summary>
         Type RecordType { get; }
 
         /// <summary>
-        /// Type of the PrimaryKey.
+        /// PrimaryKeyの型。
         /// </summary>
         Type KeyType { get; }
 
 #if UNITY_EDITOR
         /// <summary>
-        /// Creates a new empty record.
+        /// 新しい空のレコードを作成します。
         /// </summary>
         object CreateNewRecord();
 
         /// <summary>
-        /// Adds a record.
+        /// レコードを追加します。
         /// </summary>
         void AddRecordObject(object record);
 
         /// <summary>
-        /// Removes the record at the specified index.
+        /// 指定されたインデックスのレコードを削除します。
         /// </summary>
         void RemoveRecordAt(int index);
 
         /// <summary>
-        /// Checks for duplicate PrimaryKeys.
+        /// 重複するPrimaryKeyをチェックします。
         /// </summary>
-        /// <returns>List of duplicate keys (as object type)</returns>
+        /// <returns>重複キーのリスト（オブジェクト型）</returns>
         IList FindDuplicateKeysAsObjects();
 #endif
     }

@@ -6,7 +6,7 @@ using RangeAttribute = Xeon.XScriptableDB.Validation.RangeAttribute;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// Tests for validation attributes.
+    /// バリデーション属性のテスト。
     /// </summary>
     public class ValidationTests
     {
@@ -226,7 +226,7 @@ namespace Xeon.XScriptableDB.Tests
         {
             var record = new StringLengthTestRecord
             {
-                MediumText = "Hi"  // Minimum 5 characters
+                MediumText = "Hi"  // 最小5文字
             };
 
             var result = RecordValidator.ValidateRecord(record);
@@ -241,7 +241,7 @@ namespace Xeon.XScriptableDB.Tests
 
             var result = RecordValidator.ValidateRecord(record);
 
-            Assert.That(result.IsValid, Is.True);  // null is handled by a separate validation
+            Assert.That(result.IsValid, Is.True);  // nullは別のバリデーションで処理されます
         }
 
         #endregion
@@ -267,7 +267,7 @@ namespace Xeon.XScriptableDB.Tests
         {
             var record = new RegexTestRecord
             {
-                AlphaNumeric = "Test 123"  // Spaces are not allowed
+                AlphaNumeric = "Test 123"  // スペースは許可されていません
             };
 
             var result = RecordValidator.ValidateRecord(record);
@@ -342,7 +342,7 @@ namespace Xeon.XScriptableDB.Tests
         {
             var record = new RequiredTestRecord
             {
-                Name = null  // Required violation
+                Name = null  // Required違反
             };
 
             var result = RecordValidator.ValidateRecord(record);

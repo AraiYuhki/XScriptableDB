@@ -6,33 +6,33 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// List view with virtual scroll support.
-    /// Only renders items within the visible area to efficiently display large numbers of items.
+    /// 仮想スクロールをサポートするリストビュー。
+    /// 表示領域内のアイテムのみをレンダリングし、大量のアイテムを効率的に表示します。
     /// </summary>
     public class VirtualizedListView<T>
     {
-        /// <summary>Height of a single row</summary>
+        /// <summary>1行の高さ</summary>
         public float ItemHeight { get; set; } = 24f;
 
-        /// <summary>Additional height when expanded</summary>
+        /// <summary>展開時の追加の高さ</summary>
         public float ExpandedExtraHeight { get; set; } = 100f;
 
-        /// <summary>Number of buffer rows (rows pre-fetched outside the visible area)</summary>
+        /// <summary>バッファ行数（表示領域外に事前取得される行数）</summary>
         public int BufferCount { get; set; } = 5;
 
-        /// <summary>Currently selected index</summary>
+        /// <summary>現在選択されているインデックス</summary>
         public int SelectedIndex { get; set; } = -1;
 
-        /// <summary>Currently expanded index</summary>
+        /// <summary>現在展開されているインデックス</summary>
         public int ExpandedIndex { get; set; } = -1;
 
-        /// <summary>Total number of items</summary>
+        /// <summary>アイテムの総数</summary>
         public int TotalCount => items?.Count ?? 0;
 
-        /// <summary>First visible index</summary>
+        /// <summary>最初の表示インデックス</summary>
         public int FirstVisibleIndex { get; private set; }
 
-        /// <summary>Last visible index</summary>
+        /// <summary>最後の表示インデックス</summary>
         public int LastVisibleIndex { get; private set; }
 
         private IList<T> items;
@@ -40,19 +40,19 @@ namespace Xeon.XScriptableDB.Editor
         private float viewHeight;
         private Dictionary<int, float> expandedHeights = new();
 
-        /// <summary>Item drawing callback</summary>
+        /// <summary>アイテム描画コールバック</summary>
         public Action<int, T, Rect, bool, bool> OnDrawItem;
 
-        /// <summary>Callback to draw additional content for an expanded item</summary>
+        /// <summary>展開されたアイテムの追加コンテンツを描画するコールバック</summary>
         public Action<int, T, Rect> OnDrawExpandedContent;
 
-        /// <summary>Selection change callback</summary>
+        /// <summary>選択変更コールバック</summary>
         public Action<int> OnSelectionChanged;
 
         /// <summary>
-        /// Sets the data source.
+        /// データソースを設定します。
         /// </summary>
-        /// <param name="newItems">List of items to display</param>
+        /// <param name="newItems">表示するアイテムのリスト</param>
         public void SetItems(IList<T> newItems)
         {
             items = newItems;
@@ -60,19 +60,19 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Sets the expanded height.
+        /// 展開時の高さを設定します。
         /// </summary>
-        /// <param name="index">Index</param>
-        /// <param name="height">Height</param>
+        /// <param name="index">インデックス</param>
+        /// <param name="height">高さ</param>
         public void SetExpandedHeight(int index, float height)
         {
             expandedHeights[index] = height;
         }
 
         /// <summary>
-        /// Scrolls to the specified index.
+        /// 指定されたインデックスまでスクロールします。
         /// </summary>
-        /// <param name="index">Target index to scroll to</param>
+        /// <param name="index">スクロール先のインデックス</param>
         public void ScrollToIndex(int index)
         {
             if (items == null || index < 0 || index >= items.Count)
@@ -83,9 +83,9 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Draws the list.
+        /// リストを描画します。
         /// </summary>
-        /// <param name="viewRect">View area</param>
+        /// <param name="viewRect">表示領域</param>
         public void Draw(Rect viewRect)
         {
             if (items == null || items.Count == 0)
@@ -96,26 +96,26 @@ namespace Xeon.XScriptableDB.Editor
 
             viewHeight = viewRect.height;
 
-            // Calculate total content height
+            // コンテンツの合計の高さを計算する
             var totalHeight = CalculateTotalHeight();
 
-            // Start scroll view
+            // スクロールビューを開始する
             var contentRect = new Rect(0, 0, viewRect.width - 16, totalHeight);
 
             using (var scrollScope = new GUI.ScrollViewScope(viewRect, scrollPosition, contentRect))
             {
                 scrollPosition = scrollScope.scrollPosition;
 
-                // Calculate visible range indices
+                // 表示範囲のインデックスを計算する
                 CalculateVisibleRange();
 
-                // Draw only items within the visible range
+                // 表示範囲内のアイテムのみを描画する
                 DrawVisibleItems(contentRect.width);
             }
         }
 
         /// <summary>
-        /// Calculates the total content height.
+        /// コンテンツの合計の高さを計算します。
         /// </summary>
         private float CalculateTotalHeight()
         {
@@ -133,13 +133,13 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Calculates the offset up to the specified index.
+        /// 指定されたインデックスまでのオフセットを計算します。
         /// </summary>
         private float CalculateOffsetForIndex(int index)
         {
             var offset = index * ItemHeight;
 
-            // If an expanded item is before the target, add its extra height
+            // 展開されたアイテムがターゲットより前にある場合は、その追加の高さを加算する
             if (ExpandedIndex >= 0 && ExpandedIndex < index)
             {
                 if (expandedHeights.TryGetValue(ExpandedIndex, out var expandedHeight))
@@ -152,11 +152,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Calculates the indices of the visible range.
+        /// 表示範囲のインデックスを計算します。
         /// </summary>
         private void CalculateVisibleRange()
         {
-            // Calculate the first index from a position that accounts for expanded items
+            // 展開されたアイテムを考慮した位置から最初のインデックスを計算する
             var currentY = 0f;
             FirstVisibleIndex = 0;
 
@@ -180,7 +180,7 @@ namespace Xeon.XScriptableDB.Editor
                 currentY += itemHeight;
             }
 
-            // Calculate the last index
+            // 最後のインデックスを計算する
             currentY = CalculateOffsetForIndex(FirstVisibleIndex);
             LastVisibleIndex = FirstVisibleIndex;
 
@@ -208,7 +208,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Draws items within the visible range.
+        /// 表示範囲内のアイテムを描画します。
         /// </summary>
         private void DrawVisibleItems(float width)
         {
@@ -220,10 +220,10 @@ namespace Xeon.XScriptableDB.Editor
                 var isExpanded = i == ExpandedIndex;
                 var item = items[i];
 
-                // Draw the main row for the item
+                // アイテムのメイン行を描画する
                 var itemRect = new Rect(0, currentY, width, ItemHeight);
 
-                // Click detection
+                // クリック検出
                 if (Event.current.type == EventType.MouseDown && itemRect.Contains(Event.current.mousePosition))
                 {
                     if (SelectedIndex != i)
@@ -234,12 +234,12 @@ namespace Xeon.XScriptableDB.Editor
                     Event.current.Use();
                 }
 
-                // Item drawing callback
+                // アイテム描画コールバック
                 OnDrawItem?.Invoke(i, item, itemRect, isSelected, isExpanded);
 
                 currentY += ItemHeight;
 
-                // Draw additional content if expanded
+                // 展開されている場合は追加のコンテンツを描画する
                 if (isExpanded)
                 {
                     float extraHeight;
@@ -256,9 +256,9 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Expands or collapses an item.
+        /// アイテムを展開または折りたたみます。
         /// </summary>
-        /// <param name="index">Index</param>
+        /// <param name="index">インデックス</param>
         public void ToggleExpand(int index)
         {
             if (ExpandedIndex == index)
@@ -268,7 +268,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Resets the scroll position.
+        /// スクロール位置をリセットします。
         /// </summary>
         public void ResetScroll()
         {
@@ -278,12 +278,12 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Gets the current scroll position.
+        /// 現在のスクロール位置を取得します。
         /// </summary>
         public Vector2 GetScrollPosition() => scrollPosition;
 
         /// <summary>
-        /// Sets the scroll position.
+        /// スクロール位置を設定します。
         /// </summary>
         public void SetScrollPosition(Vector2 position)
         {

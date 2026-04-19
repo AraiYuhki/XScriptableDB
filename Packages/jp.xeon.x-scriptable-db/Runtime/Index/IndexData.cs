@@ -6,8 +6,8 @@ using UnityEngine;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// Serializable data structure for SecondaryKey indexes.
-    /// Holds mappings from key values to record indexes.
+    /// SecondaryKeyインデックス用のシリアライズ可能なデータ構造。
+    /// キー値からレコードインデックスへのマッピングを保持します。
     /// </summary>
     [Serializable]
     public class IndexData
@@ -22,17 +22,17 @@ namespace Xeon.XScriptableDB
         private List<IndexEntry> entries = new();
 
         /// <summary>
-        /// Name of the index.
+        /// インデックスの名前。
         /// </summary>
         public string IndexName => indexName;
 
         /// <summary>
-        /// Type name of the key.
+        /// キーの型名。
         /// </summary>
         public string KeyTypeName => keyTypeName;
 
         /// <summary>
-        /// Number of entries.
+        /// エントリの数。
         /// </summary>
         public int Count => entries.Count;
 
@@ -55,11 +55,11 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Adds an entry to the index.
+        /// インデックスにエントリを追加します。
         /// </summary>
-        /// <param name="keyHash">Hash value of the key</param>
-        /// <param name="keyString">String representation of the key</param>
-        /// <param name="recordIndices">Array of record indexes</param>
+        /// <param name="keyHash">キーのハッシュ値</param>
+        /// <param name="keyString">キーの文字列表現</param>
+        /// <param name="recordIndices">レコードインデックスの配列</param>
         public void AddEntry(int keyHash, string keyString, int[] recordIndices)
         {
             entries.Add(new IndexEntry
@@ -72,7 +72,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Clears the index.
+        /// インデックスをクリアします。
         /// </summary>
         public void Clear()
         {
@@ -83,10 +83,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Searches for record indexes by hash value.
+        /// ハッシュ値によるレコードインデックスの検索。
         /// </summary>
-        /// <param name="keyHash">Hash value of the key</param>
-        /// <returns>Array of record indexes, or an empty array if not found</returns>
+        /// <param name="keyHash">キーのハッシュ値</param>
+        /// <returns>レコードインデックスの配列。見つからない場合は空の配列</returns>
         public int[] FindByHash(int keyHash)
         {
             EnsureInitialized();
@@ -94,10 +94,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Searches for record indexes by string key.
+        /// 文字列キーによるレコードインデックスの検索。
         /// </summary>
-        /// <param name="keyString">String representation of the key</param>
-        /// <returns>Array of record indexes, or an empty array if not found</returns>
+        /// <param name="keyString">キーの文字列表現</param>
+        /// <returns>レコードインデックスの配列。見つからない場合は空の配列</returns>
         public int[] FindByString(string keyString)
         {
             EnsureInitialized();
@@ -105,12 +105,12 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Searches for record indexes by key (type-safe overload).
-        /// Uses string-key-based lookup to avoid hash collisions.
+        /// キーによるレコードインデックスの検索（型安全なオーバーロード）。
+        /// ハッシュの衝突を避けるために文字列キーベースのルックアップを使用します。
         /// </summary>
-        /// <typeparam name="TKey">Key type</typeparam>
-        /// <param name="key">The key to search for</param>
-        /// <returns>Array of record indexes, or an empty array if not found</returns>
+        /// <typeparam name="TKey">キーの型</typeparam>
+        /// <param name="key">検索するキー</param>
+        /// <returns>レコードインデックスの配列。見つからない場合は空の配列</returns>
         public int[] FindByKey<TKey>(TKey key)
         {
             if (key == null)
@@ -125,11 +125,11 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Searches for record indexes by key (object overload).
-        /// Uses string-key-based lookup to avoid hash collisions.
+        /// キーによるレコードインデックスの検索（オブジェクトオーバーロード）。
+        /// ハッシュの衝突を避けるために文字列キーベースのルックアップを使用します。
         /// </summary>
-        /// <param name="key">The key to search for</param>
-        /// <returns>Array of record indexes, or an empty array if not found</returns>
+        /// <param name="key">検索するキー</param>
+        /// <returns>レコードインデックスの配列。見つからない場合は空の配列</returns>
         public int[] FindByKey(object key)
         {
             if (key == null)
@@ -143,7 +143,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Gets all entries.
+        /// すべてのエントリを取得します。
         /// </summary>
         public IReadOnlyList<IndexEntry> GetAllEntries() => entries;
 
@@ -166,9 +166,9 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Converts a value to a culture-invariant string.
-        /// Uses the same conversion logic as IndexBuilder.
-        /// float/double use round-trip format to preserve precision.
+        /// 値をカルチャに依存しない文字列に変換します。
+        /// IndexBuilderと同じ変換ロジックを使用します。
+        /// float/doubleは精度を保つためにラウンドトリップ形式を使用します。
         /// </summary>
         private static string ConvertToInvariantString(object value)
         {

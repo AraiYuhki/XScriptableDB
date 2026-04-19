@@ -3,15 +3,15 @@ using System;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// Attribute that specifies a comparison constraint against another field.
+    /// 他のフィールドとの比較制約を指定する属性。
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class CompareAttribute : ValidationAttribute
     {
-        /// <summary>Name of the field to compare against</summary>
+        /// <summary>比較対象のフィールド名</summary>
         public string OtherField { get; }
 
-        /// <summary>Comparison operator</summary>
+        /// <summary>比較演算子</summary>
         public CompareOperator Operator { get; set; } = CompareOperator.Equal;
 
         public CompareAttribute(string otherField)
@@ -21,8 +21,8 @@ namespace Xeon.XScriptableDB.Validation
 
         public override ValidationResult Validate(object value, string fieldName)
         {
-            // Cross-field comparison cannot be performed on a single record,
-            // so it is validated by RecordValidator
+            // フィールド間の比較は単一レコードでは実行できないため、
+            // RecordValidatorによって検証されます
             return ValidationResult.Success;
         }
 

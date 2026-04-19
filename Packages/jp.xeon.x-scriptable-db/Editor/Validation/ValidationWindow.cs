@@ -9,7 +9,7 @@ using Xeon.XScriptableDB.Validation;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Validation window.
+    /// 検証ウィンドウ。
     /// </summary>
     public class ValidationWindow : EditorWindow
     {
@@ -28,7 +28,7 @@ namespace Xeon.XScriptableDB.Editor
         public static void ShowWindow()
         {
             var window = GetWindow<ValidationWindow>();
-            window.titleContent = new GUIContent("Validation");
+            window.titleContent = new GUIContent("バリデーション");
             window.minSize = new Vector2(600, 400);
             window.Show();
         }
@@ -91,15 +91,15 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.BeginVertical();
 
-            // Toolbar
+            // ツールバー
             DrawToolbar();
 
             EditorGUILayout.BeginHorizontal();
 
-            // Left panel: table list
+            // 左パネル: テーブルリスト
             DrawTableList();
 
-            // Right panel: result details
+            // 右パネル: 結果の詳細
             DrawResultDetails();
 
             EditorGUILayout.EndHorizontal();
@@ -111,7 +111,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
-            if (GUILayout.Button("Refresh", EditorStyles.toolbarButton, GUILayout.Width(60)))
+            if (GUILayout.Button("更新", EditorStyles.toolbarButton, GUILayout.Width(60)))
             {
                 RefreshTables();
             }
@@ -119,12 +119,12 @@ namespace Xeon.XScriptableDB.Editor
             GUILayout.Space(10);
 
             EditorGUI.BeginDisabledGroup(isValidating);
-            if (GUILayout.Button("Validate All", EditorStyles.toolbarButton, GUILayout.Width(80)))
+            if (GUILayout.Button("すべて検証", EditorStyles.toolbarButton, GUILayout.Width(80)))
             {
                 ValidateAllTables();
             }
 
-            if (GUILayout.Button("Validate Selected", EditorStyles.toolbarButton, GUILayout.Width(100)))
+            if (GUILayout.Button("選択項目を検証", EditorStyles.toolbarButton, GUILayout.Width(100)))
             {
                 ValidateSelectedTables();
             }
@@ -132,10 +132,10 @@ namespace Xeon.XScriptableDB.Editor
 
             GUILayout.FlexibleSpace();
 
-            // Summary
+            // 概要
             var totalErrors = tableEntries.Sum(t => t.Result?.TotalErrorCount ?? 0);
             var validatedCount = tableEntries.Count(t => t.Result != null);
-            EditorGUILayout.LabelField($"Validated: {validatedCount}/{tableEntries.Count} | Errors: {totalErrors}",
+            EditorGUILayout.LabelField($"検証済み: {validatedCount}/{tableEntries.Count} | エラー: {totalErrors}",
                 EditorStyles.miniLabel);
 
             EditorGUILayout.EndHorizontal();
@@ -145,7 +145,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.BeginVertical(GUILayout.Width(250));
 
-            EditorGUILayout.LabelField("Tables", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("テーブル", EditorStyles.boldLabel);
 
             tableListScrollPosition = EditorGUILayout.BeginScrollView(tableListScrollPosition);
 
@@ -170,20 +170,20 @@ namespace Xeon.XScriptableDB.Editor
                 EditorGUI.DrawRect(rect, bgColor);
             }
 
-            // Checkbox
+            // チェックボックス
             entry.IsSelected = EditorGUILayout.Toggle(entry.IsSelected, GUILayout.Width(20));
 
-            // Status icon
+            // ステータスアイコン
             var statusIcon = GetStatusIcon(entry);
             EditorGUILayout.LabelField(statusIcon, GUILayout.Width(20));
 
-            // Table name
+            // テーブル名
             if (GUILayout.Button(entry.TableName, EditorStyles.label))
             {
                 selectedEntry = entry;
             }
 
-            // Error count
+            // エラー数
             if (entry.Result != null && entry.Result.TotalErrorCount > 0)
             {
                 EditorGUILayout.LabelField($"({entry.Result.TotalErrorCount})", errorStyle, GUILayout.Width(40));
@@ -194,9 +194,9 @@ namespace Xeon.XScriptableDB.Editor
 
         private string GetStatusIcon(TableValidationEntry entry)
         {
-            if (entry.Result == null) return "○";  // Not validated
-            if (entry.Result.IsValid) return "✓";   // Passed
-            return "✗";  // Error
+            if (entry.Result == null) return "○";  // 未検証
+            if (entry.Result.IsValid) return "✓";   // パス
+            return "✗";  // エラー
         }
 
         private void DrawResultDetails()
@@ -205,20 +205,20 @@ namespace Xeon.XScriptableDB.Editor
 
             if (selectedEntry == null)
             {
-                EditorGUILayout.HelpBox("Select a table to view validation results", MessageType.Info);
+                EditorGUILayout.HelpBox("テーブルを選択して検証結果を表示してください", MessageType.Info);
                 EditorGUILayout.EndVertical();
                 return;
             }
 
-            // Header
+            // ヘッダー
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(selectedEntry.TableName, EditorStyles.boldLabel);
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Validate", GUILayout.Width(70)))
+            if (GUILayout.Button("検証", GUILayout.Width(70)))
             {
                 ValidateTable(selectedEntry);
             }
-            if (GUILayout.Button("Select Asset", GUILayout.Width(80)))
+            if (GUILayout.Button("アセットを選択", GUILayout.Width(80)))
             {
                 Selection.activeObject = selectedEntry.Asset;
                 EditorGUIUtility.PingObject(selectedEntry.Asset);
@@ -227,14 +227,14 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.Space(5);
 
-            // Results
+            // 結果
             if (selectedEntry.Result == null)
             {
-                EditorGUILayout.HelpBox("Not validated yet. Click 'Validate' to check.", MessageType.Info);
+                EditorGUILayout.HelpBox("まだ検証されていません。『検証』ボタンをクリックしてチェックしてください。", MessageType.Info);
             }
             else if (selectedEntry.Result.IsValid)
             {
-                EditorGUILayout.HelpBox("Validation passed. No errors found.", MessageType.Info);
+                EditorGUILayout.HelpBox("検証をパスしました。エラーは見つかりませんでした。", MessageType.Info);
             }
             else
             {
@@ -246,14 +246,14 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawValidationErrors(TableValidationResult result)
         {
-            EditorGUILayout.LabelField($"Errors: {result.TotalErrorCount}", errorStyle);
+            EditorGUILayout.LabelField($"エラー数: {result.TotalErrorCount}", errorStyle);
 
             resultScrollPosition = EditorGUILayout.BeginScrollView(resultScrollPosition);
 
-            // Table-level errors
+            // テーブルレベルのエラー
             if (result.TableLevelErrors.Count > 0)
             {
-                EditorGUILayout.LabelField("Table-level Errors:", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("テーブルレベルのエラー:", EditorStyles.boldLabel);
                 foreach (var error in result.TableLevelErrors)
                 {
                     DrawError(error);
@@ -261,7 +261,7 @@ namespace Xeon.XScriptableDB.Editor
                 EditorGUILayout.Space(10);
             }
 
-            // Record-level errors
+            // レコードレベルのエラー
             var recordsWithErrors = result.RecordResults.Where(r => !r.IsValid).ToList();
             DrawRecordErrors(recordsWithErrors);
 
@@ -272,11 +272,11 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (recordsWithErrors.Count <= 0)
                 return;
-            EditorGUILayout.LabelField($"Record Errors ({recordsWithErrors.Count} records):", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"レコードエラー ({recordsWithErrors.Count} 件):", EditorStyles.boldLabel);
 
             foreach (var recordResult in recordsWithErrors)
             {
-                var keyStr = recordResult.RecordKey?.ToString() ?? $"Index {recordResult.RecordIndex}";
+                var keyStr = recordResult.RecordKey?.ToString() ?? $"インデックス {recordResult.RecordIndex}";
                 EditorGUILayout.LabelField($"  [{keyStr}]", EditorStyles.miniBoldLabel);
 
                 foreach (var error in recordResult.Errors)
@@ -339,12 +339,12 @@ namespace Xeon.XScriptableDB.Editor
             var tableAsset = entry.TableAsset;
             var recordType = tableAsset.RecordType;
 
-            // Call ValidateTable via reflection
+            // リフレクション経由でValidateTableを呼び出す
             var method = typeof(RecordValidator)
                 .GetMethod("ValidateTable")
                 .MakeGenericMethod(recordType);
 
-            // Create key selector
+            // キーセレクターを作成
             var keySelector = CreateKeySelector(recordType);
 
             entry.Result = method.Invoke(null, new object[] { tableAsset, keySelector }) as TableValidationResult;
@@ -352,16 +352,16 @@ namespace Xeon.XScriptableDB.Editor
 
         private Delegate CreateKeySelector(Type recordType)
         {
-            // Search for PrimaryKey field
+            // PrimaryKeyフィールドを検索
             var keyField = recordType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                 .FirstOrDefault(f => f.GetCustomAttribute<PrimaryKeyAttribute>() != null);
 
             if (keyField == null) return null;
 
-            // Create Func<T, object>
+            // Func<T, object>を作成
             var funcType = typeof(Func<,>).MakeGenericType(recordType, typeof(object));
 
-            // Simply return null (key selector is optional)
+            // 単にnullを返す（キーセレクターはオプション）
             return null;
         }
 

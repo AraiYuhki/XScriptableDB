@@ -5,7 +5,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// Tests for composite index Editor functionality.
+    /// 複合インデックスのEditor機能のテスト。
     /// </summary>
     public class CompositeIndexEditorTests
     {

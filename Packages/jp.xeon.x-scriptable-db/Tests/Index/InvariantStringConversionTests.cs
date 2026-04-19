@@ -6,7 +6,7 @@ using System.Threading;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// Tests for culture-invariant string conversion and float/double round-trip precision.
+    /// カルチャ非依存の文字列変換と、float/doubleのラウンドトリップ精度のテスト。
     /// </summary>
     public class InvariantStringConversionTests
     {
@@ -79,10 +79,10 @@ namespace Xeon.XScriptableDB.Tests
             var result1 = index.FindByKey(f1);
             var result2 = index.FindByKey(f2);
 
-            Assert.That(result1.Length, Is.EqualTo(1), "Float f1 should find exactly one record");
-            Assert.That(result2.Length, Is.EqualTo(1), "Float f2 should find exactly one record");
-            Assert.That(result1[0], Is.EqualTo(0), "Float f1 should find record at index 0");
-            Assert.That(result2[0], Is.EqualTo(1), "Float f2 should find record at index 1");
+            Assert.That(result1.Length, Is.EqualTo(1), "Float f1は正確に1つのレコードを見つけるはず");
+            Assert.That(result2.Length, Is.EqualTo(1), "Float f2は正確に1つのレコードを見つけるはず");
+            Assert.That(result1[0], Is.EqualTo(0), "Float f1はインデックス0のレコードを見つけるはず");
+            Assert.That(result2[0], Is.EqualTo(1), "Float f2はインデックス1のレコードを見つけるはず");
         }
 
         [Test]
@@ -104,10 +104,10 @@ namespace Xeon.XScriptableDB.Tests
             var result1 = index.FindByKey(d1);
             var result2 = index.FindByKey(d2);
 
-            Assert.That(result1.Length, Is.EqualTo(1), "Double d1 should find exactly one record");
-            Assert.That(result2.Length, Is.EqualTo(1), "Double d2 should find exactly one record");
-            Assert.That(result1[0], Is.EqualTo(0), "Double d1 should find record at index 0");
-            Assert.That(result2[0], Is.EqualTo(1), "Double d2 should find record at index 1");
+            Assert.That(result1.Length, Is.EqualTo(1), "Double d1は正確に1つのレコードを見つけるはず");
+            Assert.That(result2.Length, Is.EqualTo(1), "Double d2は正確に1つのレコードを見つけるはず");
+            Assert.That(result1[0], Is.EqualTo(0), "Double d1はインデックス0のレコードを見つけるはず");
+            Assert.That(result2[0], Is.EqualTo(1), "Double d2はインデックス1のレコードを見つけるはず");
         }
 
         [Test]
@@ -167,7 +167,7 @@ namespace Xeon.XScriptableDB.Tests
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("fr-FR");
 
             var testValue = 1.5f;
-            Assert.That(testValue.ToString(), Is.EqualTo("1,5"), "French culture should use comma");
+            Assert.That(testValue.ToString(), Is.EqualTo("1,5"), "フランスのカルチャではカンマを使用するはず");
 
             var records = new[]
             {
@@ -178,7 +178,7 @@ namespace Xeon.XScriptableDB.Tests
             var index = container.GetIndex("FloatKey");
 
             var result = index.FindByKey(testValue);
-            Assert.That(result.Length, Is.EqualTo(1), "Should find record using invariant lookup");
+            Assert.That(result.Length, Is.EqualTo(1), "インバリアントな検索を使用してレコードを見つけるはず");
             Assert.That(result[0], Is.EqualTo(0));
         }
 
@@ -189,7 +189,7 @@ namespace Xeon.XScriptableDB.Tests
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("fr-FR");
 
             var testValue = 1.5d;
-            Assert.That(testValue.ToString(), Is.EqualTo("1,5"), "French culture should use comma");
+            Assert.That(testValue.ToString(), Is.EqualTo("1,5"), "フランスのカルチャではカンマを使用するはず");
 
             var records = new[]
             {
@@ -200,7 +200,7 @@ namespace Xeon.XScriptableDB.Tests
             var index = container.GetIndex("DoubleKey");
 
             var result = index.FindByKey(testValue);
-            Assert.That(result.Length, Is.EqualTo(1), "Should find record using invariant lookup");
+            Assert.That(result.Length, Is.EqualTo(1), "インバリアントな検索を使用してレコードを見つけるはず");
             Assert.That(result[0], Is.EqualTo(0));
         }
 
@@ -211,7 +211,7 @@ namespace Xeon.XScriptableDB.Tests
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("de-DE");
 
             var testValue = 1234.56m;
-            Assert.That(testValue.ToString(), Is.EqualTo("1234,56"), "German culture should use comma");
+            Assert.That(testValue.ToString(), Is.EqualTo("1234,56"), "ドイツのカルチャではカンマを使用するはず");
 
             var records = new[]
             {
@@ -222,7 +222,7 @@ namespace Xeon.XScriptableDB.Tests
             var index = container.GetIndex("DecimalKey");
 
             var result = index.FindByKey(testValue);
-            Assert.That(result.Length, Is.EqualTo(1), "Should find record using invariant lookup");
+            Assert.That(result.Length, Is.EqualTo(1), "インバリアントな検索を使用してレコードを見つけるはず");
             Assert.That(result[0], Is.EqualTo(0));
         }
 
@@ -244,7 +244,7 @@ namespace Xeon.XScriptableDB.Tests
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("fr-FR");
 
             var result = index.FindByKey(testValue);
-            Assert.That(result.Length, Is.EqualTo(1), "Should find record regardless of current culture");
+            Assert.That(result.Length, Is.EqualTo(1), "現在のカルチャに関係なくレコードを見つけるはず");
             Assert.That(result[0], Is.EqualTo(0));
         }
 
@@ -261,7 +261,7 @@ namespace Xeon.XScriptableDB.Tests
             var key1 = CompositeKeyHelper.ComputeCompositeString("Test", f1);
             var key2 = CompositeKeyHelper.ComputeCompositeString("Test", f2);
 
-            Assert.That(key1, Is.Not.EqualTo(key2), "Different float values should produce different keys");
+            Assert.That(key1, Is.Not.EqualTo(key2), "異なるfloat値は異なるキーを生成するはず");
         }
 
         [Test]
@@ -273,7 +273,7 @@ namespace Xeon.XScriptableDB.Tests
             var key1 = CompositeKeyHelper.ComputeCompositeString("Test", d1);
             var key2 = CompositeKeyHelper.ComputeCompositeString("Test", d2);
 
-            Assert.That(key1, Is.Not.EqualTo(key2), "Different double values should produce different keys");
+            Assert.That(key1, Is.Not.EqualTo(key2), "異なるdouble値は異なるキーを生成するはず");
         }
 
         [Test]

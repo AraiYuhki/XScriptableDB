@@ -6,8 +6,8 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
 {
     /// <summary>
-    /// Record class for the rarity master.
-    /// Defines the rarity level of items.
+    /// レアリティマスターのレコードクラス。
+    /// アイテムのレアリティレベルを定義します。
     /// </summary>
     [Serializable]
     public class RarityRecord
@@ -34,32 +34,32 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         private float dropRate;
 
         /// <summary>
-        /// Rarity ID (primary key)
+        /// レアリティID（主キー）
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// Rarity name
+        /// レアリティ名
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// Display color
+        /// 表示色
         /// </summary>
         public Color Color => new(colorR, colorG, colorB, 1f);
 
         /// <summary>
-        /// Price multiplier
+        /// 価格倍率
         /// </summary>
         public float PriceMultiplier => priceMultiplier;
 
         /// <summary>
-        /// Drop rate
+        /// ドロップ率
         /// </summary>
         public float DropRate => dropRate;
 
         /// <summary>
-        /// Star count (same as rarity ID)
+        /// 星の数（レアリティIDと同じ）
         /// </summary>
         public int StarCount => id;
 

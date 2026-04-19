@@ -7,22 +7,22 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Class for calculating diffs between table data.
+    /// テーブルデータ間の差分を計算するクラス。
     /// </summary>
     public static class DiffCalculator
     {
         private const BindingFlags MemberFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         /// <summary>
-        /// Calculates the diff between two record arrays.
+        /// 2つのレコード配列間の差分を計算します。
         /// </summary>
-        /// <typeparam name="T">Record type</typeparam>
-        /// <typeparam name="TKey">PrimaryKey type</typeparam>
-        /// <param name="oldRecords">Record array before changes</param>
-        /// <param name="newRecords">Record array after changes</param>
-        /// <param name="keySelector">Function to retrieve the PrimaryKey</param>
-        /// <param name="tableName">Table name (optional)</param>
-        /// <returns>Diff result</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <param name="oldRecords">変更前のレコード配列</param>
+        /// <param name="newRecords">変更後のレコード配列</param>
+        /// <param name="keySelector">PrimaryKeyを取得する関数</param>
+        /// <param name="tableName">テーブル名（任意）</param>
+        /// <returns>差分結果</returns>
         public static TableDiffResult Calculate<T, TKey>(
             IReadOnlyList<T> oldRecords,
             IReadOnlyList<T> newRecords,
@@ -37,7 +37,7 @@ namespace Xeon.XScriptableDB.Editor
                 RecordTypeName = typeof(T).FullName
             };
 
-            // Create indexes by PrimaryKey
+            // PrimaryKeyでインデックスを作成します
             var oldByKey = new Dictionary<TKey, (T record, int index)>();
             var newByKey = new Dictionary<TKey, (T record, int index)>();
 
@@ -57,12 +57,12 @@ namespace Xeon.XScriptableDB.Editor
                 newByKey[key] = (record, i);
             }
 
-            // Detect deletions and modifications
+            // 削除と変更を検出します
             foreach (var (key, (oldRecord, oldIndex)) in oldByKey)
             {
                 if (newByKey.TryGetValue(key, out var newEntry))
                 {
-                    // Exists in both → check for modification
+                    // 両方に存在 → 変更を確認します
                     var fieldDiffs = CompareRecords(oldRecord, newEntry.record);
                     var hasChanges = false;
                     foreach (var diff in fieldDiffs)
@@ -87,7 +87,7 @@ namespace Xeon.XScriptableDB.Editor
                     continue;
                 }
                 
-                // Not in new data → deleted
+                // 新しいデータにない → 削除されました
                 result.Diffs.Add(new RecordDiff
                 {
                     PrimaryKey = key,
@@ -100,7 +100,7 @@ namespace Xeon.XScriptableDB.Editor
                 });
             }
 
-            // Detect additions
+            // 追加を検出します
             foreach (var (key, (newRecord, newIndex)) in newByKey)
             {
                 if (oldByKey.ContainsKey(key))
@@ -117,7 +117,7 @@ namespace Xeon.XScriptableDB.Editor
                 });
             }
 
-            // Sort by PrimaryKey
+            // PrimaryKeyでソートします
             result.Diffs.Sort((a, b) =>
             {
                 if (a.PrimaryKey is IComparable ca && b.PrimaryKey is IComparable cb)
@@ -130,11 +130,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Calculates the diff between an ITableAsset and CSV data.
+        /// ITableAssetとCSVデータ間の差分を計算します。
         /// </summary>
-        /// <param name="tableAsset">Current table asset</param>
-        /// <param name="importedRecords">Array of records to import</param>
-        /// <returns>Diff result</returns>
+        /// <param name="tableAsset">現在のテーブルアセット</param>
+        /// <param name="importedRecords">インポートするレコードの配列</param>
+        /// <returns>差分結果</returns>
         public static TableDiffResult Calculate(ITableAsset tableAsset, IList importedRecords)
         {
             if (tableAsset == null)
@@ -143,7 +143,7 @@ namespace Xeon.XScriptableDB.Editor
             var recordType = tableAsset.RecordType;
             var keyType = tableAsset.KeyType;
 
-            // Create PrimaryKey accessor
+            // PrimaryKeyアクセサを作成します
             var keyAccessor = CreateKeyAccessor(recordType);
             if (keyAccessor == null)
             {
@@ -161,7 +161,7 @@ namespace Xeon.XScriptableDB.Editor
                 RecordTypeName = recordType.FullName
             };
 
-            // Index current records in a dictionary
+            // 現在のレコードをディクショナリでインデックス化します
             var oldByKey = new Dictionary<object, (object record, int index)>();
             var index = 0;
             foreach (var record in tableAsset.Records)
@@ -173,7 +173,7 @@ namespace Xeon.XScriptableDB.Editor
                 index++;
             }
 
-            // Index new records in a dictionary
+            // 新しいレコードをディクショナリでインデックス化します
             var newByKey = new Dictionary<object, (object record, int index)>();
             index = 0;
             foreach (var record in importedRecords)
@@ -185,7 +185,7 @@ namespace Xeon.XScriptableDB.Editor
                 index++;
             }
 
-            // Detect deletions and modifications
+            // 削除と変更を検出します
             foreach (var (key, (oldRecord, oldIndex)) in oldByKey)
             {
                 if (newByKey.TryGetValue(key, out var newEntry))
@@ -225,7 +225,7 @@ namespace Xeon.XScriptableDB.Editor
                 });
             }
 
-            // Detect additions
+            // 追加を検出します
             foreach (var (key, (newRecord, newIndex)) in newByKey)
             {
                 if (oldByKey.ContainsKey(key))
@@ -242,7 +242,7 @@ namespace Xeon.XScriptableDB.Editor
                 });
             }
 
-            // Sort
+            // ソートします
             result.Diffs.Sort((a, b) =>
             {
                 if (a.PrimaryKey is IComparable ca && b.PrimaryKey is IComparable cb)
@@ -255,7 +255,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Compares the fields of two records.
+        /// 2つのレコードのフィールドを比較します。
         /// </summary>
         public static List<FieldDiff> CompareRecords(object oldRecord, object newRecord)
         {
@@ -268,7 +268,7 @@ namespace Xeon.XScriptableDB.Editor
             if (type != newRecord.GetType())
                 return result;
 
-            // Compare fields
+            // フィールドを比較します
             foreach (var field in type.GetFields(MemberFlags))
             {
                 if (field.IsStatic || field.IsLiteral)
@@ -281,7 +281,7 @@ namespace Xeon.XScriptableDB.Editor
                 result.Add(new FieldDiff(field.Name, oldValue, newValue, diffType));
             }
 
-            // Compare properties (excluding backing fields)
+            // プロパティを比較します（バッキングフィールドを除く）
             foreach (var property in type.GetProperties(MemberFlags))
             {
                 if (!property.CanRead)
@@ -301,7 +301,7 @@ namespace Xeon.XScriptableDB.Editor
                 }
                 catch
                 {
-                    // Skip if property access fails
+                    // プロパティアクセスが失敗した場合はスキップします
                 }
             }
 
@@ -309,7 +309,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Compares two values.
+        /// 2つの値を比較します。
         /// </summary>
         private static DiffType CompareValues(object oldValue, object newValue)
         {
@@ -322,11 +322,11 @@ namespace Xeon.XScriptableDB.Editor
             if (newValue == null)
                 return DiffType.Removed;
 
-            // Compare using IEquatable
+            // IEquatableを使用して比較します
             if (oldValue.Equals(newValue))
                 return DiffType.Unchanged;
 
-            // For collections, compare elements
+            // コレクションの場合、要素を比較します
             if (oldValue is ICollection oldCol && newValue is ICollection newCol)
             {
                 if (oldCol.Count != newCol.Count)
@@ -348,7 +348,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Creates field diffs for a removed record.
+        /// 削除されたレコードのフィールド差分を作成します。
         /// </summary>
         private static List<FieldDiff> CreateFieldDiffsForRemoval(object record)
         {
@@ -371,7 +371,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Creates field diffs for an added record.
+        /// 追加されたレコードのフィールド差分を作成します。
         /// </summary>
         private static List<FieldDiff> CreateFieldDiffsForAddition(object record)
         {
@@ -394,11 +394,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Creates a PrimaryKey accessor.
+        /// PrimaryKeyのアクセサを作成します。
         /// </summary>
         private static Func<object, object> CreateKeyAccessor(Type recordType)
         {
-            // Search for fields/properties with PrimaryKeyAttribute
+            // PrimaryKeyAttributeを持つフィールド/プロパティを検索します
             foreach (var field in recordType.GetFields(MemberFlags))
             {
                 if (field.GetCustomAttribute<PrimaryKeyAttribute>() != null)
@@ -411,7 +411,7 @@ namespace Xeon.XScriptableDB.Editor
                     return record => property.GetValue(record);
             }
 
-            // If the type implements IRecord<TKey>
+            // 型がIRecord<TKey>を実装している場合
             var recordInterface = recordType.GetInterface("IRecord`1");
             if (recordInterface != null)
             {
@@ -420,7 +420,7 @@ namespace Xeon.XScriptableDB.Editor
                     return record => keyProperty.GetValue(record);
             }
 
-            // Search for fields/properties named "Id", "ID", "Key", or "PrimaryKey"
+            // "Id"、"ID"、"Key"、"PrimaryKey"という名前のフィールド/プロパティを検索します
             var commonNames = new[] { "Id", "ID", "Key", "PrimaryKey", "id", "key" };
             foreach (var name in commonNames)
             {

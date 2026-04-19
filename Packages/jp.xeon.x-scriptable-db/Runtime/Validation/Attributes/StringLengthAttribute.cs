@@ -3,15 +3,15 @@ using System;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// Attribute to specify the length of a string.
+    /// 文字列の長さを指定する属性。
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class StringLengthAttribute : ValidationAttribute
     {
-        /// <summary>Minimum length</summary>
+        /// <summary>最小長</summary>
         public int MinimumLength { get; set; } = 0;
 
-        /// <summary>Maximum length</summary>
+        /// <summary>最大長</summary>
         public int MaximumLength { get; }
 
         public StringLengthAttribute(int maximumLength)
@@ -36,9 +36,9 @@ namespace Xeon.XScriptableDB.Validation
         protected override string GetDefaultErrorMessage(string fieldName)
         {
             if (MinimumLength > 0)
-                return $"{fieldName} must be between {MinimumLength} and {MaximumLength} characters.";
+                return $"{fieldName} は {MinimumLength} 文字から {MaximumLength} 文字の間である必要があります。";
 
-            return $"{fieldName} must be {MaximumLength} characters or fewer.";
+            return $"{fieldName} は {MaximumLength} 文字以内である必要があります。";
         }
     }
 }

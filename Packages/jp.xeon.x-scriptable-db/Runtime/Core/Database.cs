@@ -12,8 +12,8 @@ using UnityEditor;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// Database manager.
-    /// Provides table registration and type-safe access.
+    /// データベースマネージャー。
+    /// テーブルの登録と型安全なアクセスを提供します。
     /// </summary>
     public class Database
     {
@@ -21,7 +21,7 @@ namespace Xeon.XScriptableDB
         private static readonly object lockObject = new();
 
         /// <summary>
-        /// Singleton instance.
+        /// シングルトンインスタンス。
         /// </summary>
         public static Database Instance
         {
@@ -48,10 +48,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Registers a table.
+        /// テーブルを登録します。
         /// </summary>
-        /// <typeparam name="TTable">Type of the table</typeparam>
-        /// <param name="table">The table to register</param>
+        /// <typeparam name="TTable">テーブルの型</typeparam>
+        /// <param name="table">登録するテーブル</param>
         public static void Register<TTable>(TTable table) where TTable : ScriptableObject, ITableAsset
         {
             if (table == null)
@@ -63,10 +63,10 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Retrieves a table.
+        /// テーブルを取得します。
         /// </summary>
-        /// <typeparam name="TTable">Type of the table</typeparam>
-        /// <returns>The table, or null if not found</returns>
+        /// <typeparam name="TTable">テーブルの型</typeparam>
+        /// <returns>テーブル、見つからない場合はnull</returns>
         public static TTable Get<TTable>() where TTable : ScriptableObject, ITableAsset
         {
             if (!Instance.tables.TryGetValue(typeof(TTable), out var table))
@@ -78,11 +78,11 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Retrieves a table.
+        /// テーブルを取得します。
         /// </summary>
-        /// <typeparam name="TTable">Type of the table</typeparam>
-        /// <param name="table">The retrieved table</param>
-        /// <returns>True if found</returns>
+        /// <typeparam name="TTable">テーブルの型</typeparam>
+        /// <param name="table">取得したテーブル</param>
+        /// <returns>見つかった場合はtrue</returns>
         public static bool TryGet<TTable>(out TTable table) where TTable : ScriptableObject, ITableAsset
         {
             table = null;
@@ -93,21 +93,21 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Registers an Addressable key.
+        /// Addressableキーを登録します。
         /// </summary>
-        /// <typeparam name="TTable">Type of the table</typeparam>
-        /// <param name="addressableKey">The Addressable key</param>
+        /// <typeparam name="TTable">テーブルの型</typeparam>
+        /// <param name="addressableKey">Addressableキー</param>
         public static void RegisterAddressable<TTable>(string addressableKey) where TTable : ScriptableObject, ITableAsset
         {
             Instance.addressableKeys[typeof(TTable).FullName] = addressableKey;
         }
 
         /// <summary>
-        /// Loads a table from Addressables and registers it.
+        /// Addressablesからテーブルを読み込み、登録します。
         /// </summary>
-        /// <typeparam name="TTable">Type of the table</typeparam>
-        /// <param name="addressableKey">The Addressable key</param>
-        /// <returns>The loaded table</returns>
+        /// <typeparam name="TTable">テーブルの型</typeparam>
+        /// <param name="addressableKey">Addressableキー</param>
+        /// <returns>読み込んだテーブル</returns>
         public static TTable LoadAndRegister<TTable>(string addressableKey) where TTable : ScriptableObject, ITableAsset
         {
             var table = Addressables.LoadAssetAsync<TTable>(addressableKey).WaitForCompletion();
@@ -121,9 +121,9 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Unregisters a table.
+        /// テーブルの登録を解除します。
         /// </summary>
-        /// <typeparam name="TTable">Type of the table</typeparam>
+        /// <typeparam name="TTable">テーブルの型</typeparam>
         public static void Unregister<TTable>() where TTable : ScriptableObject, ITableAsset
         {
             var type = typeof(TTable);
@@ -134,7 +134,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Unregisters all tables.
+        /// すべてのテーブルの登録を解除します。
         /// </summary>
         public static void Clear()
         {
@@ -144,7 +144,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Resets the instance.
+        /// インスタンスをリセットします。
         /// </summary>
         public static void Reset()
         {
@@ -161,7 +161,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Reloads all tables using their registered Addressable keys.
+        /// 登録されているAddressableキーを使用してすべてのテーブルを再読み込みします。
         /// </summary>
         public static void Reload()
         {
@@ -192,38 +192,38 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Number of registered tables.
+        /// 登録されているテーブルの数。
         /// </summary>
         public static int TableCount => Instance.tables.Count;
 
         /// <summary>
-        /// List of registered table types.
+        /// 登録されているテーブルの型のリスト。
         /// </summary>
         public static IEnumerable<Type> RegisteredTypes => Instance.tables.Keys;
 
         /// <summary>
-        /// All registered tables.
+        /// 登録されているすべてのテーブル。
         /// </summary>
         public static IEnumerable<ScriptableObject> AllTables => Instance.tables.Values;
 
         /// <summary>
-        /// Returns whether a table of the specified type is registered.
+        /// 指定された型のテーブルが登録されているかどうかを返します。
         /// </summary>
-        /// <typeparam name="TTable">Type of the table</typeparam>
-        /// <returns>True if registered</returns>
+        /// <typeparam name="TTable">テーブルの型</typeparam>
+        /// <returns>登録されている場合はtrue</returns>
         public static bool IsRegistered<TTable>() where TTable : ScriptableObject
         {
             return Instance.tables.ContainsKey(typeof(TTable));
         }
 
         /// <summary>
-        /// Searches for a record in the table of the specified type.
+        /// 指定された型のテーブル内でレコードを検索します。
         /// </summary>
-        /// <typeparam name="TTable">Type of the table</typeparam>
-        /// <typeparam name="TRecord">Type of the record</typeparam>
-        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
-        /// <param name="key">The PrimaryKey to search for</param>
-        /// <returns>The found record, or default if not found</returns>
+        /// <typeparam name="TTable">テーブルの型</typeparam>
+        /// <typeparam name="TRecord">レコードの型</typeparam>
+        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <param name="key">検索するPrimaryKey</param>
+        /// <returns>見つかったレコード、見つからない場合はデフォルト値</returns>
         public static TRecord Find<TTable, TRecord, TKey>(TKey key)
             where TTable : TableAsset<TRecord, TKey>
             where TRecord : class, new()

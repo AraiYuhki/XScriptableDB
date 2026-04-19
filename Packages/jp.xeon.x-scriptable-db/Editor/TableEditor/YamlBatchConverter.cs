@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Utility for batch generating C# code from YAML files.
+    /// YAMLファイルからC#コードを一括生成するためのユーティリティ。
     /// </summary>
     public static class YamlBatchConverter
     {

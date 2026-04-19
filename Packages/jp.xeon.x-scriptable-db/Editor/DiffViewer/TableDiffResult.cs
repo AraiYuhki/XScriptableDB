@@ -4,39 +4,39 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Diff result for an entire table.
+    /// テーブル全体の差分結果。
     /// </summary>
     [Serializable]
     public class TableDiffResult
     {
-        /// <summary>Table name</summary>
+        /// <summary>テーブル名</summary>
         public string TableName { get; set; }
 
-        /// <summary>Record type name</summary>
+        /// <summary>レコード型名</summary>
         public string RecordTypeName { get; set; }
 
-        /// <summary>List of diffs</summary>
+        /// <summary>差分リスト</summary>
         public List<RecordDiff> Diffs { get; set; } = new();
 
-        /// <summary>Number of added records</summary>
+        /// <summary>追加されたレコード数</summary>
         public int AddedCount { get; private set; }
 
-        /// <summary>Number of removed records</summary>
+        /// <summary>削除されたレコード数</summary>
         public int RemovedCount { get; private set; }
 
-        /// <summary>Number of modified records</summary>
+        /// <summary>変更されたレコード数</summary>
         public int ModifiedCount { get; private set; }
 
-        /// <summary>Number of unchanged records</summary>
+        /// <summary>変更なしのレコード数</summary>
         public int UnchangedCount { get; private set; }
 
         /// <summary>
-        /// Whether there are any differences.
+        /// 差分があるかどうか。
         /// </summary>
         public bool HasDifferences => AddedCount > 0 || RemovedCount > 0 || ModifiedCount > 0;
 
         /// <summary>
-        /// Recalculates the counts.
+        /// カウントを再計算します。
         /// </summary>
         public void RecalculateCounts()
         {
@@ -66,7 +66,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Gets the diff summary.
+        /// 差分の概要を取得します。
         /// </summary>
         public string GetSummary()
         {

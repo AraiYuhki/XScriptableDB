@@ -35,7 +35,7 @@ namespace Xeon.XScriptableDB.Editor
                     }
                     else
                     {
-                        // Limit to a single settings file per project
+                        // プロジェクトごとに設定ファイルを1つに制限します
                         var path = AssetDatabase.GUIDToAssetPath(new GUID(guids[0]));
                         instance = AssetDatabase.LoadAssetAtPath<TableGenerateSetting>(path);
                     }

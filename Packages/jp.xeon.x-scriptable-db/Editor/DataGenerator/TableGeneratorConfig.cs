@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Table generation configuration.
+    /// テーブル生成設定。
     /// </summary>
     [Serializable]
     public class TableGeneratorConfig

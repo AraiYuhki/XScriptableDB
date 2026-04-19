@@ -6,7 +6,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// Tests for DiffCalculator.
+    /// DiffCalculatorのテスト。
     /// </summary>
     public class DiffCalculatorTests
     {

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// Tests for TableQuery extension methods.
+    /// TableQuery拡張メソッドのテスト。
     /// </summary>
     public class TableQueryTests
     {
@@ -28,7 +28,7 @@ namespace Xeon.XScriptableDB.Tests
         }
 
         /// <summary>
-        /// TableAsset implementation for testing.
+        /// テスト用のTableAsset実装。
         /// </summary>
         private class TestTableAsset : TableAsset<TestRecord, int>
         {
@@ -187,7 +187,7 @@ namespace Xeon.XScriptableDB.Tests
             var result = table.FirstOrDefault(r => r.Category == "A");
 
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Id, Is.EqualTo(1)); // First sorted record with Category "A"
+            Assert.That(result.Id, Is.EqualTo(1)); // Category "A"の最初にソートされたレコード
         }
 
         #endregion
@@ -245,7 +245,7 @@ namespace Xeon.XScriptableDB.Tests
 
             var result = emptyTable.All(r => r.Value > 1000);
 
-            Assert.That(result, Is.True); // Vacuous truth
+            Assert.That(result, Is.True); // 空虚な真（要素がない場合はすべて条件を満たすとみなす）
         }
 
         #endregion
@@ -422,7 +422,7 @@ namespace Xeon.XScriptableDB.Tests
         [TearDown]
         public void TearDown()
         {
-            // Clean up ScriptableObject instances
+            // ScriptableObjectインスタンスをクリーンアップする
             var assets = Resources.FindObjectsOfTypeAll<TestTableAsset>();
             foreach (var asset in assets)
             {

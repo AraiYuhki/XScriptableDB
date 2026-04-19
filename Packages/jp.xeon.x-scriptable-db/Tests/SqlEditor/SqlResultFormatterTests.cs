@@ -6,7 +6,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// Tests for SqlResultFormatter.
+    /// SqlResultFormatterのテスト。
     /// </summary>
     public class SqlResultFormatterTests
     {
@@ -230,7 +230,7 @@ namespace Xeon.XScriptableDB.Tests
                 TableTypes = { ["t"] = typeof(TestRecord), ["c"] = typeof(CategoryRecord) }
             };
 
-            // CategoryName exists only in categoryRecord
+            // CategoryNameはcategoryRecordにのみ存在します
             var categoryNameResult = SqlResultFormatter.GetFieldValue(joinedRecord, null, "CategoryName");
 
             Assert.That(categoryNameResult, Is.EqualTo("Category1"));
@@ -348,18 +348,18 @@ namespace Xeon.XScriptableDB.Tests
         [Test]
         public void Integration_ResultRowFromGroupBy_CorrectlyFormatsAllValues()
         {
-            // Simulate a GROUP BY result
+            // GROUP BY結果をシミュレート
             var row = new ResultRow();
             row.Values["CategoryId"] = 1;
             row.Values["COUNT(*)"] = 5;
             row.Values["SUM(Value)"] = 500.0;
             row.Values["AVG(Value)"] = 100.0;
 
-            // Get column names
+            // 列名を取得
             var columnNames = SqlResultFormatter.GetColumnNamesFromRecord(row);
             Assert.That(columnNames.Count, Is.EqualTo(4));
 
-            // Get and format values
+            // 値を取得してフォーマット
             foreach (var colName in columnNames)
             {
                 var value = SqlResultFormatter.GetFieldValue(row, null, colName);
@@ -371,7 +371,7 @@ namespace Xeon.XScriptableDB.Tests
         [Test]
         public void Integration_JoinedRecordFromJoin_CorrectlyFormatsAllValues()
         {
-            // Simulate a JOIN result
+            // JOIN結果をシミュレート
             var testRecord = new TestRecord { Id = 1, Name = "Item1", Value = 100, Active = true };
             var categoryRecord = new CategoryRecord { Id = 1, CategoryName = "Electronics" };
 
@@ -381,23 +381,23 @@ namespace Xeon.XScriptableDB.Tests
                 TableTypes = { ["t"] = typeof(TestRecord), ["c"] = typeof(CategoryRecord) }
             };
 
-            // Get column names
+            // 列名を取得
             var columnNames = SqlResultFormatter.GetColumnNamesFromRecord(joinedRecord);
             Assert.That(columnNames.Count, Is.GreaterThan(0));
 
-            // Verify that values for all columns can be retrieved
+            // すべての列の値が取得できることを確認
             foreach (var colName in columnNames)
             {
                 var value = SqlResultFormatter.GetFieldValue(joinedRecord, null, colName);
-                // Verify values are not null (when no null table in JOIN)
-                Assert.That(value, Is.Not.Null, $"Column {colName} should not be null");
+                // 値がnullでないことを確認（JOINにnullテーブルがない場合）
+                Assert.That(value, Is.Not.Null, $"列 {colName} はnullであってはなりません");
             }
         }
 
         [Test]
         public void Integration_LeftJoinWithNullTable_CorrectlyHandlesNullValues()
         {
-            // Simulate a LEFT JOIN with no match
+            // 一致しないLEFT JOINをシミュレート
             var testRecord = new TestRecord { Id = 1, Name = "Item1", Value = 100, Active = true };
 
             var joinedRecord = new JoinedRecord
@@ -406,15 +406,15 @@ namespace Xeon.XScriptableDB.Tests
                 TableTypes = { ["t"] = typeof(TestRecord), ["c"] = typeof(CategoryRecord) }
             };
 
-            // Columns from table t can be retrieved
+            // テーブルtの列は取得可能
             var tIdValue = SqlResultFormatter.GetFieldValue(joinedRecord, null, "t.Id");
             Assert.That(tIdValue, Is.EqualTo(1));
 
-            // Columns from table c are null
+            // テーブルcの列はnull
             var cIdValue = SqlResultFormatter.GetFieldValue(joinedRecord, null, "c.Id");
             Assert.That(cIdValue, Is.Null);
 
-            // Format the null value
+            // null値をフォーマット
             var formatted = SqlResultFormatter.FormatValue(cIdValue);
             Assert.That(formatted, Is.EqualTo("(null)"));
         }

@@ -6,16 +6,16 @@ using System.Runtime.InteropServices;
 namespace Xeon.XScriptableDB.Performance
 {
     /// <summary>
-    /// Memory profiler.
-    /// Estimates memory usage for tables.
+    /// メモリプロファイラー。
+    /// テーブルのメモリ使用量を推定します。
     /// </summary>
     public static class MemoryProfiler
     {
         /// <summary>
-        /// Estimates the memory usage of a table.
+        /// テーブルのメモリ使用量を推定します。
         /// </summary>
-        /// <param name="tableAsset">Table asset</param>
-        /// <returns>Memory information</returns>
+        /// <param name="tableAsset">テーブルアセット</param>
+        /// <returns>メモリ情報</returns>
         public static TableMemoryInfo EstimateMemoryUsage(ITableAsset tableAsset)
         {
             if (tableAsset == null)
@@ -38,7 +38,7 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Estimates the memory usage of multiple tables.
+        /// 複数のテーブルのメモリ使用量を推定します。
         /// </summary>
         public static IReadOnlyList<TableMemoryInfo> EstimateMemoryUsage(IEnumerable<ITableAsset> tables)
         {
@@ -53,40 +53,40 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Estimates the size of a type.
+        /// 型のサイズを推定します。
         /// </summary>
-        /// <param name="type">Type</param>
-        /// <returns>Estimated size in bytes</returns>
+        /// <param name="type">型</param>
+        /// <returns>推定サイズ（バイト単位）</returns>
         public static long EstimateTypeSize(Type type)
         {
             if (type == null) return 0;
 
-            // Primitive types
+            // プリミティブ型
             if (type.IsPrimitive)
             {
                 return GetPrimitiveSize(type);
             }
 
-            // String (assume an average size)
+            // 文字列（平均サイズを想定）
             if (type == typeof(string))
             {
-                return 40; // Object header + average 20 characters
+                return 40; // オブジェクトヘッダー + 平均20文字
             }
 
-            // Enum
+            // 列挙型
             if (type.IsEnum)
             {
                 return 4;
             }
 
-            // Array
+            // 配列
             if (type.IsArray)
             {
-                return 24 + EstimateTypeSize(type.GetElementType()) * 10; // Assumed array size
+                return 24 + EstimateTypeSize(type.GetElementType()) * 10; // 想定される配列サイズ
             }
 
-            // Class/struct
-            long size = type.IsValueType ? 0 : 16; // Object header
+            // クラス/構造体
+            long size = type.IsValueType ? 0 : 16; // オブジェクトヘッダー
 
             var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             foreach (var field in fields)
@@ -98,7 +98,7 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Estimates the size of a field.
+        /// フィールドのサイズを推定します。
         /// </summary>
         private static long EstimateFieldSize(FieldInfo field)
         {
@@ -111,7 +111,7 @@ namespace Xeon.XScriptableDB.Performance
 
             if (type == typeof(string))
             {
-                return 8; // Reference only (string body is counted separately)
+                return 8; // 参照のみ（文字列本体は別途計算）
             }
 
             if (type.IsEnum)
@@ -124,12 +124,12 @@ namespace Xeon.XScriptableDB.Performance
                 return EstimateTypeSize(type);
             }
 
-            // Reference types: size of the reference
+            // 参照型：参照のサイズ
             return 8;
         }
 
         /// <summary>
-        /// Gets the size of a primitive type.
+        /// プリミティブ型のサイズを取得します。
         /// </summary>
         private static int GetPrimitiveSize(Type type)
         {
@@ -147,16 +147,16 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Estimates the overhead of a table.
+        /// テーブルのオーバーヘッドを推定します。
         /// </summary>
         private static long EstimateTableOverhead()
         {
-            // ScriptableObject + list + indexes, etc.
+            // ScriptableObject + リスト + インデックスなど
             return 256;
         }
 
         /// <summary>
-        /// Gets the current GC memory usage.
+        /// 現在のGCメモリ使用量を取得します。
         /// </summary>
         public static long GetTotalMemory()
         {
@@ -164,7 +164,7 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Runs GC and returns the memory usage afterward.
+        /// GCを実行し、その後のメモリ使用量を返します。
         /// </summary>
         public static long GetTotalMemoryAfterGC()
         {
@@ -172,7 +172,7 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Takes a snapshot of the current memory usage.
+        /// 現在のメモリ使用量のスナップショットを取得します。
         /// </summary>
         public static MemorySnapshot TakeSnapshot()
         {

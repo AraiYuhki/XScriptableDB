@@ -6,8 +6,8 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Custom PropertyDrawer for the SerializableDateTime type.
-    /// Enables editing of SerializableDateTime fields in the Inspector.
+    /// SerializableDateTime型用のカスタムPropertyDrawer。
+    /// InspectorでSerializableDateTimeフィールドの編集を可能にします。
     /// </summary>
     [CustomPropertyDrawer(typeof(SerializableDateTime))]
     public class SerializableDateTimePropertyDrawer : PropertyDrawer
@@ -125,12 +125,12 @@ namespace Xeon.XScriptableDB.Editor
     }
 
     /// <summary>
-    /// Utility methods related to the SerializableDateTime type.
+    /// SerializableDateTime型に関連するユーティリティメソッド。
     /// </summary>
     public static class DateTimeEditorUtility
     {
         /// <summary>
-        /// Gets a DateTime value from a SerializedProperty.
+        /// SerializedPropertyからDateTime値を取得します。
         /// </summary>
         public static DateTime GetDateTime(SerializedProperty property)
         {
@@ -160,7 +160,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Sets a DateTime value on a SerializedProperty.
+        /// SerializedPropertyにDateTime値を設定します。
         /// </summary>
         public static void SetDateTime(SerializedProperty property, DateTime dateTime)
         {
@@ -184,7 +184,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Determines whether a SerializedProperty is a supported SerializableDateTime property.
+        /// SerializedPropertyがサポートされたSerializableDateTimeプロパティかどうかを判定します。
         /// </summary>
         public static bool IsDateTimeProperty(SerializedProperty property)
         {
@@ -196,7 +196,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Converts a DateTime to a display string.
+        /// DateTimeを表示用文字列に変換します。
         /// </summary>
         public static string FormatDateTime(DateTime dateTime)
         {
@@ -206,7 +206,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Parses a DateTime from a string.
+        /// 文字列からDateTimeを解析します。
         /// </summary>
         public static bool TryParse(string value, out DateTime result)
         {

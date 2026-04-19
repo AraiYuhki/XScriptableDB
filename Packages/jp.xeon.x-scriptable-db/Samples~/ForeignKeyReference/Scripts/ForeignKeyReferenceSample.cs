@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
 {
     /// <summary>
-    /// Logic for the Foreign Key Reference sample.
-    /// Intended to be called from a GUI.
+    /// 外部キー参照サンプルのロジック。
+    /// GUIから呼び出されることを想定しています。
     /// </summary>
     public class ForeignKeyReferenceSample : MonoBehaviour
     {
@@ -23,7 +23,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         private RecipeTable recipeTable;
 
         /// <summary>
-        /// Gets detailed information for an item.
+        /// アイテムの詳細情報を取得します。
         /// </summary>
         public ItemDetailInfo GetItemDetail(int itemId)
         {
@@ -35,7 +35,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
             var rarity = item.GetRarity(rarityTable);
             var actualPrice = item.GetActualPrice(rarityTable);
 
-            // Search for recipes that can craft this item
+            // このアイテムを作成できるレシピを検索
             var recipe = recipeTable.All.FirstOrDefault(r => r.ResultItemId == itemId);
 
             return new ItemDetailInfo
@@ -49,7 +49,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets a list of items filtered by category.
+        /// カテゴリでフィルタリングされたアイテムのリストを取得します。
         /// </summary>
         public IEnumerable<ItemRecord> GetItemsByCategory(int categoryId)
         {
@@ -57,7 +57,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets a list of items filtered by rarity.
+        /// レアリティでフィルタリングされたアイテムのリストを取得します。
         /// </summary>
         public IEnumerable<ItemRecord> GetItemsByRarity(int rarityId)
         {
@@ -65,7 +65,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets a list of items with at least the specified rarity.
+        /// 指定されたレアリティ以上のアイテムのリストを取得します。
         /// </summary>
         public IEnumerable<ItemRecord> GetItemsByMinRarity(int minRarityId)
         {
@@ -73,7 +73,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets detailed information for a recipe.
+        /// レシピの詳細情報を取得します。
         /// </summary>
         public RecipeDetailInfo GetRecipeDetail(int recipeId)
         {
@@ -115,7 +115,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Searches for recipes that use the specified item as a material.
+        /// 指定されたアイテムを素材として使用するレシピを検索します。
         /// </summary>
         public IEnumerable<RecipeRecord> FindRecipesUsingItem(int itemId)
         {
@@ -126,7 +126,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets all categories (sorted by display order).
+        /// すべてのカテゴリを取得します（表示順にソート）。
         /// </summary>
         public IEnumerable<CategoryRecord> GetAllCategories()
         {
@@ -134,7 +134,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets all rarities.
+        /// すべてのレアリティを取得します。
         /// </summary>
         public IEnumerable<RarityRecord> GetAllRarities()
         {
@@ -142,7 +142,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets all items.
+        /// すべてのアイテムを取得します。
         /// </summary>
         public IEnumerable<ItemRecord> GetAllItems()
         {
@@ -150,7 +150,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets all recipes.
+        /// すべてのレシピを取得します。
         /// </summary>
         public IEnumerable<RecipeRecord> GetAllRecipes()
         {
@@ -159,7 +159,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
     }
 
     /// <summary>
-    /// Item detail information.
+    /// アイテム詳細情報。
     /// </summary>
     public class ItemDetailInfo
     {
@@ -173,7 +173,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
     }
 
     /// <summary>
-    /// Recipe detail information.
+    /// レシピ詳細情報。
     /// </summary>
     public class RecipeDetailInfo
     {
@@ -184,7 +184,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
     }
 
     /// <summary>
-    /// Material information.
+    /// 素材情報。
     /// </summary>
     public class MaterialInfo
     {

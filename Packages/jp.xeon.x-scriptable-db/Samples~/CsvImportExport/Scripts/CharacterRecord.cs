@@ -6,8 +6,8 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Samples.CsvImportExport
 {
     /// <summary>
-    /// Record class for character data.
-    /// Uses English CSV column names for easy editing by designers.
+    /// キャラクターデータのレコードクラス。
+    /// デザイナーが編集しやすいように英語のCSVカラム名を使用しています。
     /// </summary>
     [Serializable]
     public class CharacterRecord : CsvData
@@ -37,17 +37,17 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         private bool isPlayable;
 
         /// <summary>
-        /// Character ID (primary key)
+        /// キャラクターID（主キー）
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// Character name
+        /// キャラクター名
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// Level
+        /// レベル
         /// </summary>
         public int Level => level;
 
@@ -57,22 +57,22 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         public int Hp => hp;
 
         /// <summary>
-        /// Attack power
+        /// 攻撃力
         /// </summary>
         public int Attack => attack;
 
         /// <summary>
-        /// Defense power
+        /// 防御力
         /// </summary>
         public int Defense => defense;
 
         /// <summary>
-        /// Character class
+        /// クラス（職業）
         /// </summary>
         public string CharacterClass => characterClass;
 
         /// <summary>
-        /// Whether this is a playable character
+        /// プレイアブルキャラクターかどうか
         /// </summary>
         public bool IsPlayable => isPlayable;
 

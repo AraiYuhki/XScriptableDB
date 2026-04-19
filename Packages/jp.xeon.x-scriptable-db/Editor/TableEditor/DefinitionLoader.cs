@@ -8,8 +8,8 @@ namespace Xeon.XScriptableDB.Editor
     public class DefinitionLoader
     {
         /// <summary>
-        /// Loads a table definition from a YAML file.
-        /// Also supports automatic migration from the legacy format (indices: string[]).
+        /// YAMLファイルからテーブル定義をロードします。
+        /// レガシーフォーマット（indices: string[]）からの自動移行もサポートします。
         /// </summary>
         public static TableDefinition LoadDefinition(string path)
         {

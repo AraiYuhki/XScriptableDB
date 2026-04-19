@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Database browser window.
+    /// データベースブラウザウィンドウ。
     /// </summary>
     public class DatabaseBrowserWindow : EditorWindow
     {
@@ -46,7 +46,7 @@ namespace Xeon.XScriptableDB.Editor
         public static void ShowWindow()
         {
             var window = GetWindow<DatabaseBrowserWindow>();
-            window.titleContent = new GUIContent("DB Browser");
+            window.titleContent = new GUIContent("DBブラウザ");
             window.minSize = new Vector2(800, 500);
             window.Show();
         }
@@ -177,7 +177,7 @@ namespace Xeon.XScriptableDB.Editor
 
             // Header
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-            EditorGUILayout.LabelField($"Tables ({tables.Count})", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"テーブル一覧 ({tables.Count})", EditorStyles.boldLabel);
             if (GUILayout.Button("↻", EditorStyles.toolbarButton, GUILayout.Width(25)))
             {
                 RefreshTables();
@@ -265,7 +265,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (selectedTable == null)
             {
-                EditorGUILayout.HelpBox("Select a table from the list", MessageType.Info);
+                EditorGUILayout.HelpBox("リストからテーブルを選択してください", MessageType.Info);
                 EditorGUILayout.EndVertical();
                 return;
             }
@@ -277,11 +277,11 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUILayout.LabelField(selectedTable.Name, headerStyle);
             GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button("Open Editor", GUILayout.Width(90)))
+            if (GUILayout.Button("エディタを開く", GUILayout.Width(90)))
             {
                 OpenTableEditor();
             }
-            if (GUILayout.Button("Select Asset", GUILayout.Width(90)))
+            if (GUILayout.Button("アセットを選択", GUILayout.Width(90)))
             {
                 Selection.activeObject = selectedTable.Asset;
                 EditorGUIUtility.PingObject(selectedTable.Asset);
@@ -291,11 +291,11 @@ namespace Xeon.XScriptableDB.Editor
             EditorGUILayout.Space(5);
 
             // Basic information
-            EditorGUILayout.LabelField("Table Information", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("テーブル情報", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
-            EditorGUILayout.LabelField("Asset Path:", selectedTable.AssetPath);
-            EditorGUILayout.LabelField("Record Type:", selectedTable.RecordType.FullName);
-            EditorGUILayout.LabelField("Record Count:", selectedTable.RecordCount.ToString());
+            EditorGUILayout.LabelField("アセットパス:", selectedTable.AssetPath);
+            EditorGUILayout.LabelField("レコード型:", selectedTable.RecordType.FullName);
+            EditorGUILayout.LabelField("レコード数:", selectedTable.RecordCount.ToString());
             EditorGUI.indentLevel--;
 
             EditorGUILayout.Space(10);
@@ -314,19 +314,19 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawColumnsInfo()
         {
-            EditorGUILayout.LabelField($"Columns ({selectedTable.Columns.Count})", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"カラム一覧 ({selectedTable.Columns.Count})", EditorStyles.boldLabel);
 
             if (selectedTable.Columns.Count == 0)
             {
-                EditorGUILayout.HelpBox("No columns found", MessageType.Warning);
+                EditorGUILayout.HelpBox("カラムが見つかりません", MessageType.Warning);
                 return;
             }
 
             // Table header
             EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Name", EditorStyles.boldLabel, GUILayout.Width(150));
-            EditorGUILayout.LabelField("Type", EditorStyles.boldLabel, GUILayout.Width(120));
-            EditorGUILayout.LabelField("Key", EditorStyles.boldLabel, GUILayout.Width(100));
+            EditorGUILayout.LabelField("名前", EditorStyles.boldLabel, GUILayout.Width(150));
+            EditorGUILayout.LabelField("型", EditorStyles.boldLabel, GUILayout.Width(120));
+            EditorGUILayout.LabelField("キー", EditorStyles.boldLabel, GUILayout.Width(100));
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
@@ -353,11 +353,11 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawDataPreview()
         {
-            EditorGUILayout.LabelField($"Data Preview (First {PreviewRowCount} rows)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"データプレビュー (先頭 {PreviewRowCount} 件)", EditorStyles.boldLabel);
 
             if (selectedTable.RecordCount == 0)
             {
-                EditorGUILayout.HelpBox("No records", MessageType.Info);
+                EditorGUILayout.HelpBox("レコードがありません", MessageType.Info);
                 return;
             }
 

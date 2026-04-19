@@ -6,7 +6,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests.Editor
 {
     /// <summary>
-    /// Tests for TableEditor-related classes.
+    /// TableEditor関連クラスのテスト。
     /// </summary>
     public class TableEditorTests
     {
@@ -237,7 +237,7 @@ namespace Xeon.XScriptableDB.Tests.Editor
             };
 
             var code = ClassGenerator.GenerateRecord(definition);
-            // SecondaryKey is part of combined attribute list like [SerializeField, CsvColumn("category"), SecondaryKey]
+            // SecondaryKeyは [SerializeField, CsvColumn("category"), SecondaryKey] のように結合された属性リストの一部です
             Assert.IsTrue(code.Contains("SecondaryKey"));
         }
 
@@ -300,14 +300,14 @@ namespace Xeon.XScriptableDB.Tests.Editor
 
                 var code = ClassGenerator.GenerateRecord(definition);
                 Assert.IsTrue(code.Contains(testCase.Value),
-                    $"Expected '{testCase.Value}' for SQL type '{testCase.Key}'");
+                    $"SQL型 '{testCase.Key}' に対して '{testCase.Value}' が期待されます");
             }
         }
 
         [Test]
         public void ClassGenerator_TypeConversion_SnakeCaseEnum_ConvertsToPascalCase()
         {
-            // snake_case enum type names are converted to PascalCase
+            // snake_caseのenum型名はPascalCaseに変換されます
             var definition = new TableDefinition
             {
                 TableName = "test",
@@ -320,15 +320,15 @@ namespace Xeon.XScriptableDB.Tests.Editor
 
             var code = ClassGenerator.GenerateRecord(definition);
             Assert.IsTrue(code.Contains("ElementType"),
-                "snake_case enum type names are converted to PascalCase");
+                "snake_caseのenum型名はPascalCaseに変換されます");
             Assert.IsFalse(code.Contains("private element_type "),
-                "Fields with snake_case type names are not generated as-is");
+                "snake_caseの型名を持つフィールドはそのまま生成されません");
         }
 
         [Test]
         public void ClassGenerator_TypeConversion_PascalCaseEnum_PreservedAsPascalCase()
         {
-            // Enum type names already in PascalCase are preserved as-is
+            // すでにPascalCaseになっているenum型名はそのまま保持されます
             var definition = new TableDefinition
             {
                 TableName = "test",
@@ -341,7 +341,7 @@ namespace Xeon.XScriptableDB.Tests.Editor
 
             var code = ClassGenerator.GenerateRecord(definition);
             Assert.IsTrue(code.Contains("RarityType"),
-                "PascalCase enum type names are preserved as-is");
+                "PascalCaseのenum型名はそのまま保持されます");
         }
 
         [Test]
@@ -358,16 +358,16 @@ namespace Xeon.XScriptableDB.Tests.Editor
             };
 
             var code = ClassGenerator.GenerateRecord(definition);
-            // Field names are prefixed with underscore
+            // フィールド名にはアンダースコアのプレフィックスが付きます
             Assert.IsTrue(code.Contains("private int _id"),
-                "int type fields are generated with _ prefix");
+                "int型のフィールドは _ プレフィックス付きで生成されます");
             Assert.IsTrue(code.Contains("private string _itemName"),
-                "snake_case field names are converted to camelCase with _ prefix");
-            // Property getters also reference fields with _ prefix
+                "snake_caseのフィールド名は _ プレフィックス付きのcamelCaseに変換されます");
+            // プロパティのゲッターも _ プレフィックス付きのフィールドを参照します
             Assert.IsTrue(code.Contains("get => _id"),
-                "Property getters reference fields with _ prefix");
+                "プロパティのゲッターは _ プレフィックス付きのフィールドを参照します");
             Assert.IsTrue(code.Contains("get => _itemName"),
-                "Property getters derived from snake_case also reference fields with _ prefix");
+                "snake_caseから派生したプロパティのゲッターも _ プレフィックス付きのフィールドを参照します");
         }
 
         #endregion

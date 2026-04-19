@@ -1,41 +1,41 @@
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQL token types.
+    /// SQLトークンの種類。
     /// </summary>
     public enum TokenType
     {
-        // Keywords
+        // キーワード
         Select, From, Where, And, Or, Not,
         Order, By, Asc, Desc, Limit, Offset,
         Update, Set, Delete, Insert, Into, Values,
         In, Like, Is, Null, Between,
 
-        // JOIN keywords
+        // JOINキーワード
         Join, Inner, Left, Right, Cross, Outer, On,
 
-        // Aggregate keywords
+        // 集約キーワード
         Group, Having, Distinct,
         Count, Sum, Avg, Min, Max,
 
-        // Set operations
+        // セット操作
         Union, Intersect, Except, All,
 
-        // CASE expression
+        // CASE式
         Case, When, Then, Else, End,
 
-        // String functions
+        // 文字列関数
         Upper, Lower, Concat, Substring, Trim, Length,
 
-        // Symbols
+        // 記号
         Star, Comma, Dot, LeftParen, RightParen,
         Equal, NotEqual, LessThan, LessOrEqual, GreaterThan, GreaterOrEqual,
         Plus, Minus, Slash, Percent,
 
-        // Literals
+        // リテラル
         Identifier, StringLiteral, NumberLiteral,
 
-        // Special
+        // 特殊
         Eof, Unknown
     }
 }

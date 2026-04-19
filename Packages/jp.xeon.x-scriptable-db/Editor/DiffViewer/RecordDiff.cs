@@ -4,34 +4,34 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Diff information at the record level.
+    /// レコードレベルの差分情報。
     /// </summary>
     [Serializable]
     public class RecordDiff
     {
-        /// <summary>PrimaryKey value</summary>
+        /// <summary>PrimaryKeyの値</summary>
         public object PrimaryKey { get; set; }
 
-        /// <summary>Type of diff</summary>
+        /// <summary>差分の種類</summary>
         public DiffType DiffType { get; set; }
 
-        /// <summary>Record before change (on deletion or modification)</summary>
+        /// <summary>変更前のレコード（削除または変更時）</summary>
         public object OldRecord { get; set; }
 
-        /// <summary>Record after change (on addition or modification)</summary>
+        /// <summary>変更後のレコード（追加または変更時）</summary>
         public object NewRecord { get; set; }
 
-        /// <summary>Record index in the original table</summary>
+        /// <summary>元のテーブルでのレコードインデックス</summary>
         public int OldIndex { get; set; } = -1;
 
-        /// <summary>Record index in the new data</summary>
+        /// <summary>新しいデータでのレコードインデックス</summary>
         public int NewIndex { get; set; } = -1;
 
-        /// <summary>List of field-level diffs</summary>
+        /// <summary>フィールドレベルの差分リスト</summary>
         public List<FieldDiff> FieldDiffs { get; set; } = new();
 
         /// <summary>
-        /// Number of changed fields.
+        /// 変更されたフィールドの数。
         /// </summary>
         public int ChangedFieldCount
         {
@@ -48,7 +48,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Gets the diff summary.
+        /// 差分の概要を取得します。
         /// </summary>
         public string Summary
         {

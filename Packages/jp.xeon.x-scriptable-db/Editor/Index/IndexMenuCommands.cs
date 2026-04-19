@@ -5,12 +5,12 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Menu commands related to index operations.
+    /// インデックス操作に関連するメニューコマンド。
     /// </summary>
     public static class IndexMenuCommands
     {
         /// <summary>
-        /// Rebuilds indices for the selected table asset.
+        /// 選択されたテーブルアセットのインデックスを再構築します。
         /// </summary>
         [MenuItem("Assets/XScriptableDB/Rebuild Secondary Indices")]
         private static void RebuildSelectedIndices()
@@ -53,7 +53,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Rebuilds indices for all table assets in the project.
+        /// プロジェクト内のすべてのテーブルアセットのインデックスを再構築します。
         /// </summary>
         [MenuItem("Tools/XScriptableDB/Rebuild All Secondary Indices")]
         private static void RebuildAllIndices()

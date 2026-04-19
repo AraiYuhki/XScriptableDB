@@ -3,47 +3,47 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// Foreign key reference report.
+    /// 外部キー参照のレポート。
     /// </summary>
     public class ForeignKeyReport
     {
-        /// <summary>Source table name</summary>
+        /// <summary>ソーステーブル名</summary>
         public string SourceTableName { get; set; }
 
-        /// <summary>Target table name</summary>
+        /// <summary>ターゲットテーブル名</summary>
         public string TargetTableName { get; set; }
 
-        /// <summary>Foreign key field name</summary>
+        /// <summary>外部キーフィールド名</summary>
         public string ForeignKeyField { get; set; }
 
-        /// <summary>Total number of references</summary>
+        /// <summary>総参照数</summary>
         public int TotalReferences { get; set; }
 
-        /// <summary>List of invalid reference values</summary>
+        /// <summary>無効な参照値のリスト</summary>
         public List<object> InvalidReferences { get; } = new();
 
-        /// <summary>List of error messages</summary>
+        /// <summary>エラーメッセージのリスト</summary>
         public List<string> Errors { get; } = new();
 
-        /// <summary>Whether the report is valid</summary>
+        /// <summary>レポートが有効かどうか</summary>
         public bool IsValid => InvalidReferences.Count == 0 && Errors.Count == 0;
 
-        /// <summary>Number of invalid references</summary>
+        /// <summary>無効な参照の数</summary>
         public int InvalidReferenceCount => InvalidReferences.Count;
 
         /// <summary>
-        /// Returns a summary string.
+        /// サマリー文字列を返します。
         /// </summary>
         public string GetSummary()
         {
             if (IsValid)
             {
                 return $"{SourceTableName}.{ForeignKeyField} -> {TargetTableName}: " +
-                       $"All {TotalReferences} references are valid.";
+                       $"すべての{TotalReferences}件の参照が有効です。";
             }
 
             return $"{SourceTableName}.{ForeignKeyField} -> {TargetTableName}: " +
-                   $"{InvalidReferenceCount}/{TotalReferences} invalid references found.";
+                   $"{TotalReferences}件中{InvalidReferenceCount}件の無効な参照が見つかりました。";
         }
     }
 }

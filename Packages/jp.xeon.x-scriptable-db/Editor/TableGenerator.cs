@@ -30,25 +30,25 @@ namespace Xeon.XScriptableDB.Editor
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                tableCreatePath = EditorGUILayout.TextField("Table Output Path", tableCreatePath);
+                tableCreatePath = EditorGUILayout.TextField("テーブル出力パス", tableCreatePath);
                 if (GUILayout.Button("...", GUILayout.Width(50f)))
                     tableCreatePath = SelectCreatePath(tableCreatePath);
             }
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                infoCreatePath = EditorGUILayout.TextField("Info Output Path", infoCreatePath);
+                infoCreatePath = EditorGUILayout.TextField("情報クラス出力パス", infoCreatePath);
                 if (GUILayout.Button("...", GUILayout.Width(50f)))
                     infoCreatePath = SelectCreatePath(infoCreatePath);
             }
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                tableName = EditorGUILayout.TextField("Table Class Name", tableName);
-                infoName = EditorGUILayout.TextField("Info Class Name", infoName);
+                tableName = EditorGUILayout.TextField("テーブルクラス名", tableName);
+                infoName = EditorGUILayout.TextField("レコードクラス名", infoName);
             }
 
-            if (GUILayout.Button("Generate"))
+            if (GUILayout.Button("生成"))
             {
                 GenerateTableClass();
                 GenerateInfoClass();
@@ -63,7 +63,7 @@ namespace Xeon.XScriptableDB.Editor
             var directoryName = currentPath;
             if (!string.IsNullOrEmpty(Path.GetExtension(directoryName)))
                 directoryName = Path.GetDirectoryName(directoryName);
-            directoryName = EditorUtility.SaveFolderPanel("Select save location", directoryName, directoryName);
+            directoryName = EditorUtility.SaveFolderPanel("保存先を選択", directoryName, directoryName);
             if (!string.IsNullOrEmpty(directoryName))
                 return directoryName;
             return currentPath;

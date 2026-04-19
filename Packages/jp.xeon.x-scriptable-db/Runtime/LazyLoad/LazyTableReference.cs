@@ -7,10 +7,10 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Xeon.XScriptableDB.LazyLoad
 {
     /// <summary>
-    /// Lazy-load reference for a table.
-    /// Loads the table on demand using Addressables.
+    /// テーブルの遅延読み込み参照。
+    /// Addressablesを使用して必要に応じてテーブルをロードします。
     /// </summary>
-    /// <typeparam name="T">Type of the table</typeparam>
+    /// <typeparam name="T">テーブルの型</typeparam>
     [Serializable]
     public class LazyTableReference<T> where T : ScriptableObject, ITableAsset
     {
@@ -22,21 +22,21 @@ namespace Xeon.XScriptableDB.LazyLoad
         private int referenceCount;
         private bool isLoading;
 
-        /// <summary>Asset reference</summary>
+        /// <summary>アセット参照</summary>
         public AssetReference AssetReference => assetReference;
 
-        /// <summary>Whether the asset is loaded</summary>
+        /// <summary>アセットがロードされているかどうか</summary>
         public bool IsLoaded => loadedAsset != null;
 
-        /// <summary>Whether the asset is loading</summary>
+        /// <summary>アセットがロード中かどうか</summary>
         public bool IsLoading => isLoading;
 
-        /// <summary>Reference count</summary>
+        /// <summary>参照カウント</summary>
         public int ReferenceCount => referenceCount;
 
         /// <summary>
-        /// Returns the loaded asset.
-        /// Returns null if not yet loaded.
+        /// ロードされたアセットを返します。
+        /// まだロードされていない場合はnullを返します。
         /// </summary>
         public T Asset => loadedAsset;
 
@@ -50,10 +50,10 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Synchronously retrieves the table.
-        /// Performs a synchronous load if not yet loaded.
+        /// テーブルを同期的に取得します。
+        /// まだロードされていない場合は同期ロードを実行します。
         /// </summary>
-        /// <returns>Table asset</returns>
+        /// <returns>テーブルアセット</returns>
         public T GetOrLoad()
         {
             if (loadedAsset != null)
@@ -64,7 +64,7 @@ namespace Xeon.XScriptableDB.LazyLoad
 
             if (assetReference == null || !assetReference.RuntimeKeyIsValid())
             {
-                Debug.LogError("LazyTableReference: Invalid asset reference");
+                Debug.LogError("LazyTableReference: 無効なアセット参照です");
                 return null;
             }
 
@@ -77,9 +77,9 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Asynchronously loads the table.
+        /// テーブルを非同期的にロードします。
         /// </summary>
-        /// <returns>Table asset</returns>
+        /// <returns>テーブルアセット</returns>
         public async Task<T> LoadAsync()
         {
             if (loadedAsset != null)
@@ -98,7 +98,7 @@ namespace Xeon.XScriptableDB.LazyLoad
 
             if (assetReference == null || !assetReference.RuntimeKeyIsValid())
             {
-                Debug.LogError("LazyTableReference: Invalid asset reference");
+                Debug.LogError("LazyTableReference: 無効なアセット参照です");
                 return null;
             }
 
@@ -118,8 +118,8 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Releases the reference.
-        /// The asset is unloaded when the reference count reaches zero.
+        /// 参照を解放します。
+        /// 参照カウントがゼロになるとアセットがアンロードされます。
         /// </summary>
         public void Release()
         {
@@ -134,7 +134,7 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Force-unloads the asset.
+        /// アセットを強制的にアンロードします。
         /// </summary>
         public void Unload()
         {

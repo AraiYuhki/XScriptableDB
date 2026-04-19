@@ -8,8 +8,8 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Xeon.XScriptableDB.LazyLoad
 {
     /// <summary>
-    /// Table loader.
-    /// Manages lazy loading of multiple tables.
+    /// テーブルローダー。
+    /// 複数のテーブルの遅延読み込みを管理します。
     /// </summary>
     public class TableLoader : IDisposable
     {
@@ -17,24 +17,24 @@ namespace Xeon.XScriptableDB.LazyLoad
         private readonly Dictionary<string, Type> addressToType = new();
         private bool isDisposed;
 
-        /// <summary>Number of loaded tables</summary>
+        /// <summary>ロード済みテーブル数</summary>
         public int LoadedCount => loadedTables.Count;
 
         /// <summary>
-        /// Registers a table.
+        /// テーブルを登録します。
         /// </summary>
-        /// <typeparam name="T">Type of the table</typeparam>
-        /// <param name="address">Addressables address</param>
+        /// <typeparam name="T">テーブルの型</typeparam>
+        /// <param name="address">Addressablesのアドレス</param>
         public void Register<T>(string address) where T : ScriptableObject, ITableAsset
         {
             addressToType[address] = typeof(T);
         }
 
         /// <summary>
-        /// Synchronously retrieves a table.
+        /// テーブルを同期的に取得します。
         /// </summary>
-        /// <typeparam name="T">Type of the table</typeparam>
-        /// <returns>Table asset</returns>
+        /// <typeparam name="T">テーブルの型</typeparam>
+        /// <returns>テーブルアセット</returns>
         public T Get<T>() where T : ScriptableObject, ITableAsset
         {
             var type = typeof(T);
@@ -58,7 +58,7 @@ namespace Xeon.XScriptableDB.LazyLoad
 
             if (string.IsNullOrEmpty(address))
             {
-                Debug.LogError($"TableLoader: No address registered for type {type.Name}");
+                Debug.LogError($"TableLoader: 型 {type.Name} のアドレスが登録されていません");
                 return null;
             }
 
@@ -66,10 +66,10 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Asynchronously retrieves a table.
+        /// テーブルを非同期的に取得します。
         /// </summary>
-        /// <typeparam name="T">Type of the table</typeparam>
-        /// <returns>Table asset</returns>
+        /// <typeparam name="T">テーブルの型</typeparam>
+        /// <returns>テーブルアセット</returns>
         public async Task<T> GetAsync<T>() where T : ScriptableObject, ITableAsset
         {
             var type = typeof(T);
@@ -93,7 +93,7 @@ namespace Xeon.XScriptableDB.LazyLoad
 
             if (string.IsNullOrEmpty(address))
             {
-                Debug.LogError($"TableLoader: No address registered for type {type.Name}");
+                Debug.LogError($"TableLoader: 型 {type.Name} のアドレスが登録されていません");
                 return null;
             }
 
@@ -101,7 +101,7 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Synchronously loads a table from the specified address.
+        /// 指定されたアドレスからテーブルを同期的にロードします。
         /// </summary>
         public T LoadSync<T>(string address) where T : ScriptableObject, ITableAsset
         {
@@ -127,7 +127,7 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Asynchronously loads a table from the specified address.
+        /// 指定されたアドレスからテーブルを非同期的にロードします。
         /// </summary>
         public async Task<T> LoadAsync<T>(string address) where T : ScriptableObject, ITableAsset
         {
@@ -153,7 +153,7 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Asynchronously loads multiple tables at once.
+        /// 複数のテーブルを一度に非同期的にロードします。
         /// </summary>
         public async Task LoadMultipleAsync(params string[] addresses)
         {
@@ -176,9 +176,9 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Releases the reference to the table.
+        /// テーブルへの参照を解放します。
         /// </summary>
-        /// <typeparam name="T">Type of the table</typeparam>
+        /// <typeparam name="T">テーブルの型</typeparam>
         public void Release<T>() where T : ScriptableObject, ITableAsset
         {
             var type = typeof(T);
@@ -195,9 +195,9 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Force-unloads the table.
+        /// テーブルを強制的にアンロードします。
         /// </summary>
-        /// <typeparam name="T">Type of the table</typeparam>
+        /// <typeparam name="T">テーブルの型</typeparam>
         public void Unload<T>() where T : ScriptableObject, ITableAsset
         {
             var type = typeof(T);
@@ -214,7 +214,7 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Unloads all tables.
+        /// すべてのテーブルをアンロードします。
         /// </summary>
         public void UnloadAll()
         {
@@ -230,7 +230,7 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Checks whether the table is already loaded.
+        /// テーブルがすでにロードされているかどうかを確認します。
         /// </summary>
         public bool IsLoaded<T>() where T : ScriptableObject, ITableAsset
         {
@@ -238,7 +238,7 @@ namespace Xeon.XScriptableDB.LazyLoad
         }
 
         /// <summary>
-        /// Returns information about the loaded tables.
+        /// ロードされたテーブルに関する情報を返します。
         /// </summary>
         public IReadOnlyCollection<LoadedTableInfo> GetLoadedTableInfo()
         {

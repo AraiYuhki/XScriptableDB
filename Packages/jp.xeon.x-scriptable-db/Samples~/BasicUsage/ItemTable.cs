@@ -4,20 +4,20 @@ using Xeon.XScriptableDB;
 namespace XScriptableDB.Samples
 {
     /// <summary>
-    /// Item table.
-    /// Created by inheriting TableAsset&lt;TRecord, TKey&gt;.
+    /// アイテムテーブル。
+    /// TableAsset&lt;TRecord, TKey&gt;を継承して作成します。
     /// </summary>
     /// <remarks>
-    /// Using CreateAssetMenu makes it creatable from the Unity menu.
+    /// CreateAssetMenuを使用すると、Unityメニューから作成可能になります。
     /// </remarks>
     [CreateAssetMenu(fileName = "ItemTable", menuName = "XScriptableDB/Samples/ItemTable")]
     public class ItemTable : TableAsset<ItemRecord, int>
     {
-        // All base functionality of TableAsset is inherited.
-        // Implement additional methods or properties here if needed.
+        // TableAssetのすべての基本機能が継承されます。
+        // 必要に応じてここに追加のメソッドやプロパティを実装します。
 
         /// <summary>
-        /// Convenience method to retrieve items of the specified category.
+        /// 指定されたカテゴリのアイテムを取得する便利なメソッド。
         /// </summary>
         public ItemRecord[] GetItemsByCategory(string category)
         {
@@ -25,7 +25,7 @@ namespace XScriptableDB.Samples
         }
 
         /// <summary>
-        /// Convenience method to retrieve items of the specified rarity.
+        /// 指定されたレアリティのアイテムを取得する便利なメソッド。
         /// </summary>
         public ItemRecord[] GetItemsByRarity(int rarity)
         {

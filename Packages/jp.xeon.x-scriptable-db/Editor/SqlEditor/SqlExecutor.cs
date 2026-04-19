@@ -5,7 +5,7 @@ using System.Linq;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Class that executes SQL.
+    /// SQLを実行するクラス。
     /// </summary>
     public class SqlExecutor
     {
@@ -29,7 +29,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Registers a table.
+        /// テーブルを登録します。
         /// </summary>
         public void RegisterTable(string tableName, ITableAsset table)
         {
@@ -37,7 +37,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Gets the registered table.
+        /// 登録されているテーブルを取得します。
         /// </summary>
         public ITableAsset GetTable(string tableName)
         {
@@ -45,12 +45,12 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Gets the list of registered table names.
+        /// 登録されているテーブル名のリストを取得します。
         /// </summary>
         public IReadOnlyCollection<string> TableNames => tables.Keys;
 
         /// <summary>
-        /// Parses and executes a SQL string.
+        /// SQL文字列を解析して実行します。
         /// </summary>
         public SqlQueryResult Execute(string sql)
         {
@@ -75,17 +75,17 @@ namespace Xeon.XScriptableDB.Editor
                         ExecuteDelete(delete, result);
                         break;
                     default:
-                        result.ErrorMessage = $"Unsupported statement type: {statement?.GetType().Name}";
+                        result.ErrorMessage = $"サポートされていないステートメント型です: {statement?.GetType().Name}";
                         break;
                 }
             }
             catch (SqlParseException ex)
             {
-                result.ErrorMessage = $"Parse error: {ex.Message}";
+                result.ErrorMessage = $"パースエラー: {ex.Message}";
             }
             catch (Exception ex)
             {
-                result.ErrorMessage = $"Execution error: {ex.Message}";
+                result.ErrorMessage = $"実行エラー: {ex.Message}";
             }
 
             result.ExecutionTimeMs = (DateTime.Now - startTime).TotalMilliseconds;
@@ -126,7 +126,7 @@ namespace Xeon.XScriptableDB.Editor
             if (tables.TryGetValue(mainTableName, out mainTable))
                 return true;
 
-            result.ErrorMessage = $"Table not found: {mainTableName}";
+            result.ErrorMessage = $"テーブルが見つかりません: {mainTableName}";
             return false;
         }
 
@@ -237,7 +237,7 @@ namespace Xeon.XScriptableDB.Editor
             {
                 if (!tables.TryGetValue(join.TableName, out var joinTable))
                 {
-                    result.ErrorMessage = $"Table not found: {join.TableName}";
+                    result.ErrorMessage = $"テーブルが見つかりません: {join.TableName}";
                     return false;
                 }
                 var alias = join.Alias ?? join.TableName;
@@ -255,7 +255,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (!tables.TryGetValue(stmt.TableName, out var table))
             {
-                result.ErrorMessage = $"Table not found: {stmt.TableName}";
+                result.ErrorMessage = $"テーブルが見つかりません: {stmt.TableName}";
                 return;
             }
 
@@ -285,7 +285,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             if (!tables.TryGetValue(stmt.TableName, out var table))
             {
-                result.ErrorMessage = $"Table not found: {stmt.TableName}";
+                result.ErrorMessage = $"テーブルが見つかりません: {stmt.TableName}";
                 return;
             }
 

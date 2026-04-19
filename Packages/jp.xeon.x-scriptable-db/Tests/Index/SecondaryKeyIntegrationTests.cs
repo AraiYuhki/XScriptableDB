@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// Integration tests for SecondaryKey functionality.
-    /// Tests the cooperation between TableAsset and IndexBuilder.
+    /// SecondaryKey機能の統合テスト。
+    /// TableAssetとIndexBuilderの連携をテストします。
     /// </summary>
     public class SecondaryKeyIntegrationTests
     {
@@ -200,15 +200,15 @@ namespace Xeon.XScriptableDB.Tests
         {
             var table = CreateItemTable();
 
-            // Primary key lookup
+            // 主キーによる検索
             var byPrimary = table.FindByKey(3);
             Assert.That(byPrimary.Name, Is.EqualTo("Staff"));
 
-            // Secondary key lookup
+            // 副キーによる検索
             var bySecondary = table.FindBySecondaryKey("Name", "Staff");
             Assert.That(bySecondary.Id, Is.EqualTo(3));
 
-            // Same record
+            // 同じレコードであること
             Assert.That(byPrimary, Is.SameAs(bySecondary));
         }
 
@@ -219,7 +219,7 @@ namespace Xeon.XScriptableDB.Tests
         [Test]
         public void SecondaryKeyLookup_LargeDataset_PerformsWell()
         {
-            // Create a large dataset
+            // 大規模なデータセットを作成する
             var records = new ItemRecord[1000];
             for (var i = 0; i < 1000; i++)
             {
@@ -235,7 +235,7 @@ namespace Xeon.XScriptableDB.Tests
 
             var table = ItemTable.Create(records);
 
-            // Measure lookup time (should be O(1))
+            // 検索時間を計測する（O(1)になるはず）
             var sw = System.Diagnostics.Stopwatch.StartNew();
             for (var i = 0; i < 100; i++)
             {
@@ -243,7 +243,7 @@ namespace Xeon.XScriptableDB.Tests
             }
             sw.Stop();
 
-            // Should complete quickly (arbitrary threshold)
+            // すばやく完了するはず（任意のしきい値）
             Assert.That(sw.ElapsedMilliseconds, Is.LessThan(100));
         }
 
@@ -252,7 +252,7 @@ namespace Xeon.XScriptableDB.Tests
         {
             var table = CreateItemTable();
 
-            // All three indices should work
+            // 3つのインデックスすべてが機能するはず
             var byName = table.FindBySecondaryKey("Name", "Bow");
             var byRarity = table.FindAllBySecondaryKey("Rarity", ItemRarity.Epic).First();
             var byCategory = table.FindAllBySecondaryKey("Category", "Weapon")
@@ -262,7 +262,7 @@ namespace Xeon.XScriptableDB.Tests
             Assert.That(byRarity, Is.Not.Null);
             Assert.That(byCategory, Is.Not.Null);
 
-            // All should be the same record
+            // すべて同じレコードになるはず
             Assert.That(byName.Id, Is.EqualTo(byRarity.Id));
             Assert.That(byRarity.Id, Is.EqualTo(byCategory.Id));
         }

@@ -3,7 +3,7 @@ using System;
 namespace Xeon.XScriptableDB.Cache
 {
     /// <summary>
-    /// Key for the query cache.
+    /// クエリキャッシュのキー。
     /// </summary>
     public readonly struct QueryCacheKey : IEquatable<QueryCacheKey>
     {

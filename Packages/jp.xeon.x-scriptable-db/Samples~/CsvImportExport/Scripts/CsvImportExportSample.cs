@@ -8,8 +8,8 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Samples.CsvImportExport
 {
     /// <summary>
-    /// Logic for the CSV Import/Export sample.
-    /// Intended to be called from a GUI.
+    /// CSVインポート・エクスポートサンプルのロジック。
+    /// GUIから呼び出されることを想定しています。
     /// </summary>
     public class CsvImportExportSample : MonoBehaviour
     {
@@ -17,12 +17,12 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         private CharacterTable characterTable;
 
         /// <summary>
-        /// Imports a CSV file.
+        /// CSVファイルをインポートします。
         /// </summary>
-        /// <param name="filePath">Path to the CSV file</param>
-        /// <param name="encoding">Encoding (auto-detected if null)</param>
-        /// <param name="delimiter">Delimiter character (default: comma)</param>
-        /// <returns>Number of imported records</returns>
+        /// <param name="filePath">CSVファイルのパス</param>
+        /// <param name="encoding">エンコーディング（nullの場合は自動検出）</param>
+        /// <param name="delimiter">区切り文字（デフォルトはカンマ）</param>
+        /// <returns>インポートされたレコード数</returns>
         public int ImportCsv(string filePath, Encoding encoding = null, string delimiter = ",")
         {
             if (!File.Exists(filePath))
@@ -31,7 +31,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
                 return 0;
             }
 
-            // Auto-detect encoding if not specified
+            // 指定がない場合はエンコーディングを自動検出
             encoding ??= DetectEncoding(filePath);
 
             var csvText = File.ReadAllText(filePath, encoding);
@@ -47,12 +47,12 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         }
 
         /// <summary>
-        /// Previews a CSV file without performing the actual import.
+        /// 実際のインポートを実行せずにCSVファイルをプレビューします。
         /// </summary>
-        /// <param name="filePath">Path to the CSV file</param>
-        /// <param name="encoding">Encoding (auto-detected if null)</param>
-        /// <param name="delimiter">Delimiter character</param>
-        /// <returns>Preview result</returns>
+        /// <param name="filePath">CSVファイルのパス</param>
+        /// <param name="encoding">エンコーディング（nullの場合は自動検出）</param>
+        /// <param name="delimiter">区切り文字</param>
+        /// <returns>プレビュー結果</returns>
         public ImportPreviewResult PreviewImport(string filePath, Encoding encoding = null, string delimiter = ",")
         {
             if (!File.Exists(filePath))
@@ -68,7 +68,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
 
             var result = new ImportPreviewResult();
 
-            // Compare with existing data
+            // 既存データと比較
             var existingRecords = new Dictionary<int, CharacterRecord>();
             foreach (var record in characterTable.All)
                 existingRecords[record.Id] = record;
@@ -77,7 +77,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
             {
                 if (existingRecords.TryGetValue(newRecord.Id, out var existing))
                 {
-                    // Check for updates
+                    // 更新チェック
                     var changes = CompareRecords(existing, newRecord);
                     if (changes.Count > 0)
                     {
@@ -94,12 +94,12 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
                 }
                 else
                 {
-                    // New addition
+                    // 新規追加
                     result.AddedRecords.Add(newRecord);
                 }
             }
 
-            // Deletions (existing records not present in CSV)
+            // 削除（CSVに存在しない既存レコード）
             foreach (var remaining in existingRecords.Values)
                 result.DeletedRecords.Add(remaining);
 
@@ -107,12 +107,12 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         }
 
         /// <summary>
-        /// Exports the table to a CSV file.
+        /// テーブルをCSVファイルにエクスポートします。
         /// </summary>
-        /// <param name="filePath">Output path</param>
-        /// <param name="encoding">Encoding</param>
-        /// <param name="delimiter">Delimiter character</param>
-        /// <param name="sortByPrimaryKey">Whether to sort by primary key</param>
+        /// <param name="filePath">出力パス</param>
+        /// <param name="encoding">エンコーディング</param>
+        /// <param name="delimiter">区切り文字</param>
+        /// <param name="sortByPrimaryKey">主キーで並べ替えるかどうか</param>
         public void ExportCsv(string filePath, Encoding encoding, string delimiter = ",", bool sortByPrimaryKey = true)
         {
             var records = new List<CharacterRecord>(characterTable.All);
@@ -127,23 +127,23 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
         }
 
         /// <summary>
-        /// Gets the number of records in the current table.
+        /// 現在のテーブルのレコード数を取得します。
         /// </summary>
         public int RecordCount => characterTable?.Count ?? 0;
 
         /// <summary>
-        /// Gets all records in the current table.
+        /// 現在のテーブルのすべてのレコードを取得します。
         /// </summary>
         public IEnumerable<CharacterRecord> AllRecords => characterTable?.All;
 
         /// <summary>
-        /// Auto-detects the encoding of a file.
+        /// ファイルのエンコーディングを自動検出します。
         /// </summary>
         private Encoding DetectEncoding(string filePath)
         {
             var bytes = File.ReadAllBytes(filePath);
 
-            // BOM check
+            // BOMチェック
             if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
                 return Encoding.UTF8;
 
@@ -153,7 +153,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
             if (bytes.Length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF)
                 return Encoding.BigEndianUnicode;
 
-            // If no BOM, try UTF-8
+            // BOMがない場合はUTF-8を試行
             try
             {
                 var utf8 = new UTF8Encoding(false, true);
@@ -162,13 +162,13 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
             }
             catch
             {
-                // If invalid as UTF-8, assume Shift-JIS
+                // UTF-8として無効な場合はShift-JISとみなす
                 return Encoding.GetEncoding("Shift_JIS");
             }
         }
 
         /// <summary>
-        /// Compares two records and returns the changed fields.
+        /// 2つのレコードを比較し、変更されたフィールドを返します。
         /// </summary>
         private List<FieldChange> CompareRecords(CharacterRecord oldRecord, CharacterRecord newRecord)
         {
@@ -200,7 +200,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
     }
 
     /// <summary>
-    /// Result of an import preview.
+    /// インポートプレビューの結果。
     /// </summary>
     public class ImportPreviewResult
     {
@@ -212,7 +212,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
     }
 
     /// <summary>
-    /// Record change information.
+    /// レコードの変更情報。
     /// </summary>
     public class RecordChange
     {
@@ -224,7 +224,7 @@ namespace Xeon.XScriptableDB.Samples.CsvImportExport
     }
 
     /// <summary>
-    /// Field change information.
+    /// フィールドの変更情報。
     /// </summary>
     public class FieldChange
     {

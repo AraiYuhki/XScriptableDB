@@ -6,8 +6,8 @@ using Xeon.XScriptableDB;
 namespace XScriptableDB.Samples.Demo
 {
     /// <summary>
-    /// Manager that demos XScriptableDB features.
-    /// Calls each feature from UI buttons and displays results.
+    /// XScriptableDBの機能をデモするマネージャー。
+    /// UIボタンから各機能を呼び出し、結果を表示します。
     /// </summary>
     public class DemoManager : MonoBehaviour
     {
@@ -30,7 +30,7 @@ namespace XScriptableDB.Samples.Demo
         }
 
         /// <summary>
-        /// Displays all records.
+        /// すべてのレコードを表示します。
         /// </summary>
         public void ShowAllRecords()
         {
@@ -46,7 +46,7 @@ namespace XScriptableDB.Samples.Demo
         }
 
         /// <summary>
-        /// Searches by PrimaryKey.
+        /// PrimaryKeyで検索します。
         /// </summary>
         public void SearchByPrimaryKey()
         {
@@ -71,7 +71,7 @@ namespace XScriptableDB.Samples.Demo
         }
 
         /// <summary>
-        /// Searches by SecondaryKey.
+        /// SecondaryKeyで検索します。
         /// </summary>
         public void SearchBySecondaryKey()
         {
@@ -95,7 +95,7 @@ namespace XScriptableDB.Samples.Demo
         }
 
         /// <summary>
-        /// Searches by composite SecondaryKey.
+        /// 複合SecondaryKeyで検索します。
         /// </summary>
         public void SearchByCompositeKey()
         {
@@ -126,7 +126,7 @@ namespace XScriptableDB.Samples.Demo
         }
 
         /// <summary>
-        /// Searches using a Where clause.
+        /// Where句を使用して検索します。
         /// </summary>
         public void SearchWithWhere()
         {
@@ -150,7 +150,7 @@ namespace XScriptableDB.Samples.Demo
         }
 
         /// <summary>
-        /// Executes a range search.
+        /// 範囲検索を実行します。
         /// </summary>
         public void SearchInRange()
         {
@@ -175,32 +175,32 @@ namespace XScriptableDB.Samples.Demo
         }
 
         /// <summary>
-        /// Demo of aggregate functions.
+        /// 集計関数のデモ。
         /// </summary>
         public void ShowAggregation()
         {
             ClearOutput();
             Log("=== Aggregate Functions ===");
 
-            // Count
+            // カウント
             var weaponCount = itemTable.Count(r => r.Category == "Weapon");
             Log($"Weapon count: {weaponCount}");
 
-            // Any
+            // Any（存在チェック）
             var hasExpensive = itemTable.Any(r => r.Price > 5000);
             Log($"Has items over 5000G: {hasExpensive}");
 
-            // All
+            // All（全条件チェック）
             var allHavePrice = itemTable.All(r => r.Price > 0);
             Log($"All items have a price: {allHavePrice}");
 
-            // FirstOrDefault
+            // FirstOrDefault（最初の要素取得）
             var cheapest = itemTable.FirstOrDefault(r => r.Price < 100);
             Log($"Cheapest item: {cheapest?.Name ?? "none"}");
         }
 
         /// <summary>
-        /// Performance comparison.
+        /// パフォーマンス比較。
         /// </summary>
         public void ShowPerformanceComparison()
         {

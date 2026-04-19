@@ -1,17 +1,17 @@
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Type of diff.
+    /// 差分の種類。
     /// </summary>
     public enum DiffType
     {
-        /// <summary>No change</summary>
+        /// <summary>変更なし</summary>
         Unchanged,
-        /// <summary>Added</summary>
+        /// <summary>追加</summary>
         Added,
-        /// <summary>Removed</summary>
+        /// <summary>削除</summary>
         Removed,
-        /// <summary>Modified</summary>
+        /// <summary>変更</summary>
         Modified
     }
 }

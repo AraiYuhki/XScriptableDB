@@ -3,15 +3,15 @@ using System;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// Attribute that specifies a numeric range constraint.
+    /// 数値の範囲制約を指定する属性。
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class RangeAttribute : ValidationAttribute
     {
-        /// <summary>Minimum value</summary>
+        /// <summary>最小値</summary>
         public double Minimum { get; }
 
-        /// <summary>Maximum value</summary>
+        /// <summary>最大値</summary>
         public double Maximum { get; }
 
         public RangeAttribute(double minimum, double maximum)
@@ -38,7 +38,7 @@ namespace Xeon.XScriptableDB.Validation
             }
             catch
             {
-                return ValidationResult.Error(fieldName, $"{fieldName} must be a numeric value.");
+                return ValidationResult.Error(fieldName, $"{fieldName} は数値である必要があります。");
             }
 
             if (numValue < Minimum || numValue > Maximum)
@@ -49,7 +49,7 @@ namespace Xeon.XScriptableDB.Validation
 
         protected override string GetDefaultErrorMessage(string fieldName)
         {
-            return $"{fieldName} must be between {Minimum} and {Maximum}.";
+            return $"{fieldName} は {Minimum} から {Maximum} の間である必要があります。";
         }
     }
 }

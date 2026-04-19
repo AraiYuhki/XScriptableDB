@@ -7,8 +7,8 @@ using Xeon.XScriptableDB.Validation;
 namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
 {
     /// <summary>
-    /// Record class for the item master.
-    /// Holds foreign key references to category and rarity.
+    /// アイテムマスターのレコードクラス。
+    /// カテゴリとレアリティへの外部キー参照を保持します。
     /// </summary>
     [Serializable]
     public class ItemRecord
@@ -35,37 +35,37 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         private int stackLimit;
 
         /// <summary>
-        /// Item ID (primary key)
+        /// アイテムID（主キー）
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// Item name
+        /// アイテム名
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// Description
+        /// 説明
         /// </summary>
         public string Description => description;
 
         /// <summary>
-        /// Category ID (foreign key)
+        /// カテゴリID（外部キー）
         /// </summary>
         public int CategoryId => categoryId;
 
         /// <summary>
-        /// Rarity ID (foreign key)
+        /// レアリティID（外部キー）
         /// </summary>
         public int RarityId => rarityId;
 
         /// <summary>
-        /// Base price
+        /// 基本価格
         /// </summary>
         public int BasePrice => basePrice;
 
         /// <summary>
-        /// Stack limit
+        /// スタック上限
         /// </summary>
         public int StackLimit => stackLimit;
 

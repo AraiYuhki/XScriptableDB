@@ -8,14 +8,14 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// XScriptableDB command line interface.
-    /// Can be executed with Unity -batchmode.
+    /// XScriptableDB コマンドラインインターフェース。
+    /// Unity -batchmode で実行可能です。
     /// </summary>
     public static class XScriptableDBCLI
     {
         /// <summary>
-        /// Export command.
-        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Export -table=ItemTable -output=./export.csv
+        /// エクスポートコマンド。
+        /// 使用法: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Export -table=ItemTable -output=./export.csv
         /// </summary>
         public static void Export()
         {
@@ -23,7 +23,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (!args.TryGetValue("table", out var tableName))
             {
-                LogError("Missing required argument: -table");
+                LogError("引数が不足しています: -table");
                 EditorApplication.Exit(1);
                 return;
             }
@@ -40,25 +40,25 @@ namespace Xeon.XScriptableDB.Editor
                 var table = FindTable(tableName);
                 if (table == null)
                 {
-                    LogError($"Table not found: {tableName}");
+                    LogError($"テーブルが見つかりません: {tableName}");
                     EditorApplication.Exit(1);
                     return;
                 }
 
                 ExportTable(table, outputPath, format);
-                Log($"Export completed: {outputPath}");
+                Log($"エクスポート完了: {outputPath}");
                 EditorApplication.Exit(0);
             }
             catch (Exception ex)
             {
-                LogError($"Export failed: {ex.Message}");
+                LogError($"エクスポート失敗: {ex.Message}");
                 EditorApplication.Exit(1);
             }
         }
 
         /// <summary>
-        /// Import command.
-        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Import -table=ItemTable -input=./data.csv
+        /// インポートコマンド。
+        /// 使用法: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Import -table=ItemTable -input=./data.csv
         /// </summary>
         public static void Import()
         {
@@ -73,14 +73,14 @@ namespace Xeon.XScriptableDB.Editor
 
             if (!args.TryGetValue("input", out var inputPath))
             {
-                LogError("Missing required argument: -input");
+                LogError("引数が不足しています: -input");
                 EditorApplication.Exit(1);
                 return;
             }
 
             if (!File.Exists(inputPath))
             {
-                LogError($"Input file not found: {inputPath}");
+                LogError($"入力ファイルが見つかりません: {inputPath}");
                 EditorApplication.Exit(1);
                 return;
             }
@@ -90,25 +90,25 @@ namespace Xeon.XScriptableDB.Editor
                 var table = FindTable(tableName);
                 if (table == null)
                 {
-                    LogError($"Table not found: {tableName}");
+                    LogError($"テーブルが見つかりません: {tableName}");
                     EditorApplication.Exit(1);
                     return;
                 }
 
                 ImportTable(table, inputPath);
-                Log($"Import completed: {inputPath}");
+                Log($"インポート完了: {inputPath}");
                 EditorApplication.Exit(0);
             }
             catch (Exception ex)
             {
-                LogError($"Import failed: {ex.Message}");
+                LogError($"インポート失敗: {ex.Message}");
                 EditorApplication.Exit(1);
             }
         }
 
         /// <summary>
-        /// Backup command.
-        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Backup -table=ItemTable
+        /// バックアップコマンド。
+        /// 使用法: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Backup -table=ItemTable
         /// </summary>
         public static void Backup()
         {
@@ -116,7 +116,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (!args.TryGetValue("table", out var tableName))
             {
-                // Backup all tables
+                // すべてのテーブルをバックアップします
                 BackupAllTables();
                 return;
             }
@@ -133,19 +133,19 @@ namespace Xeon.XScriptableDB.Editor
 
                 var name = args.GetValueOrDefault("name", null);
                 var backup = BackupManager.CreateBackup(table, name);
-                Log($"Backup created: {backup.Name}");
+                Log($"バックアップ作成完了: {backup.Name}");
                 EditorApplication.Exit(0);
             }
             catch (Exception ex)
             {
-                LogError($"Backup failed: {ex.Message}");
+                LogError($"バックアップ失敗: {ex.Message}");
                 EditorApplication.Exit(1);
             }
         }
 
         /// <summary>
-        /// Validation command.
-        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Validate -table=ItemTable
+        /// バリデーションコマンド。
+        /// 使用法: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Validate -table=ItemTable
         /// </summary>
         public static void Validate()
         {
@@ -157,7 +157,7 @@ namespace Xeon.XScriptableDB.Editor
                 var table = FindTable(tableName);
                 if (table == null)
                 {
-                    LogError($"Table not found: {tableName}");
+                    LogError($"テーブルが見つかりません: {tableName}");
                     EditorApplication.Exit(1);
                     return;
                 }
@@ -166,7 +166,7 @@ namespace Xeon.XScriptableDB.Editor
             }
             else
             {
-                // Validate all tables
+                // すべてのテーブルをバリデーションします
                 foreach (var table in FindAllTables())
                 {
                     if (!ValidateTable(table))
@@ -178,8 +178,8 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// SQL query command.
-        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Query -sql="SELECT * FROM Items WHERE Price > 100"
+        /// SQLクエリコマンド。
+        /// 使用法: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Query -sql="SELECT * FROM Items WHERE Price > 100"
         /// </summary>
         public static void Query()
         {
@@ -187,7 +187,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (!args.TryGetValue("sql", out var sql))
             {
-                LogError("Missing required argument: -sql");
+                LogError("引数が不足しています: -sql");
                 EditorApplication.Exit(1);
                 return;
             }
@@ -196,7 +196,7 @@ namespace Xeon.XScriptableDB.Editor
             {
                 var executor = new SqlExecutor();
 
-                // Register all tables
+                // すべてのテーブルを登録します
                 foreach (var table in FindAllTables())
                 {
                     executor.RegisterTable(table.GetType().Name, table);
@@ -206,19 +206,19 @@ namespace Xeon.XScriptableDB.Editor
 
                 if (!result.IsSuccess)
                 {
-                    LogError($"Query failed: {result.ErrorMessage}");
+                    LogError($"クエリ失敗: {result.ErrorMessage}");
                     EditorApplication.Exit(1);
                     return;
                 }
 
-                Log($"Query executed successfully. Records: {result.Records.Count}");
+                Log($"クエリが正常に実行されました。レコード数: {result.Records.Count}");
 
                 // Output results in JSON format
                 if (args.TryGetValue("output", out var outputPath))
                 {
                     var json = JsonUtility.ToJson(new QueryResultWrapper { Records = result.Records.Select(r => r.ToString()).ToList() }, true);
                     File.WriteAllText(outputPath, json);
-                    Log($"Results saved to: {outputPath}");
+                    Log($"結果を保存しました: {outputPath}");
                 }
                 else
                 {
@@ -228,38 +228,38 @@ namespace Xeon.XScriptableDB.Editor
                     }
 
                     if (result.Records.Count > 10)
-                        Log($"  ... and {result.Records.Count - 10} more records");
+                        Log($"  ... 他 {result.Records.Count - 10} 件のレコード");
                 }
 
                 EditorApplication.Exit(0);
             }
             catch (Exception ex)
             {
-                LogError($"Query failed: {ex.Message}");
+                LogError($"クエリ失敗: {ex.Message}");
                 EditorApplication.Exit(1);
             }
         }
 
         /// <summary>
-        /// List tables command.
-        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.ListTables
+        /// テーブル一覧表示コマンド。
+        /// 使用法: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.ListTables
         /// </summary>
         public static void ListTables()
         {
             var tables = FindAllTables();
 
-            Log($"Found {tables.Count} tables:");
+            Log($"{tables.Count} 個のテーブルが見つかりました:");
             foreach (var table in tables)
             {
-                Log($"  - {table.GetType().Name}: {table.Count} records ({table.RecordType.Name})");
+                Log($"  - {table.GetType().Name}: {table.Count} レコード ({table.RecordType.Name})");
             }
 
             EditorApplication.Exit(0);
         }
 
         /// <summary>
-        /// Schema information command.
-        /// Usage: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Schema -table=ItemTable
+        /// スキーマ情報表示コマンド。
+        /// 使用法: Unity -batchmode -executeMethod Xeon.XScriptableDB.Editor.XScriptableDBCLI.Schema -table=ItemTable
         /// </summary>
         public static void Schema()
         {
@@ -267,7 +267,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (!args.TryGetValue("table", out var tableName))
             {
-                LogError("Missing required argument: -table");
+                LogError("引数が不足しています: -table");
                 EditorApplication.Exit(1);
                 return;
             }
@@ -275,7 +275,7 @@ namespace Xeon.XScriptableDB.Editor
             var table = FindTable(tableName);
             if (table == null)
             {
-                LogError($"Table not found: {tableName}");
+                LogError($"テーブルが見つかりません: {tableName}");
                 EditorApplication.Exit(1);
                 return;
             }
@@ -287,37 +287,37 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Help command.
+        /// ヘルプコマンド。
         /// </summary>
         public static void Help()
         {
-            Log("XScriptableDB CLI - Command Line Interface");
+            Log("XScriptableDB CLI - コマンドラインインターフェース");
             Log("");
-            Log("Available commands:");
-            Log("  Export   - Export table data to CSV/JSON");
-            Log("           -table=<name>  Table name (required)");
-            Log("           -output=<path> Output file path");
-            Log("           -format=<csv|json> Output format (default: csv)");
+            Log("利用可能なコマンド:");
+            Log("  Export   - テーブルデータをCSV/JSONにエクスポートします");
+            Log("           -table=<name>  テーブル名（必須）");
+            Log("           -output=<path> 出力ファイルパス");
+            Log("           -format=<csv|json> 出力形式（デフォルト: csv）");
             Log("");
-            Log("  Import   - Import data from CSV file");
-            Log("           -table=<name>  Table name (required)");
-            Log("           -input=<path>  Input file path (required)");
+            Log("  Import   - CSVファイルからデータをインポートします");
+            Log("           -table=<name>  テーブル名（必須）");
+            Log("           -input=<path>  入力ファイルパス（必須）");
             Log("");
-            Log("  Backup   - Create backup");
-            Log("           -table=<name>  Table name (optional, all tables if omitted)");
-            Log("           -name=<name>   Backup name");
+            Log("  Backup   - バックアップを作成します");
+            Log("           -table=<name>  テーブル名（任意、省略した場合は全テーブル）");
+            Log("           -name=<name>   バックアップ名");
             Log("");
-            Log("  Validate - Validate table data");
-            Log("           -table=<name>  Table name (optional, all tables if omitted)");
+            Log("  Validate - テーブルデータをバリデーションします");
+            Log("           -table=<name>  テーブル名（任意、省略した場合は全テーブル）");
             Log("");
-            Log("  Query    - Execute SQL query");
-            Log("           -sql=<query>   SQL query (required)");
-            Log("           -output=<path> Output file path for results");
+            Log("  Query    - SQLクエリを実行します");
+            Log("           -sql=<query>   SQLクエリ（必須）");
+            Log("           -output=<path> 結果の出力ファイルパス");
             Log("");
-            Log("  ListTables - List all tables");
+            Log("  ListTables - すべてのテーブルを一覧表示します");
             Log("");
-            Log("  Schema   - Show table schema");
-            Log("           -table=<name>  Table name (required)");
+            Log("  Schema   - テーブルのスキーマを表示します");
+            Log("           -table=<name>  テーブル名（必須）");
 
             EditorApplication.Exit(0);
         }
@@ -381,7 +381,7 @@ namespace Xeon.XScriptableDB.Editor
                 return;
             }
             
-            // Generic export
+            // 汎用エクスポート
             var records = new List<object>();
             foreach (var record in table.Records)
             {
@@ -404,7 +404,7 @@ namespace Xeon.XScriptableDB.Editor
         private static void ImportTable(ITableAsset table, string inputPath)
         {
             if (table is not IImportable importable)
-                throw new NotSupportedException($"Table {table.GetType().Name} does not support import");
+                throw new NotSupportedException($"テーブル {table.GetType().Name} はインポートをサポートしていません");
             
             importable.Import(inputPath);
 
@@ -426,11 +426,11 @@ namespace Xeon.XScriptableDB.Editor
                 }
                 catch (Exception ex)
                 {
-                    LogError($"Backup failed for {table.GetType().Name}: {ex.Message}");
+                    LogError($"{table.GetType().Name} のバックアップに失敗しました: {ex.Message}");
                 }
             }
 
-            Log($"Backup completed: {successCount}/{tables.Count} tables");
+            Log($"バックアップ完了: {successCount}/{tables.Count} 個のテーブル");
             EditorApplication.Exit(successCount == tables.Count ? 0 : 1);
         }
 
@@ -439,15 +439,15 @@ namespace Xeon.XScriptableDB.Editor
             var tableName = table.GetType().Name;
             var hasErrors = false;
 
-            // Check for duplicate keys
+            // 重複キーのチェック
             var duplicates = table.FindDuplicateKeysAsObjects();
             if (duplicates.Count > 0)
             {
-                LogError($"[{tableName}] Found {duplicates.Count} duplicate keys");
+                LogError($"[{tableName}] {duplicates.Count} 個の重複キーが見つかりました");
                 hasErrors = true;
             }
 
-            // Check for null records
+            // nullレコードのチェック
             var nullCount = 0;
             foreach (var record in table.Records)
             {
@@ -457,13 +457,13 @@ namespace Xeon.XScriptableDB.Editor
 
             if (nullCount > 0)
             {
-                LogError($"[{tableName}] Found {nullCount} null records");
+                LogError($"[{tableName}] {nullCount} 個の null レコードが見つかりました");
                 hasErrors = true;
             }
 
             if (!hasErrors)
             {
-                Log($"[{tableName}] Validation passed ({table.Count} records)");
+                Log($"[{tableName}] バリデーションに合格しました ({table.Count} レコード)");
             }
 
             return !hasErrors;

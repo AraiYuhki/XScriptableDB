@@ -8,8 +8,8 @@ using Range =  Xeon.XScriptableDB.Validation.RangeAttribute;
 namespace Xeon.XScriptableDB.Samples.Validation
 {
     /// <summary>
-    /// Record class for weapon data.
-    /// Sample demonstrating foreign key reference validation.
+    /// 武器データのレコードクラス。
+    /// 外部キー参照のバリデーションを示すサンプルです。
     /// </summary>
     [Serializable]
     public class WeaponRecord
@@ -30,27 +30,27 @@ namespace Xeon.XScriptableDB.Samples.Validation
         private int rarity;
 
         /// <summary>
-        /// Weapon ID (primary key)
+        /// 武器ID（主キー）
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// Weapon name
+        /// 武器名
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// Granted skill ID (foreign key to SkillTable)
+        /// 付与されるスキルID（SkillTableへの外部キー）
         /// </summary>
         public int SkillId => skillId;
 
         /// <summary>
-        /// Attack power
+        /// 攻撃力
         /// </summary>
         public int Attack => attack;
 
         /// <summary>
-        /// Rarity (1-5)
+        /// レアリティ（1-5）
         /// </summary>
         public int Rarity => rarity;
 

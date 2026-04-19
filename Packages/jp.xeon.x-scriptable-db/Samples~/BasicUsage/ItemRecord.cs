@@ -5,60 +5,60 @@ using Xeon.XScriptableDB.IO;
 namespace XScriptableDB.Samples
 {
     /// <summary>
-    /// Record class for item data.
+    /// アイテムデータのレコードクラス。
     /// </summary>
     [Serializable]
     public class ItemRecord
     {
         /// <summary>
-        /// Item ID (primary key).
-        /// Adding the PrimaryKey attribute enables O(log n) fast lookup via binary search.
+        /// アイテムID（主キー）。
+        /// PrimaryKey属性を追加することで、バイナリサーチによるO(log n)の高速検索が可能になります。
         /// </summary>
         [PrimaryKey]
         [CsvColumn("ID")]
         public int Id;
 
         /// <summary>
-        /// Category (secondary key).
-        /// Adding the SecondaryKey attribute enables O(1) lookup via hash index.
+        /// カテゴリ（副キー）。
+        /// SecondaryKey属性を追加することで、ハッシュインデックスによるO(1)の検索が可能になります。
         /// </summary>
         [SecondaryKey]
         [CsvColumn("Category")]
         public string Category;
 
         /// <summary>
-        /// Item name.
+        /// アイテム名。
         /// </summary>
         [CsvColumn("Name")]
         public string Name;
 
         /// <summary>
-        /// Description.
+        /// 説明。
         /// </summary>
         [CsvColumn("Description")]
         public string Description;
 
         /// <summary>
-        /// Price.
+        /// 価格。
         /// </summary>
         [CsvColumn("Price")]
         public int Price;
 
         /// <summary>
-        /// Attack power.
+        /// 攻撃力。
         /// </summary>
         [CsvColumn("Attack")]
         public int Attack;
 
         /// <summary>
-        /// Defense power.
+        /// 防御力。
         /// </summary>
         [CsvColumn("Defense")]
         public int Defense;
 
         /// <summary>
-        /// Rarity (secondary key).
-        /// Multiple SecondaryKeys can be set.
+        /// レアリティ（副キー）。
+        /// 複数のSecondaryKeyを設定できます。
         /// </summary>
         [SecondaryKey]
         [CsvColumn("Rarity")]

@@ -3,12 +3,12 @@ using System;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// Attribute to mark a field as required.
+    /// 必須フィールドであることを示す属性。
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class RequiredAttribute : ValidationAttribute
     {
-        /// <summary>Whether to allow empty strings (default: false)</summary>
+        /// <summary>空の文字列を許可するかどうか（デフォルト：false）</summary>
         public bool AllowEmptyString { get; set; } = false;
 
         public override ValidationResult Validate(object value, string fieldName)
@@ -24,7 +24,7 @@ namespace Xeon.XScriptableDB.Validation
 
         protected override string GetDefaultErrorMessage(string fieldName)
         {
-            return $"{fieldName} is required.";
+            return $"{fieldName} は必須です。";
         }
     }
 }

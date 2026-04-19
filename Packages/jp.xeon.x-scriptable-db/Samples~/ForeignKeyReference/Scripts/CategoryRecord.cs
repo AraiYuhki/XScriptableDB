@@ -6,8 +6,8 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
 {
     /// <summary>
-    /// Record class for the category master.
-    /// Used to classify items.
+    /// カテゴリマスターのレコードクラス。
+    /// アイテムの分類に使用されます。
     /// </summary>
     [Serializable]
     public class CategoryRecord
@@ -25,22 +25,22 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         private int sortOrder;
 
         /// <summary>
-        /// Category ID (primary key)
+        /// カテゴリID（主キー）
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// Category name
+        /// カテゴリ名
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// Description
+        /// 説明
         /// </summary>
         public string Description => description;
 
         /// <summary>
-        /// Display order
+        /// 表示順
         /// </summary>
         public int SortOrder => sortOrder;
 

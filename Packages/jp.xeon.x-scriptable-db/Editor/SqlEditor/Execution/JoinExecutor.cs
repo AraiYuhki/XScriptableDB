@@ -5,7 +5,7 @@ using System.Linq;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Class that executes SQL JOIN processing.
+    /// SQLのJOIN処理を実行するクラス。
     /// </summary>
     public class JoinExecutor
     {
@@ -17,7 +17,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Executes a JOIN (INNER/LEFT/CROSS).
+        /// JOIN（INNER/LEFT/CROSS）を実行します。
         /// </summary>
         public List<JoinedRecord> ExecuteJoins(
             ITableAsset mainTable,
@@ -43,7 +43,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Processes a RIGHT JOIN.
+        /// RIGHT JOINを処理します。
         /// </summary>
         public void ProcessRightJoins(
             List<JoinedRecord> joinedRecords,
@@ -61,7 +61,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Applies a WHERE clause to JoinedRecords.
+        /// JoinedRecordsにWHERE句を適用します。
         /// </summary>
         public List<JoinedRecord> ApplyWhereToJoinedRecords(
             List<JoinedRecord> records,
@@ -75,7 +75,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Applies sorting and pagination to JoinedRecords.
+        /// JoinedRecordsにソートとページネーションを適用します。
         /// </summary>
         public List<JoinedRecord> ApplySortAndPagination(
             List<JoinedRecord> records,
@@ -97,7 +97,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Builds the column name list for the JOIN result.
+        /// JOIN結果の列名リストを構築します。
         /// </summary>
         public List<string> BuildJoinedColumnNames(
             List<SelectColumn> columns,
@@ -128,7 +128,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Converts JoinedRecords to ResultRows.
+        /// JoinedRecordsをResultRowsに変換します。
         /// </summary>
         public List<ResultRow> ConvertToResultRows(
             List<JoinedRecord> joinedRecords,
@@ -151,7 +151,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Resolves a value from the JOIN result.
+        /// JOIN結果から値を解決します。
         /// </summary>
         public object ResolveJoinedValue(SqlExpression expr, JoinedRecord joinedRecord)
         {
@@ -166,7 +166,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Evaluates a JOIN condition.
+        /// JOIN条件を評価します。
         /// </summary>
         public bool EvaluateJoinCondition(SqlExpression expr, JoinedRecord joinedRecord)
         {
@@ -192,7 +192,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Resolves a column value from a JoinedRecord.
+        /// JoinedRecordから列の値を解決します。
         /// </summary>
         public object ResolveColumnValueFromJoinedRecord(JoinedRecord jr, string colName)
         {

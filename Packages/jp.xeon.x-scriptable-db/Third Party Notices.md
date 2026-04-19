@@ -1,6 +1,6 @@
 # Third Party Notices
 
-This package includes third-party software components. The following is a list of these components and their licenses.
+このパッケージには、サードパーティのソフトウェアコンポーネントが含まれています。以下は、これらのコンポーネントとそのライセンスのリストです。
 
 ---
 
@@ -36,7 +36,7 @@ SOFTWARE.
 
 ### Usage in XScriptableDB
 
-YamlDotNet is used for parsing and serializing YAML configuration files in the Table Editor.
+YamlDotNetは、Table EditorでのYAML設定ファイルの解析およびシリアル化に使用されます。
 
 ---
 

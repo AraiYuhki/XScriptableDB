@@ -3,62 +3,62 @@ using System;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// Span-based version of QueryResult. Provides lower-level access.
+    /// QueryResultのSpanベースバージョン。より低レベルなアクセスを提供します。
     /// </summary>
-    /// <typeparam name="T">Type of the record</typeparam>
+    /// <typeparam name="T">レコードの型</typeparam>
     public readonly ref struct QueryResultSpan<T> where T : class
     {
         private readonly ReadOnlySpan<T> span;
 
         /// <summary>
-        /// Number of records in the result.
+        /// 結果のレコード数。
         /// </summary>
         public int Length => span.Length;
 
         /// <summary>
-        /// Whether the result is empty.
+        /// 結果が空かどうか。
         /// </summary>
         public bool IsEmpty => span.IsEmpty;
 
         /// <summary>
-        /// Creates a QueryResultSpan from a Span.
+        /// SpanからQueryResultSpanを作成します。
         /// </summary>
-        /// <param name="span">Source Span</param>
+        /// <param name="span">ソースのSpan</param>
         public QueryResultSpan(ReadOnlySpan<T> span)
         {
             this.span = span;
         }
 
         /// <summary>
-        /// Creates a QueryResultSpan from an array.
+        /// 配列からQueryResultSpanを作成します。
         /// </summary>
-        /// <param name="array">Source array</param>
+        /// <param name="array">ソース配列</param>
         public QueryResultSpan(T[] array)
         {
             span = array.AsSpan();
         }
 
         /// <summary>
-        /// Creates an empty QueryResultSpan.
+        /// 空のQueryResultSpanを作成します。
         /// </summary>
         public static QueryResultSpan<T> Empty => new(ReadOnlySpan<T>.Empty);
 
         /// <summary>
-        /// Returns the record at the specified index.
+        /// 指定されたインデックスのレコードを返します。
         /// </summary>
-        /// <param name="index">Index</param>
-        /// <returns>Record</returns>
+        /// <param name="index">インデックス</param>
+        /// <returns>レコード</returns>
         public T this[int index] => span[index];
 
         /// <summary>
-        /// Returns an Enumerator.
+        /// Enumeratorを返します。
         /// </summary>
         public ReadOnlySpan<T>.Enumerator GetEnumerator() => span.GetEnumerator();
 
         /// <summary>
-        /// Copies the result to an array.
+        /// 結果を配列にコピーします。
         /// </summary>
-        /// <returns>Array of records</returns>
+        /// <returns>レコードの配列</returns>
         public T[] ToArray() => span.ToArray();
     }
 }

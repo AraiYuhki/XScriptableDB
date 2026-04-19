@@ -4,7 +4,7 @@ using Xeon.XScriptableDB.Editor;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// Tests for SqlParser.
+    /// SqlParserのテスト。
     /// </summary>
     public class SqlParserTests
     {
@@ -708,7 +708,7 @@ namespace Xeon.XScriptableDB.Tests
         {
             var stmt = parser.Parse("SELECT Price * Quantity + Tax FROM Items") as SelectStatement;
 
-            // Should parse as (Price * Quantity) + Tax due to operator precedence
+            // 演算子の優先順位により(Price * Quantity) + Taxとしてパースされるはずです
             var arithExpr = stmt.Columns[0].Expression as ArithmeticExpression;
             Assert.That(arithExpr.Operator, Is.EqualTo(ArithmeticOperator.Add));
             Assert.That(arithExpr.Left, Is.TypeOf<ArithmeticExpression>());
@@ -725,7 +725,7 @@ namespace Xeon.XScriptableDB.Tests
 
             var comparison = stmt.WhereClause as ComparisonExpression;
             Assert.That(comparison.Operator, Is.EqualTo(ComparisonOperator.In));
-            // Note: IN with subquery is parsed as InListExpression containing a SubqueryExpression
+            // 注意: サブクエリを伴うINは、SubqueryExpressionを含むInListExpressionとしてパースされます
         }
 
         #endregion

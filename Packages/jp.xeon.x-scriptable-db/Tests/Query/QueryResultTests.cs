@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Tests
 {
     /// <summary>
-    /// Tests for QueryResult and QueryResultSpan.
+    /// QueryResultおよびQueryResultSpanのテスト。
     /// </summary>
     public class QueryResultTests
     {
@@ -106,7 +106,7 @@ namespace Xeon.XScriptableDB.Tests
 
             var result = new QueryResult<TestRecord>(records, indices);
 
-            // Cannot use ref struct inside a lambda, so test with try-catch
+            // ラムダ式内でref structを使用できないため、try-catchでテストする
             var threw = false;
             try
             {
@@ -116,7 +116,7 @@ namespace Xeon.XScriptableDB.Tests
             {
                 threw = true;
             }
-            Assert.That(threw, Is.True, "Expected IndexOutOfRangeException");
+            Assert.That(threw, Is.True, "IndexOutOfRangeExceptionがスローされることを想定");
         }
 
         [Test]
@@ -125,7 +125,7 @@ namespace Xeon.XScriptableDB.Tests
             var records = CreateTestRecords();
             var result = new QueryResult<TestRecord>(records);
 
-            // Cannot use ref struct inside a lambda, so test with try-catch
+            // ラムダ式内でref structを使用できないため、try-catchでテストする
             var threw = false;
             try
             {
@@ -135,7 +135,7 @@ namespace Xeon.XScriptableDB.Tests
             {
                 threw = true;
             }
-            Assert.That(threw, Is.True, "Expected IndexOutOfRangeException");
+            Assert.That(threw, Is.True, "IndexOutOfRangeExceptionがスローされることを想定");
         }
 
         #endregion

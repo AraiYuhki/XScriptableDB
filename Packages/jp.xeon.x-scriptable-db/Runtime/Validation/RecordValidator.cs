@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// Record validator.
+    /// レコードバリデーター。
     /// </summary>
     public static class RecordValidator
     {
@@ -14,29 +14,29 @@ namespace Xeon.XScriptableDB.Validation
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         /// <summary>
-        /// Validates a single record.
+        /// 単一レコードを検証します。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <param name="record">Record to validate</param>
-        /// <returns>Validation result</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <param name="record">検証するレコード</param>
+        /// <returns>検証結果</returns>
         public static ValidationResult ValidateRecord<T>(T record) where T : class
         {
             if (record == null)
             {
-                return ValidationResult.Error("record", "Record is null.");
+                return ValidationResult.Error("record", "レコードがnullです。");
             }
 
             var result = new ValidationResult();
             var type = typeof(T);
 
-            // Validate fields
+            // フィールドの検証
             foreach (var field in type.GetFields(MemberFlags))
             {
                 var value = field.GetValue(record);
                 ValidateMember(field, value, field.Name, result);
             }
 
-            // Validate properties
+            // プロパティの検証
             foreach (var property in type.GetProperties(MemberFlags))
             {
                 if (!property.CanRead) continue;
@@ -48,7 +48,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// Validates a member.
+        /// メンバーを検証します。
         /// </summary>
         private static void ValidateMember(MemberInfo member, object value, string fieldName, ValidationResult result)
         {
@@ -62,12 +62,12 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// Validates an entire table.
+        /// テーブル全体を検証します。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <param name="tableAsset">Table to validate</param>
-        /// <param name="keySelector">Key selector</param>
-        /// <returns>Validation result</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <param name="tableAsset">検証するテーブル</param>
+        /// <param name="keySelector">キーセレクター</param>
+        /// <returns>検証結果</returns>
         public static TableValidationResult ValidateTable<T>(
             ITableAsset tableAsset,
             Func<T, object> keySelector = null) where T : class
@@ -79,14 +79,14 @@ namespace Xeon.XScriptableDB.Validation
 
             if (tableAsset == null)
             {
-                result.TableLevelErrors.Add(new ValidationError("table", "Table is null."));
+                result.TableLevelErrors.Add(new ValidationError("table", "テーブルがnullです。"));
                 return result;
             }
 
             var records = new List<T>();
             var index = 0;
 
-            // Validate each record
+            // 各レコードの検証
             foreach (var record in tableAsset.Records)
             {
                 if (record is T typedRecord)
@@ -107,14 +107,14 @@ namespace Xeon.XScriptableDB.Validation
                 index++;
             }
 
-            // Table-level validation
+            // テーブルレベルの検証
             ValidateTableLevelConstraints(records, result, keySelector);
 
             return result;
         }
 
         /// <summary>
-        /// Validates table-level constraints.
+        /// テーブルレベルの制約を検証します。
         /// </summary>
         private static void ValidateTableLevelConstraints<T>(
             List<T> records,
@@ -125,7 +125,7 @@ namespace Xeon.XScriptableDB.Validation
 
             var type = typeof(T);
 
-            // Check Unique constraints
+            // Unique制約のチェック
             foreach (var field in type.GetFields(MemberFlags))
             {
                 if (field.GetCustomAttribute<UniqueAttribute>() != null)
@@ -143,12 +143,12 @@ namespace Xeon.XScriptableDB.Validation
                 }
             }
 
-            // Check Compare constraints
+            // Compare制約のチェック
             ValidateCompareConstraints(records, result, keySelector);
         }
 
         /// <summary>
-        /// Validates uniqueness.
+        /// 一意性を検証します。
         /// </summary>
         private static void ValidateUniqueness<T>(
             List<T> records,
@@ -168,14 +168,14 @@ namespace Xeon.XScriptableDB.Validation
                 var duplicateKeys = group.Select(x => keySelector?.Invoke(x.Record) ?? x.Index).ToList();
                 var error = new ValidationError(
                     fieldName,
-                    $"The value '{group.Key}' of {fieldName} is duplicated. Keys: {string.Join(", ", duplicateKeys)}",
+                    $"{fieldName} の値 '{group.Key}' が重複しています。キー: {string.Join(", ", duplicateKeys)}",
                     ValidationErrorType.Unique);
                 result.TableLevelErrors.Add(error);
             }
         }
 
         /// <summary>
-        /// Validates Compare constraints.
+        /// Compare制約を検証します。
         /// </summary>
         private static void ValidateCompareConstraints<T>(
             List<T> records,
@@ -195,7 +195,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// Validates comparison between fields.
+        /// フィールド間の比較を検証します。
         /// </summary>
         private static void ValidateCompareField<T>(
             List<T> records,
@@ -228,7 +228,7 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// Compares two values.
+        /// 2つの値を比較します。
         /// </summary>
         private static bool CompareValues(object left, object right, CompareOperator op)
         {
@@ -273,21 +273,21 @@ namespace Xeon.XScriptableDB.Validation
         }
 
         /// <summary>
-        /// Returns the comparison error message.
+        /// 比較エラーメッセージを返します。
         /// </summary>
         private static string GetCompareErrorMessage(string fieldName, string otherField, CompareOperator op)
         {
             var opStr = op switch
             {
-                CompareOperator.Equal => "equal to",
-                CompareOperator.NotEqual => "not equal to",
-                CompareOperator.LessThan => "less than",
-                CompareOperator.LessThanOrEqual => "less than or equal to",
-                CompareOperator.GreaterThan => "greater than",
-                CompareOperator.GreaterThanOrEqual => "greater than or equal to",
+                CompareOperator.Equal => "と等しい",
+                CompareOperator.NotEqual => "と等しくない",
+                CompareOperator.LessThan => "より小さい",
+                CompareOperator.LessThanOrEqual => "以下",
+                CompareOperator.GreaterThan => "より大きい",
+                CompareOperator.GreaterThanOrEqual => "以上",
                 _ => "?"
             };
-            return $"{fieldName} must be {opStr} {otherField}.";
+            return $"{fieldName} は {otherField} {opStr}必要があります。";
         }
     }
 }

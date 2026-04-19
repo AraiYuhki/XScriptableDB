@@ -3,7 +3,7 @@ using System;
 namespace Xeon.XScriptableDB.Performance
 {
     /// <summary>
-    /// Query profile result.
+    /// クエリプロファイル結果。
     /// </summary>
     public struct QueryProfile
     {

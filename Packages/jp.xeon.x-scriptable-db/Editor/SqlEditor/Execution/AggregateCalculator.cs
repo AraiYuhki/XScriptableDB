@@ -5,7 +5,7 @@ using System.Linq;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Class that calculates SQL aggregate functions.
+    /// SQL集約関数を計算するクラス。
     /// </summary>
     public class AggregateCalculator
     {
@@ -19,7 +19,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Checks whether an aggregate function is present.
+        /// 集約関数が存在するかどうかを確認します。
         /// </summary>
         public bool HasAggregateFunction(List<SelectColumn> columns)
         {
@@ -27,7 +27,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Evaluates an aggregate function.
+        /// 集約関数を評価します。
         /// </summary>
         public object EvaluateAggregate(AggregateExpression aggExpr, List<object> records, Type recordType)
         {
@@ -61,7 +61,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Evaluates an aggregate function against the JOIN result.
+        /// JOIN結果に対して集約関数を評価します。
         /// </summary>
         public object EvaluateJoinedAggregate(
             AggregateExpression aggExpr,
@@ -98,7 +98,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Calculates the SUM function.
+        /// SUM関数を計算します。
         /// </summary>
         public object CalculateSum(List<object> values)
         {
@@ -115,7 +115,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Calculates the AVG function.
+        /// AVG関数を計算します。
         /// </summary>
         public object CalculateAvg(List<object> values)
         {
@@ -130,7 +130,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Calculates the MIN function.
+        /// MIN関数を計算します。
         /// </summary>
         public object CalculateMin(List<object> values)
         {
@@ -147,7 +147,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Calculates the MAX function.
+        /// MAX関数を計算します。
         /// </summary>
         public object CalculateMax(List<object> values)
         {

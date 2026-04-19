@@ -10,17 +10,17 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Class that exports tables to CSV/TSV.
+    /// テーブルをCSV/TSVにエクスポートするクラス。
     /// </summary>
     public static class TableExporter
     {
         private const BindingFlags MemberFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         /// <summary>
-        /// Exports a table to a file.
+        /// テーブルをファイルにエクスポートします。
         /// </summary>
-        /// <param name="table">The table to export</param>
-        /// <param name="settings">Export settings</param>
+        /// <param name="table">エクスポートするテーブル</param>
+        /// <param name="settings">エクスポート設定</param>
         public static void Export(ScriptableObject table, ExportSettings settings)
         {
             if (table == null)
@@ -32,7 +32,7 @@ namespace Xeon.XScriptableDB.Editor
             var tableAsset = table as ITableAsset;
             if (tableAsset == null)
             {
-                // If IExportable is implemented
+                // IExportableが実装されている場合
                 if (table is IExportable exportable)
                 {
                     exportable.Export(settings.FilePath, settings.Encoding);
@@ -47,11 +47,11 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Generates a CSV string from a table.
+        /// テーブルからCSV文字列を生成します。
         /// </summary>
-        /// <param name="tableAsset">The table asset</param>
-        /// <param name="settings">Export settings</param>
-        /// <returns>CSV string</returns>
+        /// <param name="tableAsset">テーブルアセット</param>
+        /// <param name="settings">エクスポート設定</param>
+        /// <returns>CSV文字列</returns>
         public static string GenerateCsvContent(ITableAsset tableAsset, ExportSettings settings)
         {
             var recordType = tableAsset.RecordType;
@@ -60,14 +60,14 @@ namespace Xeon.XScriptableDB.Editor
 
             var sb = new StringBuilder();
 
-            // Header row
+            // ヘッダー行
             var headerLine = string.Join(delimiter.ToString(), columns.Select(c => c.columnName));
             sb.AppendLine(headerLine);
 
-            // Get sorted records
+            // ソートされたレコードを取得します
             var records = GetSortedRecords(tableAsset, settings?.SortByPrimaryKey ?? true);
 
-            // Data rows
+            // データ行
             foreach (var record in records)
             {
                 var values = new List<string>();
@@ -86,7 +86,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Gets column information.
+        /// 列情報を取得します。
         /// </summary>
         private static List<(string columnName, Func<object, object> getValue)> GetColumns(
             Type recordType,
@@ -97,7 +97,7 @@ namespace Xeon.XScriptableDB.Editor
                 ? new HashSet<string>(settings.ExcludeColumns, StringComparer.OrdinalIgnoreCase)
                 : new HashSet<string>();
 
-            // Find fields with CsvColumn
+            // CsvColumnを持つフィールドを検索します
             var fieldsWithAttribute = new List<(FieldInfo field, CsvColumn attr)>();
             foreach (var field in recordType.GetFields(MemberFlags))
             {
@@ -108,7 +108,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (fieldsWithAttribute.Count > 0)
             {
-                // Use CsvColumn
+                // CsvColumnを使用します
                 foreach (var (field, attr) in fieldsWithAttribute)
                 {
                     var columnName = attr.Name ?? field.Name;
@@ -120,7 +120,7 @@ namespace Xeon.XScriptableDB.Editor
             }
             else
             {
-                // Use all serializable fields
+                // すべてのシリアライズ可能なフィールドを使用します
                 foreach (var field in ReflectionUtility.GetSerializableFields(recordType))
                 {
                     if (excludeSet.Contains(field.Name))
@@ -130,7 +130,7 @@ namespace Xeon.XScriptableDB.Editor
                 }
             }
 
-            // Apply column ordering
+            // 列の並び順を適用します
             if (settings?.ColumnOrder != null && settings.ColumnOrder.Length > 0)
             {
                 var orderDict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -149,7 +149,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Gets sorted records.
+        /// ソートされたレコードを取得します。
         /// </summary>
         private static IEnumerable<object> GetSortedRecords(ITableAsset tableAsset, bool sortByPrimaryKey)
         {
@@ -163,7 +163,7 @@ namespace Xeon.XScriptableDB.Editor
             if (!sortByPrimaryKey)
                 return records;
 
-            // Sort using PrimaryKeyAccessor
+            // PrimaryKeyAccessorを使用してソートします
             var keyAccessor = CreateKeyAccessor(tableAsset.RecordType);
             if (keyAccessor == null)
                 return records;
@@ -183,7 +183,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Creates a PrimaryKey accessor.
+        /// PrimaryKeyのアクセサを作成します。
         /// </summary>
         private static Func<object, object> CreateKeyAccessor(Type recordType)
         {
@@ -203,7 +203,7 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Formats a value into CSV format.
+        /// 値をCSV形式にフォーマットします。
         /// </summary>
         private static string FormatValue(object value, char delimiter)
         {
@@ -212,7 +212,7 @@ namespace Xeon.XScriptableDB.Editor
 
             var str = value.ToString();
 
-            // Check if escaping is needed
+            // エスケープが必要か確認します
             var needsQuote = str.Contains(delimiter) ||
                              str.Contains('"') ||
                              str.Contains('\n') ||
@@ -221,13 +221,13 @@ namespace Xeon.XScriptableDB.Editor
             if (!needsQuote)
                 return str;
 
-            // Escape double quotes
+            // ダブルクォーテーションをエスケープします
             str = str.Replace("\"", "\"\"");
             return $"\"{str}\"";
         }
 
         /// <summary>
-        /// Writes to a file.
+        /// ファイルに書き込みます。
         /// </summary>
         private static void WriteToFile(string filePath, string content, Encoding encoding, bool writeBom)
         {
@@ -244,10 +244,10 @@ namespace Xeon.XScriptableDB.Editor
         }
 
         /// <summary>
-        /// Gets the list of columns for a table.
+        /// テーブルの列リストを取得します。
         /// </summary>
-        /// <param name="recordType">The record type</param>
-        /// <returns>List of column names</returns>
+        /// <param name="recordType">レコードの型</param>
+        /// <returns>列名のリスト</returns>
         public static List<string> GetColumnNames(Type recordType)
         {
             var columns = new List<string>();

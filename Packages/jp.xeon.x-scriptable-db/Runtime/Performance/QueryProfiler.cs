@@ -5,8 +5,8 @@ using System.Diagnostics;
 namespace Xeon.XScriptableDB.Performance
 {
     /// <summary>
-    /// Query profiler.
-    /// Measures the execution time of queries.
+    /// クエリプロファイラー。
+    /// クエリの実行時間を計測します。
     /// </summary>
     public class QueryProfiler
     {
@@ -15,14 +15,14 @@ namespace Xeon.XScriptableDB.Performance
         private readonly object syncLock = new();
         private bool isEnabled = true;
 
-        /// <summary>Whether profiling is enabled</summary>
+        /// <summary>プロファイリングが有効かどうか</summary>
         public bool IsEnabled
         {
             get => isEnabled;
             set => isEnabled = value;
         }
 
-        /// <summary>Number of recorded profiles</summary>
+        /// <summary>記録されたプロファイルの数</summary>
         public int ProfileCount
         {
             get
@@ -40,13 +40,13 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Measures the execution of a query.
+        /// クエリの実行を計測します。
         /// </summary>
-        /// <typeparam name="T">Type of the result</typeparam>
-        /// <param name="queryName">Query name</param>
-        /// <param name="tableType">Type of the table</param>
-        /// <param name="query">Query to execute</param>
-        /// <returns>Query result</returns>
+        /// <typeparam name="T">結果の型</typeparam>
+        /// <param name="queryName">クエリ名</param>
+        /// <param name="tableType">テーブルの型</param>
+        /// <param name="query">実行するクエリ</param>
+        /// <returns>クエリ結果</returns>
         public T Profile<T>(string queryName, Type tableType, Func<T> query)
         {
             if (!isEnabled)
@@ -74,7 +74,7 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Records a profile.
+        /// プロファイルを記録します。
         /// </summary>
         public void RecordProfile(QueryProfile profile)
         {
@@ -83,7 +83,7 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Adds a profile entry.
+        /// プロファイルエントリを追加します。
         /// </summary>
         private void AddProfile(QueryProfile profile)
         {
@@ -91,7 +91,7 @@ namespace Xeon.XScriptableDB.Performance
             {
                 profiles.Add(profile);
 
-                // Remove old entries when the maximum count is exceeded
+                // 最大数を超えた場合は古いエントリを削除する
                 while (profiles.Count > maxProfiles)
                 {
                     profiles.RemoveAt(0);
@@ -100,7 +100,7 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Returns the count of results.
+        /// 結果の数を返します。
         /// </summary>
         private int GetResultCount<T>(T result)
         {
@@ -125,7 +125,7 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Returns all recorded profiles.
+        /// 記録されたすべてのプロファイルを返します。
         /// </summary>
         public IReadOnlyList<QueryProfile> GetProfiles()
         {
@@ -136,7 +136,7 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Returns profiling statistics.
+        /// プロファイリング統計を返します。
         /// </summary>
         public ProfileStatistics GetStatistics()
         {
@@ -173,9 +173,9 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Returns slow queries above the threshold.
+        /// 閾値を超える遅いクエリを返します。
         /// </summary>
-        /// <param name="thresholdMs">Threshold in milliseconds</param>
+        /// <param name="thresholdMs">ミリ秒単位の閾値</param>
         public IReadOnlyList<QueryProfile> GetSlowQueries(double thresholdMs)
         {
             lock (syncLock)
@@ -195,7 +195,7 @@ namespace Xeon.XScriptableDB.Performance
         }
 
         /// <summary>
-        /// Clears all profiles.
+        /// すべてのプロファイルをクリアします。
         /// </summary>
         public void Clear()
         {

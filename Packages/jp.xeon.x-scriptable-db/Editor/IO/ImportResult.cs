@@ -3,29 +3,29 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Import result.
+    /// インポート結果。
     /// </summary>
     public class ImportResult
     {
-        /// <summary>Whether the import was successful</summary>
+        /// <summary>インポートが成功したかどうか</summary>
         public bool Success { get; set; }
 
-        /// <summary>Number of imported records</summary>
+        /// <summary>インポートされたレコード数</summary>
         public int ImportedCount { get; set; }
 
-        /// <summary>Number of added records</summary>
+        /// <summary>追加されたレコード数</summary>
         public int AddedCount { get; set; }
 
-        /// <summary>Number of updated records</summary>
+        /// <summary>更新されたレコード数</summary>
         public int UpdatedCount { get; set; }
 
-        /// <summary>Number of deleted records</summary>
+        /// <summary>削除されたレコード数</summary>
         public int DeletedCount { get; set; }
 
-        /// <summary>Error message</summary>
+        /// <summary>エラーメッセージ</summary>
         public string ErrorMessage { get; set; }
 
-        /// <summary>Warning list</summary>
+        /// <summary>警告リスト</summary>
         public List<string> Warnings { get; set; } = new();
     }
 }

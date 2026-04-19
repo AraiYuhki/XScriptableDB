@@ -1,13 +1,13 @@
 namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
 {
     /// <summary>
-    /// Extension methods related to items.
-    /// Helpers for concisely retrieving foreign key references.
+    /// アイテムに関する拡張メソッド。
+    /// 外部キー参照を簡潔に取得するためのヘルパーです。
     /// </summary>
     public static class ItemExtensions
     {
         /// <summary>
-        /// Gets the category of an item.
+        /// アイテムのカテゴリを取得します。
         /// </summary>
         public static CategoryRecord GetCategory(this ItemRecord item, CategoryTable categoryTable)
         {
@@ -15,7 +15,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets the rarity of an item.
+        /// アイテムのレアリティを取得します。
         /// </summary>
         public static RarityRecord GetRarity(this ItemRecord item, RarityTable rarityTable)
         {
@@ -23,7 +23,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Calculates the actual selling price of an item (after applying the rarity multiplier).
+        /// （レアリティ倍率を適用した）アイテムの実際の販売価格を計算します。
         /// </summary>
         public static int GetActualPrice(this ItemRecord item, RarityTable rarityTable)
         {
@@ -35,7 +35,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets the result item of a recipe.
+        /// レシピの完成品アイテムを取得します。
         /// </summary>
         public static ItemRecord GetResultItem(this RecipeRecord recipe, ItemTable itemTable)
         {
@@ -43,7 +43,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets material 1 of a recipe.
+        /// レシピの素材1を取得します。
         /// </summary>
         public static ItemRecord GetMaterial1(this RecipeRecord recipe, ItemTable itemTable)
         {
@@ -53,7 +53,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets material 2 of a recipe.
+        /// レシピの素材2を取得します。
         /// </summary>
         public static ItemRecord GetMaterial2(this RecipeRecord recipe, ItemTable itemTable)
         {
@@ -63,7 +63,7 @@ namespace Xeon.XScriptableDB.Samples.ForeignKeyReference
         }
 
         /// <summary>
-        /// Gets material 3 of a recipe.
+        /// レシピの素材3を取得します。
         /// </summary>
         public static ItemRecord GetMaterial3(this RecipeRecord recipe, ItemTable itemTable)
         {

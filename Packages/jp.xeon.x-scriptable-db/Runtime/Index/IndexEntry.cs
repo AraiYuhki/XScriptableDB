@@ -3,23 +3,23 @@ using System;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// Index entry.
+    /// インデックスエントリ。
     /// </summary>
     [Serializable]
     public class IndexEntry
     {
         /// <summary>
-        /// Hash value of the key.
+        /// キーのハッシュ値。
         /// </summary>
         public int keyHash;
 
         /// <summary>
-        /// String representation of the key (for debugging and string-based lookup).
+        /// キーの文字列表現（デバッグおよび文字列ベースのルックアップ用）。
         /// </summary>
         public string keyString;
 
         /// <summary>
-        /// Array of record indices corresponding to this key.
+        /// このキーに対応するレコードインデックスの配列。
         /// </summary>
         public int[] recordIndices;
     }

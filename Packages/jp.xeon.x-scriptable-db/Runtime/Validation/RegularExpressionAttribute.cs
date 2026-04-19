@@ -4,12 +4,12 @@ using System.Text.RegularExpressions;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// Attribute to specify a regular expression pattern.
+    /// 正規表現パターンを指定する属性。
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class RegularExpressionAttribute : ValidationAttribute
     {
-        /// <summary>Regular expression pattern</summary>
+        /// <summary>正規表現パターン</summary>
         public string Pattern { get; }
 
         public RegularExpressionAttribute(string pattern)
@@ -31,7 +31,7 @@ namespace Xeon.XScriptableDB.Validation
 
         protected override string GetDefaultErrorMessage(string fieldName)
         {
-            return $"The format of {fieldName} is invalid.";
+            return $"{fieldName}のフォーマットが無効です。";
         }
     }
 }

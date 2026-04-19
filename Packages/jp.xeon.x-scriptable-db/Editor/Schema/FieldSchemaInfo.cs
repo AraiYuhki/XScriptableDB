@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Field information.
+    /// フィールド情報。
     /// </summary>
     public class FieldSchemaInfo
     {

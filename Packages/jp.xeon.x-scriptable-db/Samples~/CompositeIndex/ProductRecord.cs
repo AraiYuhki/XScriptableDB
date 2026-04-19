@@ -5,8 +5,8 @@ using Xeon.XScriptableDB;
 namespace XScriptableDB.Samples.CompositeIndex
 {
     /// <summary>
-    /// Sample product record using composite SecondaryKey.
-    /// Enables fast lookup by combining Category and SubCategory.
+    /// 複合SecondaryKeyを使用した製品レコードのサンプル。
+    /// カテゴリとサブカテゴリを組み合わせることで高速検索を可能にします。
     /// </summary>
     [Serializable]
     public class ProductRecord
@@ -17,15 +17,15 @@ namespace XScriptableDB.Samples.CompositeIndex
         [SerializeField]
         private string name;
 
-        // Composite index: CategorySubCategory
-        // Fields sharing the same Name attribute are grouped together
+        // 複合インデックス：CategorySubCategory
+        // 同じName属性を共有するフィールドがグループ化されます
         [SerializeField, SecondaryKey("CategorySubCategory",  0)]
         private string category;
 
         [SerializeField, SecondaryKey("CategorySubCategory", 1)]
         private string subCategory;
 
-        // Single SecondaryKey
+        // 単一のSecondaryKey
         [SerializeField, SecondaryKey]
         private string brand;
 
@@ -35,7 +35,7 @@ namespace XScriptableDB.Samples.CompositeIndex
         [SerializeField]
         private int stock;
 
-        // Properties
+        // プロパティ
         public int Id => id;
         public string Name => name;
         public string Category => category;

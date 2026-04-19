@@ -7,8 +7,8 @@ using Range = Xeon.XScriptableDB.Validation.RangeAttribute;
 namespace Xeon.XScriptableDB.Samples.Validation
 {
     /// <summary>
-    /// Record class for skill data.
-    /// Uses various validation attributes to ensure data quality.
+    /// スキルデータのレコードクラス。
+    /// データの品質を確保するために様々なバリデーション属性を使用しています。
     /// </summary>
     [Serializable]
     public class SkillRecord
@@ -45,52 +45,52 @@ namespace Xeon.XScriptableDB.Samples.Validation
         private int maxLevel;
 
         /// <summary>
-        /// Skill ID (primary key)
+        /// スキルID（主キー）
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// Skill name
+        /// スキル名
         /// </summary>
         public string Name => name;
 
         /// <summary>
-        /// Description
+        /// 説明
         /// </summary>
         public string Description => description;
 
         /// <summary>
-        /// MP cost
+        /// 消費MP
         /// </summary>
         public int MpCost => mpCost;
 
         /// <summary>
-        /// Cooldown in seconds
+        /// クールダウン（秒）
         /// </summary>
         public float Cooldown => cooldown;
 
         /// <summary>
-        /// Power
+        /// 威力
         /// </summary>
         public int Power => power;
 
         /// <summary>
-        /// Element type
+        /// 属性タイプ
         /// </summary>
         public ElementType ElementType => elementType;
 
         /// <summary>
-        /// Target type
+        /// 対象タイプ
         /// </summary>
         public TargetType TargetType => targetType;
 
         /// <summary>
-        /// Required level to learn
+        /// 習得に必要なレベル
         /// </summary>
         public int RequiredLevel => requiredLevel;
 
         /// <summary>
-        /// Maximum upgrade level
+        /// 最大強化レベル
         /// </summary>
         public int MaxLevel => maxLevel;
 

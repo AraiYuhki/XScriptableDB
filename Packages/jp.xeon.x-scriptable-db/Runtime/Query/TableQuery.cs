@@ -4,20 +4,20 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// Query extension methods for TableAsset.
+    /// TableAssetのクエリ拡張メソッド。
     /// </summary>
     public static class TableQuery
     {
         /// <summary>
-        /// Searches for records by SecondaryKey and returns them as a QueryResult.
+        /// SecondaryKeyでレコードを検索し、QueryResultとして返します。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
-        /// <typeparam name="TSecondaryKey">Type of the SecondaryKey</typeparam>
-        /// <param name="table">Table to search</param>
-        /// <param name="indexName">Index name</param>
-        /// <param name="key">Key to search for</param>
-        /// <returns>Search result</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <typeparam name="TSecondaryKey">SecondaryKeyの型</typeparam>
+        /// <param name="table">検索するテーブル</param>
+        /// <param name="indexName">インデックス名</param>
+        /// <param name="key">検索するキー</param>
+        /// <returns>検索結果</returns>
         public static QueryResult<T> QueryBySecondaryKey<T, TKey, TSecondaryKey>(
             this TableAsset<T, TKey> table,
             string indexName,
@@ -37,13 +37,13 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Searches for records matching the condition.
+        /// 条件に一致するレコードを検索します。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
-        /// <param name="table">Table to search</param>
-        /// <param name="predicate">Condition</param>
-        /// <returns>Enumeration of matching records</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <param name="table">検索するテーブル</param>
+        /// <param name="predicate">条件</param>
+        /// <returns>一致するレコードの列挙</returns>
         public static IEnumerable<T> Where<T, TKey>(this TableAsset<T, TKey> table, Func<T, bool> predicate)
             where T : class, new()
             where TKey : IComparable<TKey>
@@ -56,13 +56,13 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Returns the first record matching the condition.
+        /// 条件に一致する最初のレコードを返します。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
-        /// <param name="table">Table to search</param>
-        /// <param name="predicate">Condition</param>
-        /// <returns>First matching record, or null if not found</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <param name="table">検索するテーブル</param>
+        /// <param name="predicate">条件</param>
+        /// <returns>最初に一致したレコード、見つからない場合はnull</returns>
         public static T FirstOrDefault<T, TKey>(this TableAsset<T, TKey> table, Func<T, bool> predicate)
             where T : class, new()
             where TKey : IComparable<TKey>
@@ -76,13 +76,13 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Checks whether any record matching the condition exists.
+        /// 条件に一致するレコードが存在するかどうかを確認します。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
-        /// <param name="table">Table to search</param>
-        /// <param name="predicate">Condition</param>
-        /// <returns>True if a matching record exists</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <param name="table">検索するテーブル</param>
+        /// <param name="predicate">条件</param>
+        /// <returns>一致するレコードが存在する場合はtrue</returns>
         public static bool Any<T, TKey>(this TableAsset<T, TKey> table, Func<T, bool> predicate)
             where T : class, new()
             where TKey : IComparable<TKey>
@@ -96,13 +96,13 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Checks whether all records match the condition.
+        /// すべてのレコードが条件に一致するかどうかを確認します。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
-        /// <param name="table">Table to search</param>
-        /// <param name="predicate">Condition</param>
-        /// <returns>True if all records match</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <param name="table">検索するテーブル</param>
+        /// <param name="predicate">条件</param>
+        /// <returns>すべてのレコードが一致する場合はtrue</returns>
         public static bool All<T, TKey>(this TableAsset<T, TKey> table, Func<T, bool> predicate)
             where T : class, new()
             where TKey : IComparable<TKey>
@@ -116,13 +116,13 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Counts the number of records matching the condition.
+        /// 条件に一致するレコードの数をカウントします。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
-        /// <param name="table">Table to search</param>
-        /// <param name="predicate">Condition</param>
-        /// <returns>Number of matching records</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <param name="table">検索するテーブル</param>
+        /// <param name="predicate">条件</param>
+        /// <returns>一致するレコードの数</returns>
         public static int Count<T, TKey>(this TableAsset<T, TKey> table, Func<T, bool> predicate)
             where T : class, new()
             where TKey : IComparable<TKey>
@@ -137,14 +137,14 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Projects each record to a new form and returns the results.
+        /// 各レコードを新しい形式に射影し、結果を返します。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
-        /// <typeparam name="TResult">Type of the projected result</typeparam>
-        /// <param name="table">Table to project from</param>
-        /// <param name="selector">Projection function</param>
-        /// <returns>Enumeration of projected values</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <typeparam name="TResult">射影された結果の型</typeparam>
+        /// <param name="table">射影元のテーブル</param>
+        /// <param name="selector">射影関数</param>
+        /// <returns>射影された値の列挙</returns>
         public static IEnumerable<TResult> Select<T, TKey, TResult>(this TableAsset<T, TKey> table, Func<T, TResult> selector)
             where T : class, new()
             where TKey : IComparable<TKey>
@@ -154,13 +154,13 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Skips the specified number of records.
+        /// 指定された数のレコードをスキップします。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
-        /// <param name="table">Table to skip from</param>
-        /// <param name="count">Number of records to skip</param>
-        /// <returns>Enumeration of records after skipping</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <param name="table">スキップ元のテーブル</param>
+        /// <param name="count">スキップするレコードの数</param>
+        /// <returns>スキップ後のレコードの列挙</returns>
         public static IEnumerable<T> Skip<T, TKey>(this TableAsset<T, TKey> table, int count)
             where T : class, new()
             where TKey : IComparable<TKey>
@@ -178,13 +178,13 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Returns the specified number of records.
+        /// 指定された数のレコードを返します。
         /// </summary>
-        /// <typeparam name="T">Type of the record</typeparam>
-        /// <typeparam name="TKey">Type of the PrimaryKey</typeparam>
-        /// <param name="table">Table to take from</param>
-        /// <param name="count">Number of records to take</param>
-        /// <returns>Enumeration of taken records</returns>
+        /// <typeparam name="T">レコードの型</typeparam>
+        /// <typeparam name="TKey">PrimaryKeyの型</typeparam>
+        /// <param name="table">取得元のテーブル</param>
+        /// <param name="count">取得するレコードの数</param>
+        /// <returns>取得したレコードの列挙</returns>
         public static IEnumerable<T> Take<T, TKey>(this TableAsset<T, TKey> table, int count)
             where T : class, new()
             where TKey : IComparable<TKey>

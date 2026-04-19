@@ -5,7 +5,7 @@ using Xeon.XScriptableDB.Performance;
 namespace Xeon.XScriptableDB.Tests.Performance
 {
     /// <summary>
-    /// Tests for the performance profiler.
+    /// パフォーマンスプロファイラのテスト。
     /// </summary>
     public class PerformanceTests
     {
@@ -118,7 +118,7 @@ namespace Xeon.XScriptableDB.Tests.Performance
         {
             var profiler = new QueryProfiler();
 
-            // Manually add profiles (to control execution time)
+            // プロファイルを手動で追加する（実行時間を制御するため）
             profiler.RecordProfile(new QueryProfile
             {
                 QueryName = "FastQuery",
@@ -237,7 +237,7 @@ namespace Xeon.XScriptableDB.Tests.Performance
         {
             var size = MemoryProfiler.EstimateTypeSize(typeof(string));
 
-            // String is an estimated size (object header + average character count)
+            // 文字列は推定サイズ（オブジェクトヘッダ＋平均文字数）
             Assert.Greater(size, 0);
         }
 
@@ -322,7 +322,7 @@ namespace Xeon.XScriptableDB.Tests.Performance
 
         #endregion
 
-        // Dummy types for testing
+        // テスト用のダミー型
         private class TestTable { }
         private enum TestEnum { Value1, Value2 }
     }

@@ -3,7 +3,7 @@ using System;
 namespace Xeon.XScriptableDB.Performance
 {
     /// <summary>
-    /// Memory snapshot.
+    /// メモリのスナップショット。
     /// </summary>
     public struct MemorySnapshot
     {

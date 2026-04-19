@@ -6,8 +6,8 @@ using Xeon.XScriptableDB.IO;
 namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
 {
     /// <summary>
-    /// Record class for enemy data.
-    /// Designed for large datasets intended for performance measurement.
+    /// エネミーデータのレコードクラス。
+    /// パフォーマンス測定用の大規模データセット向けに設計されています。
     /// </summary>
     [Serializable]
     public class EnemyRecord
@@ -40,12 +40,12 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         private float dropRate;
 
         /// <summary>
-        /// Enemy ID (primary key)
+        /// エネミーID（主キー）
         /// </summary>
         public int Id => id;
 
         /// <summary>
-        /// Enemy name
+        /// エネミー名
         /// </summary>
         public string Name => name;
 
@@ -55,32 +55,32 @@ namespace Xeon.XScriptableDB.Samples.QueryResultZeroGC
         public int Hp => hp;
 
         /// <summary>
-        /// Attack power
+        /// 攻撃力
         /// </summary>
         public int Attack => attack;
 
         /// <summary>
-        /// Defense power
+        /// 防御力
         /// </summary>
         public int Defense => defense;
 
         /// <summary>
-        /// Level
+        /// レベル
         /// </summary>
         public int Level => level;
 
         /// <summary>
-        /// Spawn area ID
+        /// 出現エリアID
         /// </summary>
         public int AreaId => areaId;
 
         /// <summary>
-        /// Boss flag
+        /// ボスフラグ
         /// </summary>
         public bool IsBoss => isBoss;
 
         /// <summary>
-        /// Drop rate
+        /// ドロップ率
         /// </summary>
         public float DropRate => dropRate;
 

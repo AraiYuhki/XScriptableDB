@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQL editor window.
+    /// SQLエディタウィンドウ。
     /// </summary>
     public class SqlEditorWindow : EditorWindow
     {
@@ -27,12 +27,12 @@ namespace Xeon.XScriptableDB.Editor
         private GUIStyle errorStyle;
         private bool stylesInitialized;
 
-        // Result display settings
+        // 結果表示設定
         private const int MaxDisplayRows = 1000;
         private const int ColumnMinWidth = 80;
         private const int ColumnMaxWidth = 300;
 
-        // SQL history
+        // SQL履歴
         private List<string> sqlHistory = new();
         private int historyIndex = -1;
         private const int MaxHistoryCount = 50;
@@ -41,7 +41,7 @@ namespace Xeon.XScriptableDB.Editor
         public static void ShowWindow()
         {
             var window = GetWindow<SqlEditorWindow>();
-            window.titleContent = new GUIContent("SQL Editor");
+            window.titleContent = new GUIContent("SQLエディタ");
             window.minSize = new Vector2(600, 400);
             window.Show();
         }
@@ -56,7 +56,7 @@ namespace Xeon.XScriptableDB.Editor
         {
             registeredTables.Clear();
 
-            // Search for TableAssets in the project
+            // プロジェクト内のTableAssetを検索する
             var guids = AssetDatabase.FindAssets("t:ScriptableObject");
             foreach (var guid in guids)
             {
@@ -109,8 +109,8 @@ namespace Xeon.XScriptableDB.Editor
 
         private Font GetMonospaceFont()
         {
-            // Get the system monospace font (if available)
-            return null; // Use the default font
+            // システムの等幅フォントを取得する（利用可能な場合）
+            return null; // デフォルトのフォントを使用する
         }
 
         private Texture2D MakeTexture(int width, int height, Color color)
@@ -131,21 +131,21 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.BeginVertical();
 
-            // Toolbar
+            // ツールバー
             DrawToolbar();
 
-            // SQL input area
+            // SQL入力エリア
             DrawSqlInput();
 
-            // Execute button
+            // 実行ボタン
             DrawExecuteButton();
 
-            // Result display area
+            // 結果表示エリア
             DrawResults();
 
             EditorGUILayout.EndVertical();
 
-            // Keyboard shortcuts
+            // キーボードショートカット
             HandleKeyboardShortcuts();
         }
 
@@ -153,22 +153,22 @@ namespace Xeon.XScriptableDB.Editor
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
-            if (GUILayout.Button("Refresh Tables", EditorStyles.toolbarButton, GUILayout.Width(100)))
+            if (GUILayout.Button("テーブル更新", EditorStyles.toolbarButton, GUILayout.Width(100)))
             {
                 RefreshTables();
             }
 
             GUILayout.Space(10);
 
-            // Table selection dropdown
-            if (GUILayout.Button("Insert Table", EditorStyles.toolbarDropDown, GUILayout.Width(100)))
+            // テーブル選択ドロップダウン
+            if (GUILayout.Button("テーブルを挿入", EditorStyles.toolbarDropDown, GUILayout.Width(100)))
             {
                 ShowTableMenu();
             }
 
             GUILayout.FlexibleSpace();
 
-            // History buttons
+            // 履歴ボタン
             EditorGUI.BeginDisabledGroup(historyIndex <= 0);
             if (GUILayout.Button("◀", EditorStyles.toolbarButton, GUILayout.Width(25)))
             {
@@ -183,7 +183,7 @@ namespace Xeon.XScriptableDB.Editor
             }
             EditorGUI.EndDisabledGroup();
 
-            if (GUILayout.Button("Clear", EditorStyles.toolbarButton, GUILayout.Width(50)))
+            if (GUILayout.Button("クリア", EditorStyles.toolbarButton, GUILayout.Width(50)))
             {
                 sqlText = "";
                 lastResult = null;
@@ -207,7 +207,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (!executor.TableNames.Any())
             {
-                menu.AddDisabledItem(new GUIContent("No tables found"));
+                menu.AddDisabledItem(new GUIContent("テーブルが見つかりません"));
             }
 
             menu.ShowAsContext();
@@ -215,14 +215,14 @@ namespace Xeon.XScriptableDB.Editor
 
         private void InsertTableName(string tableName)
         {
-            // Insert table name at cursor position (simple implementation)
+            // カーソル位置にテーブル名を挿入する（シンプルな実装）
             sqlText += tableName;
             Repaint();
         }
 
         private void DrawSqlInput()
         {
-            EditorGUILayout.LabelField("SQL Query:", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("SQLクエリ:", EditorStyles.boldLabel);
 
             var height = Mathf.Min(150, Mathf.Max(60, sqlText.Split('\n').Length * 18 + 20));
 
@@ -232,11 +232,11 @@ namespace Xeon.XScriptableDB.Editor
 
             EditorGUILayout.EndScrollView();
 
-            // Show table list
+            // テーブルリストを表示する
             if (executor.TableNames.Any())
             {
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Available tables:", GUILayout.Width(100));
+                EditorGUILayout.LabelField("利用可能なテーブル:", GUILayout.Width(100));
                 EditorGUILayout.LabelField(string.Join(", ", executor.TableNames.OrderBy(n => n)),
                     EditorStyles.miniLabel);
                 EditorGUILayout.EndHorizontal();
@@ -256,7 +256,7 @@ namespace Xeon.XScriptableDB.Editor
                 fixedWidth = 120
             };
 
-            if (GUILayout.Button("Execute (F5)", buttonStyle))
+            if (GUILayout.Button("実行 (F5)", buttonStyle))
             {
                 ExecuteQuery();
             }
@@ -270,41 +270,41 @@ namespace Xeon.XScriptableDB.Editor
 
         private void DrawResults()
         {
-            EditorGUILayout.LabelField("Results:", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("結果:", EditorStyles.boldLabel);
 
             if (lastResult == null)
             {
-                EditorGUILayout.HelpBox("Enter a SQL query and press Execute or F5", MessageType.Info);
+                EditorGUILayout.HelpBox("SQLクエリを入力し、『実行』またはF5キーを押してください", MessageType.Info);
                 return;
             }
 
-            // Status bar
+            // ステータスバー
             EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
             if (lastResult.IsSuccess)
             {
                 var statusText = lastResult.Statement switch
                 {
-                    SelectStatement => $"{lastResult.Records.Count} rows returned",
-                    UpdateStatement or DeleteStatement => $"{lastResult.AffectedCount} rows affected",
-                    _ => "Executed"
+                    SelectStatement => $"{lastResult.Records.Count} 件のレコードが返されました",
+                    UpdateStatement or DeleteStatement => $"{lastResult.AffectedCount} 件のレコードに影響しました",
+                    _ => "実行完了"
                 };
                 EditorGUILayout.LabelField($"✓ {statusText} ({lastResult.ExecutionTimeMs:F2}ms)",
                     EditorStyles.miniLabel);
             }
             else
             {
-                EditorGUILayout.LabelField($"✗ Error", errorStyle);
+                EditorGUILayout.LabelField($"✗ エラー", errorStyle);
             }
             EditorGUILayout.EndHorizontal();
 
-            // Error display
+            // エラー表示
             if (!lastResult.IsSuccess)
             {
                 EditorGUILayout.HelpBox(lastResult.ErrorMessage, MessageType.Error);
                 return;
             }
 
-            // Display SELECT results
+            // SELECT結果を表示する
             if (lastResult.Statement is SelectStatement && lastResult.Records.Count > 0)
             {
                 DrawSelectResults();
@@ -318,16 +318,16 @@ namespace Xeon.XScriptableDB.Editor
 
             if (columnNames.Count == 0 && records.Count > 0)
             {
-                // Get column names from records if not available
+                // 利用できない場合は、レコードから列名を取得する
                 columnNames = SqlResultFormatter.GetColumnNamesFromRecord(records[0]);
             }
 
-            // Calculate column widths
+            // 列幅を計算する
             var columnWidths = CalculateColumnWidths(columnNames, records);
 
             resultScrollPosition = EditorGUILayout.BeginScrollView(resultScrollPosition);
 
-            // Header row
+            // ヘッダー行
             EditorGUILayout.BeginHorizontal();
             for (var i = 0; i < columnNames.Count; i++)
             {
@@ -335,7 +335,7 @@ namespace Xeon.XScriptableDB.Editor
             }
             EditorGUILayout.EndHorizontal();
 
-            // Data rows
+            // データ行
             var displayCount = Math.Min(records.Count, MaxDisplayRows);
             var recordType = records.Count > 0 ? records[0].GetType() : null;
 
@@ -356,7 +356,7 @@ namespace Xeon.XScriptableDB.Editor
 
             if (records.Count > MaxDisplayRows)
             {
-                EditorGUILayout.HelpBox($"Showing {MaxDisplayRows} of {records.Count} rows", MessageType.Warning);
+                EditorGUILayout.HelpBox($"{records.Count} 件中 {MaxDisplayRows} 件を表示しています", MessageType.Warning);
             }
 
             EditorGUILayout.EndScrollView();
@@ -368,11 +368,11 @@ namespace Xeon.XScriptableDB.Editor
 
             for (var i = 0; i < columnNames.Count; i++)
             {
-                // Header width
+                // ヘッダーの幅
                 widths[i] = GUI.skin.label.CalcSize(new GUIContent(columnNames[i])).x + 20;
             }
 
-            // Sample data widths
+            // サンプルデータの幅
             var sampleCount = Math.Min(100, records.Count);
             var recordType = records.Count > 0 ? records[0].GetType() : null;
 
@@ -388,7 +388,7 @@ namespace Xeon.XScriptableDB.Editor
                 }
             }
 
-            // Apply min/max widths
+            // 最小/最大幅を適用する
             for (var i = 0; i < widths.Length; i++)
             {
                 widths[i] = Mathf.Clamp(widths[i], ColumnMinWidth, ColumnMaxWidth);
@@ -404,7 +404,7 @@ namespace Xeon.XScriptableDB.Editor
 
             lastResult = executor.Execute(sqlText);
 
-            // Add to history
+            // 履歴に追加する
             AddToHistory(sqlText);
 
             Repaint();
@@ -412,13 +412,13 @@ namespace Xeon.XScriptableDB.Editor
 
         private void AddToHistory(string sql)
         {
-            // Remove duplicates
+            // 重複を削除する
             sqlHistory.RemoveAll(s => s.Equals(sql, StringComparison.OrdinalIgnoreCase));
 
-            // Add to the end
+            // 最後に追加する
             sqlHistory.Add(sql);
 
-            // Remove oldest entries if exceeding max count
+            // 最大数を超える場合は最も古いエントリを削除する
             while (sqlHistory.Count > MaxHistoryCount)
             {
                 sqlHistory.RemoveAt(0);
@@ -443,7 +443,7 @@ namespace Xeon.XScriptableDB.Editor
             var e = Event.current;
             if (e.type != EventType.KeyDown) return;
 
-            // Execute on F5
+            // F5で実行
             if (e.keyCode == KeyCode.F5)
             {
                 ExecuteQuery();
@@ -453,14 +453,14 @@ namespace Xeon.XScriptableDB.Editor
             if (!e.control && !e.command)
                 return;
 
-            // Execute on Ctrl+Enter
+            // Ctrl+Enterで実行
             if (e.keyCode == KeyCode.Return)
             {
                 ExecuteQuery();
                 e.Use();
             }
 
-            // Navigate history with Ctrl+Up/Down
+            // Ctrl+Up/Downで履歴をナビゲートする
             if (e.keyCode == KeyCode.UpArrow)
             {
                 NavigateHistory(-1);

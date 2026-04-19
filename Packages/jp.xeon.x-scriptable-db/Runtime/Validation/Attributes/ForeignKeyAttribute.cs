@@ -3,15 +3,15 @@ using System;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// Attribute that specifies a foreign key constraint.
+    /// 外部キー制約を指定する属性。
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class ForeignKeyAttribute : ValidationAttribute
     {
-        /// <summary>Type of the referenced table</summary>
+        /// <summary>参照先のテーブルの型</summary>
         public Type ReferenceTableType { get; }
 
-        /// <summary>Name of the key field in the referenced table (defaults to PrimaryKey)</summary>
+        /// <summary>参照先テーブルのキーフィールド名（デフォルトはPrimaryKey）</summary>
         public string ReferenceKeyField { get; set; }
 
         public ForeignKeyAttribute(Type referenceTableType)
@@ -21,8 +21,8 @@ namespace Xeon.XScriptableDB.Validation
 
         public override ValidationResult Validate(object value, string fieldName)
         {
-            // Foreign key validation requires the referenced table,
-            // so it is validated by RecordValidator
+            // 外部キーの検証には参照先のテーブルが必要なため、
+            // RecordValidatorによって検証されます
             return ValidationResult.Success;
         }
 

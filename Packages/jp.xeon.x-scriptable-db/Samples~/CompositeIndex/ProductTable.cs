@@ -4,28 +4,28 @@ using Xeon.XScriptableDB;
 namespace XScriptableDB.Samples.CompositeIndex
 {
     /// <summary>
-    /// Product table.
-    /// Supports fast lookup via composite SecondaryKey.
+    /// 製品テーブル。
+    /// 複合SecondaryKeyによる高速検索をサポートします。
     /// </summary>
     [CreateAssetMenu(fileName = "ProductTable", menuName = "XScriptableDB/Samples/ProductTable")]
     public class ProductTable : TableAsset<ProductRecord, int>
     {
         /// <summary>
-        /// Searches for products by category and subcategory (O(1)).
+        /// カテゴリとサブカテゴリで製品を検索します（O(1)）。
         /// </summary>
-        /// <param name="category">Category</param>
-        /// <param name="subCategory">Subcategory</param>
-        /// <returns>Array of matching products</returns>
+        /// <param name="category">カテゴリ</param>
+        /// <param name="subCategory">サブカテゴリ</param>
+        /// <returns>一致する製品の配列</returns>
         public ProductRecord[] FindByCategory(string category, string subCategory)
         {
             return FindAllBySecondaryKeyAsArray("CategorySubCategory", category, subCategory);
         }
 
         /// <summary>
-        /// Searches for products by brand (O(1)).
+        /// ブランドで製品を検索します（O(1)）。
         /// </summary>
-        /// <param name="brand">Brand name</param>
-        /// <returns>Array of matching products</returns>
+        /// <param name="brand">ブランド名</param>
+        /// <returns>一致する製品の配列</returns>
         public ProductRecord[] FindByBrand(string brand)
         {
             return FindAllBySecondaryKeyAsArray("brand", brand);

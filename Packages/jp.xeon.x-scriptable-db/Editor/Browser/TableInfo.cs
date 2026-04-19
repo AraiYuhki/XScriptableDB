@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// Table information.
+    /// テーブル情報。
     /// </summary>
     public class TableInfo
     {

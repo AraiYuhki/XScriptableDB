@@ -3,7 +3,7 @@ using System;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQL parse error.
+    /// SQL解析エラー。
     /// </summary>
     public class SqlParseException : Exception
     {

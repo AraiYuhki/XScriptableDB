@@ -3,15 +3,15 @@ using System;
 namespace Xeon.XScriptableDB.Cache
 {
     /// <summary>
-    /// Cache manager.
-    /// Manages the global cache instance.
+    /// キャッシュマネージャー。
+    /// グローバルキャッシュインスタンスを管理します。
     /// </summary>
     public static class CacheManager
     {
         private static QueryCache queryCache;
         private static bool isEnabled = true;
 
-        /// <summary>Whether the cache is enabled</summary>
+        /// <summary>キャッシュが有効かどうか</summary>
         public static bool IsEnabled
         {
             get => isEnabled;
@@ -25,11 +25,11 @@ namespace Xeon.XScriptableDB.Cache
             }
         }
 
-        /// <summary>Default cache capacity</summary>
+        /// <summary>デフォルトのキャッシュ容量</summary>
         public static int DefaultCapacity { get; set; } = 1000;
 
         /// <summary>
-        /// Returns the query cache.
+        /// クエリキャッシュを返します。
         /// </summary>
         public static QueryCache QueryCache
         {
@@ -41,34 +41,34 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Initializes the cache.
+        /// キャッシュを初期化します。
         /// </summary>
-        /// <param name="capacity">Cache capacity</param>
+        /// <param name="capacity">キャッシュ容量</param>
         public static void Initialize(int capacity)
         {
             queryCache = new QueryCache(capacity);
         }
 
         /// <summary>
-        /// Invalidates the cache for a table.
+        /// テーブルのキャッシュを無効にします。
         /// </summary>
-        /// <typeparam name="T">Type of the table</typeparam>
+        /// <typeparam name="T">テーブルの型</typeparam>
         public static void InvalidateTable<T>() where T : ITableAsset
         {
             QueryCache.InvalidateTable(typeof(T));
         }
 
         /// <summary>
-        /// Invalidates the cache for a table.
+        /// テーブルのキャッシュを無効にします。
         /// </summary>
-        /// <param name="tableType">Type of the table</param>
+        /// <param name="tableType">テーブルの型</param>
         public static void InvalidateTable(Type tableType)
         {
             QueryCache.InvalidateTable(tableType);
         }
 
         /// <summary>
-        /// Clears all caches.
+        /// すべてのキャッシュをクリアします。
         /// </summary>
         public static void Clear()
         {
@@ -76,7 +76,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Resets the statistics.
+        /// 統計をリセットします。
         /// </summary>
         public static void ResetStatistics()
         {
@@ -84,7 +84,7 @@ namespace Xeon.XScriptableDB.Cache
         }
 
         /// <summary>
-        /// Returns the cache statistics.
+        /// キャッシュの統計を返します。
         /// </summary>
         public static CacheStatistics GetStatistics()
         {

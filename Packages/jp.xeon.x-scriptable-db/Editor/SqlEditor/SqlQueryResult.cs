@@ -3,29 +3,29 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// The execution result of a SQL query.
+    /// SQLクエリの実行結果。
     /// </summary>
     public class SqlQueryResult
     {
-        /// <summary>The executed SQL statement</summary>
+        /// <summary>実行されたSQLステートメント</summary>
         public SqlStatement Statement { get; set; }
 
-        /// <summary>Result records (for SELECT)</summary>
+        /// <summary>結果レコード（SELECT用）</summary>
         public List<object> Records { get; set; } = new();
 
-        /// <summary>Column name list (for SELECT)</summary>
+        /// <summary>列名リスト（SELECT用）</summary>
         public List<string> ColumnNames { get; set; } = new();
 
-        /// <summary>Number of affected records (for UPDATE/DELETE)</summary>
+        /// <summary>影響を受けるレコードの数（UPDATE/DELETE用）</summary>
         public int AffectedCount { get; set; }
 
-        /// <summary>Error message</summary>
+        /// <summary>エラーメッセージ</summary>
         public string ErrorMessage { get; set; }
 
-        /// <summary>Whether execution was successful</summary>
+        /// <summary>実行が成功したかどうか</summary>
         public bool IsSuccess => string.IsNullOrEmpty(ErrorMessage);
 
-        /// <summary>Execution time (milliseconds)</summary>
+        /// <summary>実行時間（ミリ秒）</summary>
         public double ExecutionTimeMs { get; set; }
     }
 }

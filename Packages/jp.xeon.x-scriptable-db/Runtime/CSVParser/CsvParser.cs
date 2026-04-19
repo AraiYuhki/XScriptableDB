@@ -9,6 +9,10 @@ using UnityEngine;
 
 namespace Xeon.XScriptableDB.IO
 {
+    /// <summary>
+    /// CSVパーサー。
+    /// 文字列またはファイルからオブジェクトのリストを生成します。
+    /// </summary>
     public class CsvParser
     {
         private const BindingFlags MemberFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
@@ -221,7 +225,7 @@ namespace Xeon.XScriptableDB.IO
             }
             else
             {
-                Debug.LogError($"{member.Name} is not property or field");
+                Debug.LogError($"{member.Name} はプロパティまたはフィールドではありません");
                 return;
             }
 
@@ -236,28 +240,28 @@ namespace Xeon.XScriptableDB.IO
             {
                 if (int.TryParse(value, out var intValue))
                     return intValue;
-                Debug.LogWarning($"Failed to parse '{value}' as int for member '{memberName}'");
+                Debug.LogWarning($"メンバ '{memberName}' の値を int としてパースできませんでした: '{value}'");
                 return 0;
             }
             if (targetType == typeof(float))
             {
                 if (float.TryParse(value, out var floatValue))
                     return floatValue;
-                Debug.LogWarning($"Failed to parse '{value}' as float for member '{memberName}'");
+                Debug.LogWarning($"メンバ '{memberName}' の値を float としてパースできませんでした: '{value}'");
                 return 0f;
             }
             if (targetType == typeof(double))
             {
                 if (double.TryParse(value, out var doubleValue))
                     return doubleValue;
-                Debug.LogWarning($"Failed to parse '{value}' as double for member '{memberName}'");
+                Debug.LogWarning($"メンバ '{memberName}' の値を double としてパースできませんでした: '{value}'");
                 return 0.0;
             }
             if (targetType == typeof(bool))
             {
                 if (bool.TryParse(value, out var boolValue))
                     return boolValue;
-                Debug.LogWarning($"Failed to parse '{value}' as bool for member '{memberName}'");
+                Debug.LogWarning($"メンバ '{memberName}' の値を bool としてパースできませんでした: '{value}'");
                 return false;
             }
             if (targetType == typeof(string))
@@ -266,25 +270,25 @@ namespace Xeon.XScriptableDB.IO
             {
                 if (Enum.TryParse(targetType, value, out var enumValue))
                     return enumValue;
-                Debug.LogWarning($"Failed to parse '{value}' as {targetType.Name} for member '{memberName}'");
+                Debug.LogWarning($"メンバ '{memberName}' の値を {targetType.Name} としてパースできませんでした: '{value}'");
                 return Activator.CreateInstance(targetType);
             }
             if (targetType == typeof(DateTime))
             {
                 if (TryParseDateTime(value, out var dateTimeValue))
                     return dateTimeValue;
-                Debug.LogWarning($"Failed to parse '{value}' as DateTime for member '{memberName}'");
+                Debug.LogWarning($"メンバ '{memberName}' の値を DateTime としてパースできませんでした: '{value}'");
                 return DateTime.MinValue;
             }
             if (targetType == typeof(SerializableDateTime))
             {
                 if (TryParseDateTime(value, out var dateTimeValue))
                     return new SerializableDateTime(dateTimeValue);
-                Debug.LogWarning($"Failed to parse '{value}' as SerializableDateTime for member '{memberName}'");
+                Debug.LogWarning($"メンバ '{memberName}' の値を SerializableDateTime としてパースできませんでした: '{value}'");
                 return SerializableDateTime.MinValue;
             }
 
-            Debug.LogWarning($"Type '{targetType}' is not supported for member '{memberName}'");
+            Debug.LogWarning($"型 '{targetType}' はメンバ '{memberName}' でサポートされていません");
             return null;
         }
 

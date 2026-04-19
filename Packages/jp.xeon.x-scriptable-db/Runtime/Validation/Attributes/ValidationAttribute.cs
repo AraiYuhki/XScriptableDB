@@ -3,29 +3,29 @@ using System;
 namespace Xeon.XScriptableDB.Validation
 {
     /// <summary>
-    /// Base class for validation attributes.
+    /// バリデーション属性の基底クラス。
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = true)]
     public abstract class ValidationAttribute : Attribute
     {
-        /// <summary>Error message</summary>
+        /// <summary>エラーメッセージ</summary>
         public string ErrorMessage { get; set; }
 
         /// <summary>
-        /// Validates the value.
+        /// 値を検証します。
         /// </summary>
-        /// <param name="value">Value to validate</param>
-        /// <param name="fieldName">Field name</param>
-        /// <returns>Validation result</returns>
+        /// <param name="value">検証する値</param>
+        /// <param name="fieldName">フィールド名</param>
+        /// <returns>検証結果</returns>
         public abstract ValidationResult Validate(object value, string fieldName);
 
         /// <summary>
-        /// Returns the default error message.
+        /// デフォルトのエラーメッセージを返します。
         /// </summary>
         protected abstract string GetDefaultErrorMessage(string fieldName);
 
         /// <summary>
-        /// Returns the error message.
+        /// エラーメッセージを返します。
         /// </summary>
         protected string GetErrorMessage(string fieldName)
         {

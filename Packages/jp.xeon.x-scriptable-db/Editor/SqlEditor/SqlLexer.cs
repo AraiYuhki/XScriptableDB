@@ -4,7 +4,7 @@ using System.Text;
 namespace Xeon.XScriptableDB.Editor
 {
     /// <summary>
-    /// SQL lexical analyzer.
+    /// SQL字句解析器。
     /// </summary>
     public class SqlLexer
     {
@@ -36,7 +36,7 @@ namespace Xeon.XScriptableDB.Editor
             { "IS", TokenType.Is },
             { "NULL", TokenType.Null },
             { "BETWEEN", TokenType.Between },
-            // JOIN keywords
+            // JOINキーワード
             { "JOIN", TokenType.Join },
             { "INNER", TokenType.Inner },
             { "LEFT", TokenType.Left },
@@ -44,7 +44,7 @@ namespace Xeon.XScriptableDB.Editor
             { "CROSS", TokenType.Cross },
             { "OUTER", TokenType.Outer },
             { "ON", TokenType.On },
-            // Aggregate keywords
+            // 集約キーワード
             { "GROUP", TokenType.Group },
             { "HAVING", TokenType.Having },
             { "DISTINCT", TokenType.Distinct },
@@ -53,18 +53,18 @@ namespace Xeon.XScriptableDB.Editor
             { "AVG", TokenType.Avg },
             { "MIN", TokenType.Min },
             { "MAX", TokenType.Max },
-            // Set operations
+            // 集合演算
             { "UNION", TokenType.Union },
             { "INTERSECT", TokenType.Intersect },
             { "EXCEPT", TokenType.Except },
             { "ALL", TokenType.All },
-            // CASE expression
+            // CASE式
             { "CASE", TokenType.Case },
             { "WHEN", TokenType.When },
             { "THEN", TokenType.Then },
             { "ELSE", TokenType.Else },
             { "END", TokenType.End },
-            // String functions
+            // 文字列関数
             { "UPPER", TokenType.Upper },
             { "LOWER", TokenType.Lower },
             { "CONCAT", TokenType.Concat },
@@ -109,7 +109,7 @@ namespace Xeon.XScriptableDB.Editor
             var startPos = position;
             var c = input[position];
 
-            // Single character tokens
+            // 単一文字のトークン
             switch (c)
             {
                 case '*': position++; return new Token(TokenType.Star, "*", startPos);
@@ -123,7 +123,7 @@ namespace Xeon.XScriptableDB.Editor
                 case '%': position++; return new Token(TokenType.Percent, "%", startPos);
             }
 
-            // Two character operators
+            // 2文字の演算子
             if (c == '!' && position + 1 < input.Length && input[position + 1] == '=')
             {
                 position += 2;
@@ -157,26 +157,26 @@ namespace Xeon.XScriptableDB.Editor
                 return new Token(TokenType.GreaterThan, ">", startPos);
             }
 
-            // Minus (processed as an operator)
+            // マイナス（演算子として処理される）
             if (c == '-')
             {
                 position++;
                 return new Token(TokenType.Minus, "-", startPos);
             }
 
-            // String literal
+            // 文字列リテラル
             if (c == '\'' || c == '"')
                 return ReadStringLiteral(c);
 
-            // Number literal
+            // 数値リテラル
             if (char.IsDigit(c))
                 return ReadNumberLiteral();
 
-            // Identifier or keyword
+            // 識別子またはキーワード
             if (char.IsLetter(c) || c == '_')
                 return ReadIdentifierOrKeyword();
 
-            // Unknown character
+            // 不明な文字
             position++;
             return new Token(TokenType.Unknown, c.ToString(), startPos);
         }
@@ -184,7 +184,7 @@ namespace Xeon.XScriptableDB.Editor
         private Token ReadStringLiteral(char quote)
         {
             var startPos = position;
-            position++; // Skip opening quote
+            position++; // 開始の引用符をスキップする
 
             var sb = new StringBuilder();
             while (position < input.Length)
@@ -192,14 +192,14 @@ namespace Xeon.XScriptableDB.Editor
                 var c = input[position];
                 if (c == quote)
                 {
-                    // Check for escaped quote
+                    // エスケープされた引用符を確認する
                     if (position + 1 < input.Length && input[position + 1] == quote)
                     {
                         sb.Append(quote);
                         position += 2;
                         continue;
                     }
-                    position++; // Skip closing quote
+                    position++; // 終了の引用符をスキップする
                     break;
                 }
                 sb.Append(c);
@@ -236,7 +236,7 @@ namespace Xeon.XScriptableDB.Editor
 
             var value = sb.ToString();
 
-            // Check if it's a keyword
+            // キーワードかどうかを確認する
             if (Keywords.TryGetValue(value, out var keywordType))
                 return new Token(keywordType, value, startPos);
 

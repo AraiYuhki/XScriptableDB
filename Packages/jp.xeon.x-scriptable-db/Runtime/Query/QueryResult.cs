@@ -4,10 +4,10 @@ using System.Collections.Generic;
 namespace Xeon.XScriptableDB
 {
     /// <summary>
-    /// Zero-GC-allocation query result struct.
-    /// Uses ref struct to avoid heap allocation.
+    /// GCアロケーションなしのクエリ結果構造体。
+    /// ヒープ割り当てを避けるためにref structを使用します。
     /// </summary>
-    /// <typeparam name="T">Type of the record</typeparam>
+    /// <typeparam name="T">レコードの型</typeparam>
     public ref struct QueryResult<T> where T : class
     {
         private readonly T[] source;
@@ -15,25 +15,25 @@ namespace Xeon.XScriptableDB
         private readonly int count;
 
         /// <summary>
-        /// Number of records in the result.
+        /// 結果のレコード数。
         /// </summary>
         public int Count => count;
 
         /// <summary>
-        /// Whether the result is empty.
+        /// 結果が空かどうか。
         /// </summary>
         public bool IsEmpty => count == 0;
 
         /// <summary>
-        /// Returns the first record. Null if the result is empty.
+        /// 最初のレコードを返します。結果が空の場合はnullになります。
         /// </summary>
         public T First => count > 0 ? source[indices[0]] : null;
 
         /// <summary>
-        /// Creates a QueryResult from a source array and an index array.
+        /// ソース配列とインデックス配列からQueryResultを作成します。
         /// </summary>
-        /// <param name="source">Source array</param>
-        /// <param name="indices">Index array</param>
+        /// <param name="source">ソース配列</param>
+        /// <param name="indices">インデックス配列</param>
         public QueryResult(T[] source, int[] indices)
         {
             this.source = source;
@@ -42,9 +42,9 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Creates a QueryResult from an entire source array.
+        /// ソース配列全体からQueryResultを作成します。
         /// </summary>
-        /// <param name="source">Source array</param>
+        /// <param name="source">ソース配列</param>
         public QueryResult(T[] source)
         {
             this.source = source;
@@ -53,15 +53,15 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Creates an empty QueryResult.
+        /// 空のQueryResultを作成します。
         /// </summary>
         public static QueryResult<T> Empty => new(Array.Empty<T>(), Array.Empty<int>());
 
         /// <summary>
-        /// Returns the record at the specified index.
+        /// 指定されたインデックスのレコードを返します。
         /// </summary>
-        /// <param name="index">Index</param>
-        /// <returns>Record</returns>
+        /// <param name="index">インデックス</param>
+        /// <returns>レコード</returns>
         public T this[int index]
         {
             get
@@ -76,14 +76,14 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Returns an Enumerator.
+        /// Enumeratorを返します。
         /// </summary>
         public Enumerator GetEnumerator() => new(this);
 
         /// <summary>
-        /// Copies the result to an array.
+        /// 結果を配列にコピーします。
         /// </summary>
-        /// <returns>Array of records</returns>
+        /// <returns>レコードの配列</returns>
         public T[] ToArray()
         {
             if (count == 0)
@@ -96,9 +96,9 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Copies the result to a list.
+        /// 結果をリストにコピーします。
         /// </summary>
-        /// <returns>List of records</returns>
+        /// <returns>レコードのリスト</returns>
         public List<T> ToList()
         {
             var result = new List<T>(count);
@@ -108,7 +108,7 @@ namespace Xeon.XScriptableDB
         }
 
         /// <summary>
-        /// Zero-GC-allocation Enumerator.
+        /// GCアロケーションなしのEnumerator。
         /// </summary>
         public ref struct Enumerator
         {

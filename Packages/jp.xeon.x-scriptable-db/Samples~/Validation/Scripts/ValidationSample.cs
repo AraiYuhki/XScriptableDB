@@ -6,8 +6,8 @@ using Xeon.XScriptableDB.Validation;
 namespace Xeon.XScriptableDB.Samples.Validation
 {
     /// <summary>
-    /// Logic for the Validation sample.
-    /// Intended to be called from a GUI.
+    /// バリデーションサンプルのロジック。
+    /// GUIから呼び出されることを想定しています。
     /// </summary>
     public class ValidationSample : MonoBehaviour
     {
@@ -18,9 +18,9 @@ namespace Xeon.XScriptableDB.Samples.Validation
         private WeaponTable weaponTable;
 
         /// <summary>
-        /// Runs validation on the skill table.
+        /// スキルテーブルのバリデーションを実行します。
         /// </summary>
-        /// <returns>Validation result</returns>
+        /// <returns>バリデーション結果</returns>
         public TableValidationResult ValidateSkillTable()
         {
             if (skillTable == null)
@@ -37,9 +37,9 @@ namespace Xeon.XScriptableDB.Samples.Validation
         }
 
         /// <summary>
-        /// Runs validation on the weapon table (including foreign key validation).
+        /// 武器テーブルのバリデーション（外部キーのバリデーションを含む）を実行します。
         /// </summary>
-        /// <returns>Validation result</returns>
+        /// <returns>バリデーション結果</returns>
         public TableValidationResult ValidateWeaponTable()
         {
             if (weaponTable == null)
@@ -48,13 +48,13 @@ namespace Xeon.XScriptableDB.Samples.Validation
                 return null;
             }
 
-            // Record validation
+            // レコードのバリデーション
             var result = RecordValidator.ValidateTable<WeaponRecord>(
                 weaponTable, r => r.Id);
 
             LogValidationResult(result);
 
-            // Foreign key validation
+            // 外部キーのバリデーション
             if (skillTable != null)
             {
                 var context = new ForeignKeyValidationContext();
@@ -70,9 +70,9 @@ namespace Xeon.XScriptableDB.Samples.Validation
         }
 
         /// <summary>
-        /// Runs batch validation on all tables.
+        /// すべてのテーブルに対して一括バリデーションを実行します。
         /// </summary>
-        /// <returns>Dictionary of table names and validation results</returns>
+        /// <returns>テーブル名とバリデーション結果のディクショナリ</returns>
         public Dictionary<string, TableValidationResult> ValidateAll()
         {
             var results = new Dictionary<string, TableValidationResult>();
@@ -85,7 +85,7 @@ namespace Xeon.XScriptableDB.Samples.Validation
             if (weaponResult != null)
                 results["WeaponTable"] = weaponResult;
 
-            // Summary log
+            // サマリーログ
             var totalErrors = results.Values.Sum(r => r.TotalErrorCount);
 
             Debug.Log("=== Batch Validation Complete ===");
@@ -96,7 +96,7 @@ namespace Xeon.XScriptableDB.Samples.Validation
         }
 
         /// <summary>
-        /// Logs the validation result.
+        /// バリデーション結果をログに出力します。
         /// </summary>
         private void LogValidationResult(TableValidationResult result)
         {
@@ -115,12 +115,12 @@ namespace Xeon.XScriptableDB.Samples.Validation
         }
 
         /// <summary>
-        /// Gets the number of records in the current SkillTable.
+        /// 現在のSkillTableのレコード数を取得します。
         /// </summary>
         public int SkillRecordCount => skillTable?.Count ?? 0;
 
         /// <summary>
-        /// Gets the number of records in the current WeaponTable.
+        /// 現在のWeaponTableのレコード数を取得します。
         /// </summary>
         public int WeaponRecordCount => weaponTable?.Count ?? 0;
     }
