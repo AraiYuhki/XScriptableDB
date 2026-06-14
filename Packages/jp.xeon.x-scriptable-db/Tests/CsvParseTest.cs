@@ -89,5 +89,99 @@ namespace Xeon.XScriptableDB.Tests
                 Assert.That(parsed[i].enumValue, Is.EqualTo(original[i].enumValue));
             }
         }
+
+        [Serializable]
+        private class NullableTestData : CsvData
+        {
+            [CsvColumn("int_value")]
+            public int? intValue;
+
+            [CsvColumn("float_value")]
+            public float? floatValue;
+
+            [CsvColumn("double_value")]
+            public double? doubleValue;
+
+            [CsvColumn("bool_value")]
+            public bool? boolValue;
+        }
+
+        [Test]
+        [Description("空文字をパースするとnullになることをテスト")]
+        public void Parse_NullableType_EmptyValue_BecomesNull()
+        {
+            var csv = "int_value,float_value,double_value,bool_value\n,,,\n";
+            var result = CsvParser.Parse<NullableTestData>(csv);
+
+            Assert.That(result.Count, Is.EqualTo(1));
+            Assert.That(result[0].intValue, Is.Null);
+            Assert.That(result[0].floatValue, Is.Null);
+            Assert.That(result[0].doubleValue, Is.Null);
+            Assert.That(result[0].boolValue, Is.Null);
+        }
+
+        [Test]
+        [Description("\"null\"という文字列をパースするとnullになることをテスト")]
+        public void Parse_NullableType_NullLiteral_BecomesNull()
+        {
+            var csv = "int_value,float_value,double_value,bool_value\nnull,NULL,Null,null\n";
+            var result = CsvParser.Parse<NullableTestData>(csv);
+
+            Assert.That(result.Count, Is.EqualTo(1));
+            Assert.That(result[0].intValue, Is.Null);
+            Assert.That(result[0].floatValue, Is.Null);
+            Assert.That(result[0].doubleValue, Is.Null);
+            Assert.That(result[0].boolValue, Is.Null);
+        }
+
+        [Test]
+        [Description("値が存在する場合は通常通りパースされることをテスト")]
+        public void Parse_NullableType_WithValue_ParsesValue()
+        {
+            var csv = "int_value,float_value,double_value,bool_value\n10,1.5,2.5,True\n";
+            var result = CsvParser.Parse<NullableTestData>(csv);
+
+            Assert.That(result.Count, Is.EqualTo(1));
+            Assert.That(result[0].intValue, Is.EqualTo(10));
+            Assert.That(result[0].floatValue, Is.EqualTo(1.5f));
+            Assert.That(result[0].doubleValue, Is.EqualTo(2.5));
+            Assert.That(result[0].boolValue, Is.EqualTo(true));
+        }
+
+        [Test]
+        [Description("nullの場合はCSV出力でnullと書き出されることをテスト")]
+        public void ToCsv_NullableType_NullValue_WritesNullLiteral()
+        {
+            var data = new NullableTestData();
+            var csv = CsvParser.ToCSV(new List<NullableTestData> { data });
+            var normalizedCsv = csv.Replace("\r\n", "\n");
+            var expect = "int_value,float_value,double_value,bool_value\nnull,null,null,null\n";
+            Assert.That(normalizedCsv, Is.EqualTo(expect));
+        }
+
+        [Test]
+        [Description("Nullable型の往復変換テスト")]
+        public void RoundTrip_NullableType_PreservesNullAndValue()
+        {
+            var original = new List<NullableTestData>
+            {
+                new NullableTestData { intValue = 1, floatValue = 1.5f, doubleValue = 2.5, boolValue = true },
+                new NullableTestData()
+            };
+
+            var csv = CsvParser.ToCSV(original);
+            var parsed = CsvParser.Parse<NullableTestData>(csv);
+
+            Assert.That(parsed.Count, Is.EqualTo(original.Count));
+            Assert.That(parsed[0].intValue, Is.EqualTo(original[0].intValue));
+            Assert.That(parsed[0].floatValue, Is.EqualTo(original[0].floatValue));
+            Assert.That(parsed[0].doubleValue, Is.EqualTo(original[0].doubleValue));
+            Assert.That(parsed[0].boolValue, Is.EqualTo(original[0].boolValue));
+
+            Assert.That(parsed[1].intValue, Is.Null);
+            Assert.That(parsed[1].floatValue, Is.Null);
+            Assert.That(parsed[1].doubleValue, Is.Null);
+            Assert.That(parsed[1].boolValue, Is.Null);
+        }
     }
 }
