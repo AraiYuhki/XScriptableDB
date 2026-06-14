@@ -236,6 +236,10 @@ namespace Xeon.XScriptableDB.IO
 
         private object ConvertValue(Type targetType, string value, string memberName)
         {
+            var underlyingType = Nullable.GetUnderlyingType(targetType);
+            if (underlyingType != null)
+                return IsNullValue(value) ? null : ConvertValue(underlyingType, value, memberName);
+
             if (targetType == typeof(int))
             {
                 if (int.TryParse(value, out var intValue))
@@ -292,6 +296,9 @@ namespace Xeon.XScriptableDB.IO
             return null;
         }
 
+        private static bool IsNullValue(string value)
+            => string.IsNullOrEmpty(value) || string.Equals(value, "null", StringComparison.OrdinalIgnoreCase);
+
         public static string ToCSV<T>(List<T> data)
             => ToCSV(data, defaultSeparator);
 
@@ -312,23 +319,23 @@ namespace Xeon.XScriptableDB.IO
                 var values = new List<string>();
                 foreach (var (_, member) in members)
                 {
-                    object value = member switch
+                    var (value, memberType) = member switch
                     {
-                        PropertyInfo prop => prop.GetValue(row),
-                        FieldInfo field => field.GetValue(row),
-                        _ => null
+                        PropertyInfo prop => (prop.GetValue(row), prop.PropertyType),
+                        FieldInfo field => (field.GetValue(row), field.FieldType),
+                        _ => (null, typeof(object))
                     };
-                    values.Add(ValueToString(value));
+                    values.Add(ValueToString(value, memberType));
                 }
                 builder.AppendLine(string.Join(separator, values));
             }
             return builder.ToString();
         }
 
-        private static string ValueToString(object value)
+        private static string ValueToString(object value, Type memberType)
         {
             if (value == null)
-                return "\"\"";
+                return Nullable.GetUnderlyingType(memberType) != null ? "null" : "\"\"";
             if (value is string s)
                 return s.ToCsv();
             if (value is DateTime dt)

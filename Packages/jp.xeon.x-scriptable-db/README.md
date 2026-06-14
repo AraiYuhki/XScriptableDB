@@ -430,6 +430,11 @@ indices:                       # SecondaryKeyインデックスのリスト
 
 `isNullable: true`の場合、値型は`int?`のようにNullable型として生成されます。
 
+Nullable型(`int?`, `float?`, `double?`, `bool?`など)のCSVインポート/エクスポートは以下のように扱われます。
+
+- インポート時: セルが空文字、または`null`(大文字小文字を区別しない)の場合は`null`になります。
+- エクスポート時: 値が`null`の場合はセルに`null`という文字列が出力されます。
+
 ### 完全な例
 
 ```yaml
