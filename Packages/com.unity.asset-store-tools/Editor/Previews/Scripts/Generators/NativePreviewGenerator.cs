@@ -305,7 +305,7 @@ namespace AssetStoreTools.Previews.Generators
             foreach (var obj in objects)
             {
                 var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(AssetDatabase.GUIDToAssetPath(obj.Guid));
-                if (AssetPreview.IsLoadingAssetPreview(asset.GetInstanceID()))
+                if (AssetPreview.IsLoadingAssetPreview(asset.GetEntityId()))
                 {
                     await WaitForEndOfFrame();
                 }

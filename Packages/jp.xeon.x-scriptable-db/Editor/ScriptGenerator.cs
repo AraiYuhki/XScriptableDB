@@ -16,7 +16,7 @@ namespace Xeon.XScriptableDB.Editor
             CreateFile<EndDBScriptNameEditAction>("NewDatabaseScript.cs", "DB.template");
         }
 
-        private static void CreateFile<T>(string fileName, string templateName) where T : EndNameEditAction
+        private static void CreateFile<T>(string fileName, string templateName) where T : AssetCreationEndAction
         {
             var directoryPath = AssetDatabase.GetAssetPath(Selection.activeObject);
             if (!string.IsNullOrEmpty(Path.GetExtension(directoryPath)))
@@ -32,7 +32,7 @@ namespace Xeon.XScriptableDB.Editor
             AssetDatabase.Refresh();
             var asset = AssetDatabase.LoadAssetAtPath(newFilePath, typeof(TextAsset));
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(
-                asset.GetInstanceID(),
+                asset.GetEntityId(),
                 ScriptableObject.CreateInstance<T>(),
                 newFilePath,
                 AssetPreview.GetMiniThumbnail(asset),
@@ -40,10 +40,10 @@ namespace Xeon.XScriptableDB.Editor
             Selection.activeObject = asset;
         }
 
-        private abstract class EndScriptNameEditActionBase : EndNameEditAction
+        private abstract class EndScriptNameEditActionBase : AssetCreationEndAction
         {
             protected abstract string TemplateFileName { get; }
-            public override void Action(int instanceId, string pathName, string resourceFile)
+            public override void Action(EntityId entityId, string pathName, string resourceFile)
             {
                 var templateFilePath = Path.Join(TemplateBasePath, TemplateFileName);
                 var fileText = File.ReadAllText(templateFilePath);
