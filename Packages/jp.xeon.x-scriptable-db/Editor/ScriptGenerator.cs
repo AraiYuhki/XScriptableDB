@@ -3,6 +3,14 @@ using UnityEditor;
 using UnityEditor.ProjectWindowCallback;
 using UnityEngine;
 
+#if UNITY_6000_5_OR_NEWER
+using ProjectWindowAssetId = UnityEngine.EntityId;
+using ProjectWindowEndAction = UnityEditor.ProjectWindowCallback.AssetCreationEndAction;
+#else
+using ProjectWindowAssetId = System.Int32;
+using ProjectWindowEndAction = UnityEditor.ProjectWindowCallback.EndNameEditAction;
+#endif
+
 namespace Xeon.XScriptableDB.Editor
 {
     [InitializeOnLoad]
@@ -16,7 +24,7 @@ namespace Xeon.XScriptableDB.Editor
             CreateFile<EndDBScriptNameEditAction>("NewDatabaseScript.cs", "DB.template");
         }
 
-        private static void CreateFile<T>(string fileName, string templateName) where T : EndNameEditAction
+        private static void CreateFile<T>(string fileName, string templateName) where T : ProjectWindowEndAction
         {
             var directoryPath = AssetDatabase.GetAssetPath(Selection.activeObject);
             if (!string.IsNullOrEmpty(Path.GetExtension(directoryPath)))
@@ -32,7 +40,7 @@ namespace Xeon.XScriptableDB.Editor
             AssetDatabase.Refresh();
             var asset = AssetDatabase.LoadAssetAtPath(newFilePath, typeof(TextAsset));
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(
-                asset.GetInstanceID(),
+                GetProjectWindowAssetId(asset),
                 ScriptableObject.CreateInstance<T>(),
                 newFilePath,
                 AssetPreview.GetMiniThumbnail(asset),
@@ -40,10 +48,16 @@ namespace Xeon.XScriptableDB.Editor
             Selection.activeObject = asset;
         }
 
-        private abstract class EndScriptNameEditActionBase : EndNameEditAction
+#if UNITY_6000_5_OR_NEWER
+        private static ProjectWindowAssetId GetProjectWindowAssetId(Object asset) => asset.GetEntityId();
+#else
+        private static ProjectWindowAssetId GetProjectWindowAssetId(Object asset) => asset.GetInstanceID();
+#endif
+
+        private abstract class EndScriptNameEditActionBase : ProjectWindowEndAction
         {
             protected abstract string TemplateFileName { get; }
-            public override void Action(int instanceId, string pathName, string resourceFile)
+            public override void Action(ProjectWindowAssetId entityId, string pathName, string resourceFile)
             {
                 var templateFilePath = Path.Join(TemplateBasePath, TemplateFileName);
                 var fileText = File.ReadAllText(templateFilePath);
