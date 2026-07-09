@@ -49,9 +49,14 @@ namespace Xeon.XScriptableDB.Validation
 
         /// <summary>
         /// メンバーを検証します。
+        /// SerializableNullable は中身へアンラップして検証します（値なしは null として扱う）。
         /// </summary>
         private static void ValidateMember(MemberInfo member, object value, string fieldName, ValidationResult result)
         {
+            if (value is ISerializableNullable nullable)
+            {
+                value = nullable.HasValue ? nullable.BoxedValue : null;
+            }
             var attributes = member.GetCustomAttributes<ValidationAttribute>();
 
             foreach (var attr in attributes)
