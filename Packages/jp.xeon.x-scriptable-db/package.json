@@ -1,6 +1,6 @@
 {
   "name": "jp.xeon.x-scriptable-db",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "displayName": "XScriptableDB",
   "description": "Unity用の高性能なScriptableObjectベースのデータベースシステムです。PrimaryKeyによるO(log n)のバイナリサーチ、SecondaryKeyによるO(1)のハッシュルックアップ、GCアロケーションゼロのクエリ、差分プレビュー付きのCSV/TSVインポート・エクスポート、JOIN/GROUP BY/集計関数をサポートするSQLエディタ、スキーマ比較、マイグレーションツール、そして包括的なバリデーションシステムなどの機能を備えています。",
   "unity": "6000.0",

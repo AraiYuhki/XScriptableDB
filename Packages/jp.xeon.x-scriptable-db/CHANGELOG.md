@@ -5,6 +5,17 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティック バージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.0] - 2026-07-09
+
+### Added
+
+- `SerializableNullable<T>` を追加。Unity がシリアライズできない `Nullable<T>`（`int?` など）の代替として、nullable なカラムをドメインリロード後も値を保持したまま扱えるようにした
+  - CsvParser: インポートで空文字/`null` を値なしとして解釈し、エクスポートで値なしを `null` として出力
+  - RecordValidator: 検証前に中身へアンラップ（`Required` は値なしを検出、`Range` は値なしをスキップ）
+  - インスペクタ編集用の PropertyDrawer（チェックボックス + 値フィールド）を追加
+
+---
+
 ## [1.1.4] - 2026-07-04
 
 ### Fixed
