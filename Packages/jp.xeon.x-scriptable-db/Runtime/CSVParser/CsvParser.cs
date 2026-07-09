@@ -240,6 +240,9 @@ namespace Xeon.XScriptableDB.IO
             if (underlyingType != null)
                 return IsNullValue(value) ? null : ConvertValue(underlyingType, value, memberName);
 
+            if (TryGetSerializableNullableInnerType(targetType, out var innerType))
+                return ConvertSerializableNullable(targetType, innerType, value, memberName);
+
             if (targetType == typeof(int))
             {
                 if (int.TryParse(value, out var intValue))
@@ -299,6 +302,28 @@ namespace Xeon.XScriptableDB.IO
         private static bool IsNullValue(string value)
             => string.IsNullOrEmpty(value) || string.Equals(value, "null", StringComparison.OrdinalIgnoreCase);
 
+        private static bool TryGetSerializableNullableInnerType(Type targetType, out Type innerType)
+        {
+            if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(SerializableNullable<>))
+            {
+                innerType = targetType.GetGenericArguments()[0];
+                return true;
+            }
+            innerType = null;
+            return false;
+        }
+
+        private object ConvertSerializableNullable(Type targetType, Type innerType, string value, string memberName)
+        {
+            if (IsNullValue(value))
+                return Activator.CreateInstance(targetType);
+
+            var innerValue = ConvertValue(innerType, value, memberName);
+            if (innerValue == null)
+                return Activator.CreateInstance(targetType);
+            return Activator.CreateInstance(targetType, innerValue);
+        }
+
         public static string ToCSV<T>(List<T> data)
             => ToCSV(data, defaultSeparator);
 
@@ -336,6 +361,8 @@ namespace Xeon.XScriptableDB.IO
         {
             if (value == null)
                 return Nullable.GetUnderlyingType(memberType) != null ? "null" : "\"\"";
+            if (value is ISerializableNullable nullable)
+                return nullable.HasValue ? ValueToString(nullable.BoxedValue, nullable.BoxedValue.GetType()) : "null";
             if (value is string s)
                 return s.ToCsv();
             if (value is DateTime dt)
