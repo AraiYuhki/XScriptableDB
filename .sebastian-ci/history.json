@@ -1,0 +1,15 @@
+{
+  "523b8d157e474d10f9b32d3a94de9de12ad752bc": {
+    "executedAt": "2026-10-04T12:17:56.3953019+09:00",
+    "isSuccess": false,
+    "logDirectoryPath": "D:\\Projects\\XScriptableDB\\.sebastian-ci\\logs\\523b8d157e474d10f9b32d3a94de9de12ad752bc",
+    "jobs": [
+      {
+        "jobId": "build",
+        "status": "Failed",
+        "durationSeconds": 0.2,
+        "tests": null
+      }
+    ]
+  }
+}

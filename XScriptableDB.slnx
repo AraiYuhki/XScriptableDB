@@ -3,4 +3,5 @@
   <Project Path="asset-store-tools-editor.csproj" />
   <Project Path="jp.xeon.x-scriptable-db.Editor.csproj" />
   <Project Path="jp.xeon.x-scriptable-db.Tests.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>
