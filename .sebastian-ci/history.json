@@ -24,5 +24,18 @@
         "tests": null
       }
     ]
+  },
+  "4179ce0adbf9f255a87c9744cd21554287b79f5f": {
+    "executedAt": "2026-10-18T13:49:14.4507934+09:00",
+    "isSuccess": true,
+    "logDirectoryPath": "D:\\Projects\\XScriptableDB\\.sebastian-ci\\logs\\4179ce0adbf9f255a87c9744cd21554287b79f5f",
+    "jobs": [
+      {
+        "jobId": "build",
+        "status": "Success",
+        "durationSeconds": 1514.2,
+        "tests": null
+      }
+    ]
   }
 }
