@@ -110,3 +110,5 @@ InitTestScene*.unity*
 Dist
 *.zip
 
+# Sebastian CI の実行履歴(マシンごと)
+/.sebastian-ci/
